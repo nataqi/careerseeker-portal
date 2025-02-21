@@ -1,17 +1,37 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { Search as SearchIcon, Upload, BriefcaseIcon, LogOut, Loader2 } from "lucide-react";
+import { Search as SearchIcon, Upload, BriefcaseIcon, LogOut, Loader2, Info } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/lib/auth";
 import { useNavigate } from "react-router-dom";
 import { searchJobs } from "@/services/jobService";
 import type { JobListing } from "@/types/job";
 import { useDebounce } from "@/hooks/useDebounce";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+const AF_BASE_URL = "https://arbetsformedlingen.se/platsbanken/annonser";
+
+type SearchMode = "OR" | "AND" | "NOT" | "EXACT";
+
+const searchModeHelp = {
+  OR: "Find jobs containing any of the words (e.g., 'developer designer')",
+  AND: "Find jobs containing all words (e.g., 'frontend react')",
+  NOT: "Exclude jobs with specific words (e.g., 'developer -junior -intern')",
+  EXACT: "Search for an exact phrase (e.g., 'full stack developer')",
+};
 
 const Search = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchMode, setSearchMode] = useState<SearchMode>("OR");
   const [isLoading, setIsLoading] = useState(false);
   const [jobs, setJobs] = useState<JobListing[]>([]);
   const { toast } = useToast();
@@ -25,6 +45,20 @@ const Search = () => {
     }
   }, [user, navigate]);
 
+  const formatSearchQuery = (query: string, mode: SearchMode): string => {
+    switch (mode) {
+      case "EXACT":
+        return `"${query}"`;
+      case "NOT":
+        return query; // User adds minus signs manually
+      case "AND":
+        return query.split(" ").filter(Boolean).map(term => `+${term}`).join(" ");
+      case "OR":
+      default:
+        return query;
+    }
+  };
+
   useEffect(() => {
     const fetchJobs = async () => {
       if (!debouncedSearchQuery.trim()) {
@@ -34,7 +68,8 @@ const Search = () => {
 
       setIsLoading(true);
       try {
-        const response = await searchJobs(debouncedSearchQuery);
+        const formattedQuery = formatSearchQuery(debouncedSearchQuery, searchMode);
+        const response = await searchJobs(formattedQuery, searchMode);
         setJobs(response.hits);
       } catch (error) {
         console.error("Search error:", error);
@@ -49,7 +84,7 @@ const Search = () => {
     };
 
     fetchJobs();
-  }, [debouncedSearchQuery, toast]);
+  }, [debouncedSearchQuery, searchMode, toast]);
 
   if (!user) return null;
   
@@ -85,17 +120,37 @@ const Search = () => {
         
         <div className="space-y-6">
           <div className="flex flex-col md:flex-row gap-4 items-stretch md:items-center">
-            <div className="relative flex-1">
-              <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <Input
-                type="text"
-                placeholder="Search jobs by title, company, or keywords..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 w-full"
-              />
+            <div className="flex-1 space-y-2">
+              <div className="relative">
+                <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <Input
+                  type="text"
+                  placeholder="Search jobs by title, company, or keywords..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 w-full"
+                />
+              </div>
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <Info className="w-4 h-4" />
+                <span>{searchModeHelp[searchMode]}</span>
+              </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 items-start">
+              <Select
+                value={searchMode}
+                onValueChange={(value) => setSearchMode(value as SearchMode)}
+              >
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Search mode" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="OR">Any words (OR)</SelectItem>
+                  <SelectItem value="AND">All words (AND)</SelectItem>
+                  <SelectItem value="NOT">Exclude words (NOT)</SelectItem>
+                  <SelectItem value="EXACT">Exact phrase</SelectItem>
+                </SelectContent>
+              </Select>
               <Button 
                 className="bg-primary hover:bg-primary-hover text-white"
                 disabled={isLoading}
@@ -177,17 +232,7 @@ const Search = () => {
                     </div>
                     <Button
                       onClick={() => {
-                        if (job.application_details?.url) {
-                          window.open(job.application_details.url, '_blank');
-                        } else if (job.application_details?.email) {
-                          window.location.href = `mailto:${job.application_details.email}`;
-                        } else {
-                          toast({
-                            title: "Application unavailable",
-                            description: "The application details for this job are not available.",
-                            variant: "destructive",
-                          });
-                        }
+                        window.open(`${AF_BASE_URL}/${job.id}`, '_blank');
                       }}
                       className="bg-primary hover:bg-primary-hover text-white"
                     >
