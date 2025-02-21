@@ -36,13 +36,9 @@ const Search = () => {
   const [jobs, setJobs] = useState<JobListing[]>([]);
   const [isProcessingCV, setIsProcessingCV] = useState(false);
   const [extractedSkills, setExtractedSkills] = useState<string[]>([]);
-  const {
-    toast
-  } = useToast();
-  const {
-    user,
-    signOut
-  } = useAuth();
+  const [isDragging, setIsDragging] = useState(false);
+  const { toast } = useToast();
+  const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
   const { toggleSaveJob, isJobSaved } = useSavedJobs();
@@ -85,8 +81,7 @@ const Search = () => {
     fetchJobs();
   }, [debouncedSearchQuery, searchMode, toast]);
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const handleFileUpload = async (file: File) => {
     if (!file) return;
 
     if (file.type !== "application/pdf") {
@@ -127,6 +122,29 @@ const Search = () => {
     } finally {
       setIsProcessingCV(false);
     }
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    
+    const file = e.dataTransfer.files[0];
+    if (file) {
+      handleFileUpload(file);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
   };
 
   if (!user) return null;
@@ -190,31 +208,46 @@ const Search = () => {
                 <input 
                   type="file" 
                   accept=".pdf" 
-                  onChange={handleFileUpload} 
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleFileUpload(file);
+                  }} 
                   className="hidden" 
                   id="cv-upload" 
                   disabled={isProcessingCV}
                 />
-                <label htmlFor="cv-upload">
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    className="border-2 border-primary text-primary hover:bg-accent"
-                    disabled={isProcessingCV}
-                  >
-                    {isProcessingCV ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Processing...
-                      </>
-                    ) : (
-                      <>
-                        <Upload className="w-4 h-4 mr-2" />
-                        Upload CV
-                      </>
-                    )}
-                  </Button>
-                </label>
+                <div
+                  onDrop={handleDrop}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  className={`relative border-2 ${
+                    isDragging ? 'border-primary bg-primary/10' : 'border-dashed border-gray-300'
+                  } rounded-lg p-6 transition-all cursor-pointer hover:border-primary/50`}
+                  onClick={() => document.getElementById('cv-upload')?.click()}
+                >
+                  {isProcessingCV ? (
+                    <div className="flex flex-col items-center justify-center space-y-2">
+                      <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                      <p className="text-sm text-gray-600">Processing CV...</p>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center space-y-2">
+                      <Upload className="w-8 h-8 text-gray-400" />
+                      <p className="text-sm text-center text-gray-600">
+                        {isDragging ? (
+                          "Drop your CV here"
+                        ) : (
+                          <>
+                            Drag and drop your CV here
+                            <br />
+                            or click to select a file
+                          </>
+                        )}
+                      </p>
+                      <p className="text-xs text-gray-400">PDF files only</p>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -310,3 +343,4 @@ const Search = () => {
 };
 
 export default Search;
+
