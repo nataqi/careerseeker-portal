@@ -7,7 +7,6 @@ import { useToast } from "@/components/ui/use-toast";
 import { Card } from "@/components/ui/card";
 import { useAuth } from "@/lib/auth";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -61,16 +60,7 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen bg-secondary flex items-center justify-center p-4">
-      <Card className="w-full max-w-md p-8 bg-white rounded-xl shadow-sm animate-fadeIn relative">
-        <Button
-          variant="ghost"
-          className="absolute left-4 top-4"
-          onClick={() => navigate(-1)}
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back
-        </Button>
-        
+      <Card className="w-full max-w-md p-8 bg-white rounded-xl shadow-sm animate-fadeIn">
         <div className="space-y-6">
           <div className="text-center">
             <h1 className="text-2xl font-bold">{isLogin ? "Welcome Back" : "Create Account"}</h1>
