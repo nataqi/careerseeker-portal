@@ -1,12 +1,40 @@
 
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
+import { PdfReader } from "npm:pdfreader";
+import { Buffer } from 'node:buffer';
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+async function extractTextFromPDF(pdfBuffer: ArrayBuffer): Promise<string> {
+  try {
+    const buffer = Buffer.from(pdfBuffer);
+    return await new Promise((resolve, reject) => {
+      const textItems: string[] = [];
+      new PdfReader().parseBuffer(buffer, (err: Error | null, item: { text?: string } | null) => {
+        if (err) {
+          reject(`PDF parsing error: ${err.message}`);
+          return;
+        }
+        
+        if (!item) { // End of file
+          resolve(textItems.join(' '));
+          return;
+        }
+
+        if (item.text) {
+          textItems.push(item.text);
+        }
+      });
+    });
+  } catch (error) {
+    console.error('[ERROR] PDF extraction error:', error);
+    throw new Error('Failed to extract text from PDF');
+  }
+}
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -26,10 +54,16 @@ serve(async (req) => {
       throw new Error('File must be a PDF');
     }
 
-    // Read the PDF file as text
-    const pdfText = await file.text();
+    // Convert the File to ArrayBuffer
+    const pdfBuffer = await file.arrayBuffer();
+    
+    // Extract text from PDF
+    console.log('Starting PDF text extraction...');
+    const pdfText = await extractTextFromPDF(pdfBuffer);
+    console.log('PDF text extracted successfully');
 
     // Process with OpenAI to extract skills
+    console.log('Sending text to OpenAI for analysis...');
     const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -41,10 +75,10 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `You are a skilled CV analyzer. Extract all explicitly mentioned skills from the CV text. 
-            Focus on technical skills, tools, programming languages, and domain expertise.
+            content: `You are a skilled CV analyzer. Extract technical skills, tools, programming languages, and relevant professional competencies from the CV.
             Format the output as a comma-separated list of skills only.
-            Example output: "JavaScript, React, Node.js, Project Management"`
+            Example: "JavaScript, React, Node.js, Project Management"
+            Keep the skills relevant and avoid generic terms.`
           },
           {
             role: 'user',
@@ -55,16 +89,20 @@ serve(async (req) => {
     });
 
     if (!openAIResponse.ok) {
+      const errorData = await openAIResponse.text();
+      console.error('OpenAI API error:', errorData);
       throw new Error('Failed to process CV with OpenAI');
     }
 
     const openAIData = await openAIResponse.json();
     const extractedSkills = openAIData.choices[0].message.content;
+    console.log('Skills extracted successfully:', extractedSkills);
 
     // Convert skills to search query
     const searchQuery = extractedSkills.replace(/,/g, ' OR ');
 
     // Search for jobs using the extracted skills
+    console.log('Searching for matching jobs...');
     const jobResponse = await fetch(`https://jobsearch.api.jobtechdev.se/search?q=${encodeURIComponent(searchQuery)}`, {
       headers: {
         'accept': 'application/json',
@@ -79,13 +117,16 @@ serve(async (req) => {
     }
 
     const jobData = await jobResponse.json();
+    console.log(`Found ${jobData.hits.length} matching jobs`);
 
     // Return both the extracted skills and matching jobs
     return new Response(
       JSON.stringify({
-        skills: extractedSkills.split(',').map((skill: string) => skill.trim()),
-        jobs: jobData.hits.slice(0, 10), // Return top 10 matching jobs
-        totalJobs: jobData.total.value
+        data: {
+          skills: extractedSkills.split(',').map((skill: string) => skill.trim()),
+          jobs: jobData.hits.slice(0, 10), // Return top 10 matching jobs
+          totalJobs: jobData.total.value
+        }
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
