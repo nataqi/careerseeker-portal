@@ -1,14 +1,14 @@
 
 import { JobSearchResponse } from "@/types/job";
 
-const API_URL = "https://jobsearch.api.jobtechdev.se/search"; 
+const API_URL = "https://jobsearch.api.jobtechdev.se/search";
 
-export const searchJobs = async (query: string): Promise<JobSearchResponse> => {
+export const searchJobs = async (query: string, mode: "OR" | "AND" | "NOT"): Promise<JobSearchResponse> => {
   try {
     const response = await fetch(`${API_URL}?q=${encodeURIComponent(query)}`, {
       headers: {
         'accept': 'application/json',
-        'x-feature-freetext-bool-method': 'or',
+        'x-feature-freetext-bool-method': mode === "AND" ? 'and' : 'or',
         'x-feature-disable-smart-freetext': 'false',
         'x-feature-enable-false-negative': 'true'
       }
