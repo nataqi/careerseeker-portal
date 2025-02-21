@@ -2,11 +2,9 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Search } from "lucide-react";
 
 const Index = () => {
   const navigate = useNavigate();
-  const [isHovered, setIsHovered] = useState(false);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-secondary to-white">
@@ -24,16 +22,7 @@ const Index = () => {
             </p>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
-            <Button
-              className="button-animation bg-primary hover:bg-primary-hover text-white px-8 py-6"
-              onClick={() => navigate("/search")}
-              onMouseEnter={() => setIsHovered(true)}
-              onMouseLeave={() => setIsHovered(false)}
-            >
-              <Search className={`mr-2 ${isHovered ? "animate-pulse" : ""}`} />
-              Start Searching
-            </Button>
+          <div className="flex justify-center mt-8">
             <Button
               className="button-animation bg-white text-primary border-2 border-primary hover:bg-accent px-8 py-6"
               onClick={() => navigate("/auth")}

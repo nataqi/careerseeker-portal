@@ -7,6 +7,8 @@ import { Card } from "@/components/ui/card";
 import { BriefcaseIcon, ArrowLeft, Home, Loader2, Star } from "lucide-react";
 import { useSavedJobs } from "@/hooks/useSavedJobs";
 
+const AF_BASE_URL = "https://arbetsformedlingen.se/platsbanken/annonser";
+
 const SavedJobs = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -79,7 +81,15 @@ const SavedJobs = () => {
                       )}
                     </div>
                   </div>
-                  <Star className="w-5 h-5 text-pink-500 fill-pink-500" />
+                  <div className="flex items-center gap-2">
+                    <Button
+                      onClick={() => window.open(`${AF_BASE_URL}/${job.job_id}`, '_blank')}
+                      className="bg-primary hover:bg-primary-hover text-white"
+                    >
+                      Apply Now
+                    </Button>
+                    <Star className="w-5 h-5 text-pink-500 fill-pink-500" />
+                  </div>
                 </div>
               </Card>
             ))
