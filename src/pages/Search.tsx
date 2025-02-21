@@ -3,16 +3,22 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { Search as SearchIcon, Upload, BriefcaseIcon, LogOut } from "lucide-react";
+import { Search as SearchIcon, Upload, BriefcaseIcon, LogOut, Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/lib/auth";
 import { useNavigate } from "react-router-dom";
+import { searchJobs } from "@/services/jobService";
+import type { JobListing } from "@/types/job";
+import { useDebounce } from "@/hooks/useDebounce";
 
 const Search = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [jobs, setJobs] = useState<JobListing[]>([]);
   const { toast } = useToast();
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const debouncedSearchQuery = useDebounce(searchQuery, 500);
   
   // Protect this route
   useEffect(() => {
@@ -20,6 +26,32 @@ const Search = () => {
       navigate("/auth");
     }
   }, [user, navigate]);
+
+  useEffect(() => {
+    const fetchJobs = async () => {
+      if (!debouncedSearchQuery.trim()) {
+        setJobs([]);
+        return;
+      }
+
+      setIsLoading(true);
+      try {
+        const response = await searchJobs(debouncedSearchQuery);
+        setJobs(response.hits);
+      } catch (error) {
+        console.error("Search error:", error);
+        toast({
+          title: "Error",
+          description: "Failed to fetch job listings. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchJobs();
+  }, [debouncedSearchQuery, toast]);
 
   if (!user) return null;
   
@@ -38,30 +70,6 @@ const Search = () => {
       });
     }
   };
-
-  const mockJobs = [
-    {
-      title: "Senior Software Engineer",
-      company: "TechCorp",
-      location: "San Francisco, CA",
-      type: "Full-time",
-      salary: "$120,000 - $180,000",
-    },
-    {
-      title: "Product Designer",
-      company: "DesignStudio",
-      location: "New York, NY",
-      type: "Full-time",
-      salary: "$90,000 - $130,000",
-    },
-    {
-      title: "Marketing Manager",
-      company: "GrowthCo",
-      location: "Remote",
-      type: "Full-time",
-      salary: "$80,000 - $120,000",
-    },
-  ];
 
   return (
     <div className="min-h-screen bg-secondary p-4 md:p-8">
@@ -90,8 +98,21 @@ const Search = () => {
               />
             </div>
             <div className="flex gap-2">
-              <Button className="bg-primary hover:bg-primary-hover text-white">
-                Search
+              <Button 
+                className="bg-primary hover:bg-primary-hover text-white"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Searching...
+                  </>
+                ) : (
+                  <>
+                    <SearchIcon className="w-4 h-4 mr-2" />
+                    Search
+                  </>
+                )}
               </Button>
               <div className="relative">
                 <input
@@ -116,43 +137,60 @@ const Search = () => {
           </div>
 
           <div className="grid gap-4">
-            {mockJobs.map((job, index) => (
-              <Card
-                key={index}
-                className="p-6 card-hover bg-white"
-              >
-                <div className="flex items-start justify-between">
-                  <div className="space-y-2">
-                    <h3 className="text-xl font-semibold text-gray-900">{job.title}</h3>
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <BriefcaseIcon className="w-4 h-4" />
-                      <span>{job.company}</span>
-                      <span>•</span>
-                      <span>{job.location}</span>
+            {isLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              </div>
+            ) : jobs.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                {searchQuery.trim() ? "No jobs found. Try different keywords." : "Start searching for jobs..."}
+              </div>
+            ) : (
+              jobs.map((job) => (
+                <Card
+                  key={job.id}
+                  className="p-6 card-hover bg-white"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-2">
+                      <h3 className="text-xl font-semibold text-gray-900">{job.headline}</h3>
+                      <div className="flex items-center gap-2 text-gray-600">
+                        <BriefcaseIcon className="w-4 h-4" />
+                        <span>{job.employer.name}</span>
+                        <span>•</span>
+                        <span>{job.workplace.city}</span>
+                      </div>
+                      <div className="flex gap-2">
+                        <span className="inline-block bg-accent text-primary text-sm px-3 py-1 rounded-full">
+                          {job.working_hours_type.label}
+                        </span>
+                        {job.salary_type?.label && (
+                          <span className="inline-block bg-secondary text-gray-600 text-sm px-3 py-1 rounded-full">
+                            {job.salary_type.label}
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex gap-2">
-                      <span className="inline-block bg-accent text-primary text-sm px-3 py-1 rounded-full">
-                        {job.type}
-                      </span>
-                      <span className="inline-block bg-secondary text-gray-600 text-sm px-3 py-1 rounded-full">
-                        {job.salary}
-                      </span>
-                    </div>
+                    <Button
+                      onClick={() => {
+                        if (job.application.url) {
+                          window.open(job.application.url, '_blank');
+                        } else {
+                          toast({
+                            title: "Application unavailable",
+                            description: "The application link for this job is not available.",
+                            variant: "destructive",
+                          });
+                        }
+                      }}
+                      className="bg-primary hover:bg-primary-hover text-white"
+                    >
+                      Apply Now
+                    </Button>
                   </div>
-                  <Button
-                    onClick={() => {
-                      toast({
-                        title: "Coming soon!",
-                        description: "Job application functionality will be implemented with Supabase integration.",
-                      });
-                    }}
-                    className="bg-primary hover:bg-primary-hover text-white"
-                  >
-                    Apply Now
-                  </Button>
-                </div>
-              </Card>
-            ))}
+                </Card>
+              ))
+            )}
           </div>
         </div>
       </div>
