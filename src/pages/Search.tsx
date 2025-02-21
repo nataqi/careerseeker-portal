@@ -2,17 +2,13 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { Search as SearchIcon, Upload, BriefcaseIcon, LogOut, Loader2, HelpCircle } from "lucide-react";
+import { Search as SearchIcon, Upload, BriefcaseIcon, LogOut, Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/lib/auth";
 import { useNavigate } from "react-router-dom";
 import { searchJobs } from "@/services/jobService";
 import type { JobListing } from "@/types/job";
 import { useDebounce } from "@/hooks/useDebounce";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { parseSearchQuery, buildSearchQuery } from "@/utils/searchParser";
-
-const AF_BASE_URL = "https://arbetsformedlingen.se/platsbanken/annonser/";
 
 const Search = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -38,9 +34,7 @@ const Search = () => {
 
       setIsLoading(true);
       try {
-        const parsed = parseSearchQuery(debouncedSearchQuery);
-        const processedQuery = buildSearchQuery(parsed);
-        const response = await searchJobs(processedQuery);
+        const response = await searchJobs(debouncedSearchQuery);
         setJobs(response.hits);
       } catch (error) {
         console.error("Search error:", error);
@@ -75,11 +69,6 @@ const Search = () => {
     }
   };
 
-  const handleApply = (job: JobListing) => {
-    const applicationUrl = `${AF_BASE_URL}${job.id}`;
-    window.open(applicationUrl, '_blank', 'noopener,noreferrer');
-  };
-
   return (
     <div className="min-h-screen bg-secondary p-4 md:p-8">
       <div className="container mx-auto max-w-6xl">
@@ -95,86 +84,54 @@ const Search = () => {
         </div>
         
         <div className="space-y-6">
-          <div className="flex flex-col space-y-2">
-            <div className="flex flex-col md:flex-row gap-4 items-stretch md:items-center">
-              <div className="relative flex-1">
-                <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                <Input
-                  type="text"
-                  placeholder="Search jobs by title, company, or keywords..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 w-full"
+          <div className="flex flex-col md:flex-row gap-4 items-stretch md:items-center">
+            <div className="relative flex-1">
+              <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <Input
+                type="text"
+                placeholder="Search jobs by title, company, or keywords..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 w-full"
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button 
+                className="bg-primary hover:bg-primary-hover text-white"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Searching...
+                  </>
+                ) : (
+                  <>
+                    <SearchIcon className="w-4 h-4 mr-2" />
+                    Search
+                  </>
+                )}
+              </Button>
+              <div className="relative">
+                <input
+                  type="file"
+                  accept=".pdf"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                  id="cv-upload"
                 />
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      className="absolute right-2 top-1/2 transform -translate-y-1/2"
-                      size="icon"
-                    >
-                      <HelpCircle className="w-4 h-4 text-gray-400" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent className="w-80 p-4" side="bottom">
-                    <div className="space-y-2">
-                      <h3 className="font-semibold">Search Tips:</h3>
-                      <ul className="space-y-1 text-sm">
-                        <li>• Use <span className="font-mono">space</span> for OR search: <span className="font-mono">frontend backend</span></li>
-                        <li>• Use <span className="font-mono">+</span> for AND search: <span className="font-mono">+react +typescript</span></li>
-                        <li>• Use <span className="font-mono">-</span> to exclude: <span className="font-mono">developer -junior</span></li>
-                        <li>• Use quotes for exact phrase: <span className="font-mono">"full stack developer"</span></li>
-                      </ul>
-                      <p className="text-sm text-gray-500 mt-2">
-                        Example: <span className="font-mono">"frontend developer" +react -junior</span>
-                      </p>
-                    </div>
-                  </TooltipContent>
-                </Tooltip>
-              </div>
-              <div className="flex gap-2">
-                <Button 
-                  className="bg-primary hover:bg-primary-hover text-white"
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Searching...
-                    </>
-                  ) : (
-                    <>
-                      <SearchIcon className="w-4 h-4 mr-2" />
-                      Search
-                    </>
-                  )}
-                </Button>
-                <div className="relative">
-                  <input
-                    type="file"
-                    accept=".pdf"
-                    onChange={handleFileUpload}
-                    className="hidden"
-                    id="cv-upload"
-                  />
-                  <label htmlFor="cv-upload">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="border-2 border-primary text-primary hover:bg-accent"
-                    >
-                      <Upload className="w-4 h-4 mr-2" />
-                      Upload CV
-                    </Button>
-                  </label>
-                </div>
+                <label htmlFor="cv-upload">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="border-2 border-primary text-primary hover:bg-accent"
+                  >
+                    <Upload className="w-4 h-4 mr-2" />
+                    Upload CV
+                  </Button>
+                </label>
               </div>
             </div>
-            {searchQuery && (
-              <div className="text-sm text-gray-500">
-                Tip: Use quotes for exact phrases, + for required words, and - to exclude terms
-              </div>
-            )}
           </div>
 
           <div className="grid gap-4">
@@ -184,7 +141,7 @@ const Search = () => {
               </div>
             ) : jobs.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
-                {searchQuery.trim() ? "No jobs found. Try different keywords or search operators." : "Start searching for jobs..."}
+                {searchQuery.trim() ? "No jobs found. Try different keywords." : "Start searching for jobs..."}
               </div>
             ) : (
               jobs.map((job) => (
@@ -219,7 +176,19 @@ const Search = () => {
                       </div>
                     </div>
                     <Button
-                      onClick={() => handleApply(job)}
+                      onClick={() => {
+                        if (job.application_details?.url) {
+                          window.open(job.application_details.url, '_blank');
+                        } else if (job.application_details?.email) {
+                          window.location.href = `mailto:${job.application_details.email}`;
+                        } else {
+                          toast({
+                            title: "Application unavailable",
+                            description: "The application details for this job are not available.",
+                            variant: "destructive",
+                          });
+                        }
+                      }}
                       className="bg-primary hover:bg-primary-hover text-white"
                     >
                       Apply Now
