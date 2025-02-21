@@ -35,16 +35,20 @@ const Auth = () => {
           description: "You have successfully signed in.",
         });
       } else {
-        await signUp(email, password);
+        const result = await signUp(email, password);
+        console.log("Signup result:", result); // Add logging to help debug
         toast({
-          title: "Welcome!",
-          description: "Your account has been created. Please check your email for verification.",
+          title: "Account created!",
+          description: "Please check your email to confirm your registration.",
         });
+        // Switch to login view after successful registration
+        setIsLogin(true);
       }
     } catch (error) {
+      console.error("Auth error:", error); // Add logging to help debug
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "An error occurred",
+        description: error instanceof Error ? error.message : "An error occurred during authentication",
         variant: "destructive",
       });
     } finally {
@@ -89,6 +93,7 @@ const Auth = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 className="w-full"
+                minLength={6}
               />
             </div>
 
