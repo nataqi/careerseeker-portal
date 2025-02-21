@@ -26,7 +26,7 @@ const searchModeHelp = {
   OR: "Find jobs containing any of the words (e.g., 'developer designer')",
   AND: "Find jobs containing all words (e.g., 'frontend react')",
   NOT: "Exclude jobs with specific words (e.g., 'developer -junior -intern')",
-  EXACT: "Search for an exact phrase (e.g., 'full stack developer')",
+  EXACT: 'Use quotes for exact phrase (e.g., "full stack developer")',
 };
 
 const Search = () => {
@@ -48,9 +48,10 @@ const Search = () => {
   const formatSearchQuery = (query: string, mode: SearchMode): string => {
     switch (mode) {
       case "EXACT":
-        return `"${query}"`;
+        // Don't add quotes here, let user input them
+        return query;
       case "NOT":
-        return query; // User adds minus signs manually
+        return query;
       case "AND":
         return query.split(" ").filter(Boolean).map(term => `+${term}`).join(" ");
       case "OR":

@@ -8,8 +8,8 @@ export const searchJobs = async (query: string, mode: "OR" | "AND" | "NOT" | "EX
     const response = await fetch(`${API_URL}?q=${encodeURIComponent(query)}`, {
       headers: {
         'accept': 'application/json',
-        'x-feature-freetext-bool-method': mode === "AND" ? 'and' : 'or',
-        'x-feature-disable-smart-freetext': mode === "EXACT" ? 'true' : 'false',
+        'x-feature-freetext-bool-method': mode === "AND" || mode === "EXACT" ? 'and' : 'or',
+        'x-feature-disable-smart-freetext': 'false',
         'x-feature-enable-false-negative': 'true'
       }
     });
