@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +11,7 @@ import { searchJobs } from "@/services/jobService";
 import type { JobListing } from "@/types/job";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useSavedJobs } from "@/hooks/useSavedJobs";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Select,
   SelectContent,
@@ -32,6 +34,8 @@ const Search = () => {
   const [searchMode, setSearchMode] = useState<SearchMode>("OR");
   const [isLoading, setIsLoading] = useState(false);
   const [jobs, setJobs] = useState<JobListing[]>([]);
+  const [isProcessingCV, setIsProcessingCV] = useState(false);
+  const [extractedSkills, setExtractedSkills] = useState<string[]>([]);
   const {
     toast
   } = useToast();
@@ -81,23 +85,51 @@ const Search = () => {
     fetchJobs();
   }, [debouncedSearchQuery, searchMode, toast]);
 
-  if (!user) return null;
-
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file && file.type === "application/pdf") {
-      toast({
-        title: "Coming soon!",
-        description: "CV upload and automatic job matching will be implemented with Supabase integration."
-      });
-    } else {
+    if (!file) return;
+
+    if (file.type !== "application/pdf") {
       toast({
         title: "Invalid file",
         description: "Please upload a PDF file",
         variant: "destructive"
       });
+      return;
+    }
+
+    setIsProcessingCV(true);
+    const formData = new FormData();
+    formData.append('cv', file);
+
+    try {
+      const { data: { data: functionData }, error: functionError } = await supabase.functions.invoke('process-cv', {
+        body: formData,
+      });
+
+      if (functionError) throw functionError;
+
+      const { skills, jobs: matchedJobs } = functionData;
+      setExtractedSkills(skills);
+      setJobs(matchedJobs);
+      
+      toast({
+        title: "CV Processed Successfully",
+        description: `Found ${matchedJobs.length} matching jobs based on your skills!`,
+      });
+    } catch (error) {
+      console.error("CV processing error:", error);
+      toast({
+        title: "Error",
+        description: "Failed to process your CV. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsProcessingCV(false);
     }
   };
+
+  if (!user) return null;
 
   return (
     <div className="min-h-screen bg-secondary p-4 md:p-8">
@@ -126,7 +158,13 @@ const Search = () => {
             <div className="flex-1 space-y-2">
               <div className="relative">
                 <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                <Input type="text" placeholder="Search jobs by title, company, or keywords..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-10 w-full" />
+                <Input 
+                  type="text" 
+                  placeholder="Search jobs by title, company, or keywords..." 
+                  value={searchQuery} 
+                  onChange={e => setSearchQuery(e.target.value)} 
+                  className="pl-10 w-full" 
+                />
               </div>
             </div>
             <div className="flex gap-2 items-start">
@@ -149,19 +187,56 @@ const Search = () => {
                   </>}
               </Button>
               <div className="relative">
-                <input type="file" accept=".pdf" onChange={handleFileUpload} className="hidden" id="cv-upload" />
+                <input 
+                  type="file" 
+                  accept=".pdf" 
+                  onChange={handleFileUpload} 
+                  className="hidden" 
+                  id="cv-upload" 
+                  disabled={isProcessingCV}
+                />
                 <label htmlFor="cv-upload">
-                  <Button type="button" variant="outline" className="border-2 border-primary text-primary hover:bg-accent">
-                    <Upload className="w-4 h-4 mr-2" />
-                    Upload CV
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    className="border-2 border-primary text-primary hover:bg-accent"
+                    disabled={isProcessingCV}
+                  >
+                    {isProcessingCV ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Processing...
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="w-4 h-4 mr-2" />
+                        Upload CV
+                      </>
+                    )}
                   </Button>
                 </label>
               </div>
             </div>
           </div>
 
+          {extractedSkills.length > 0 && (
+            <div className="bg-white p-4 rounded-lg shadow-sm">
+              <h3 className="text-sm font-medium text-gray-700 mb-2">Skills Extracted from CV:</h3>
+              <div className="flex flex-wrap gap-2">
+                {extractedSkills.map((skill, index) => (
+                  <span
+                    key={index}
+                    className="inline-block bg-accent text-primary text-sm px-3 py-1 rounded-full"
+                  >
+                    {skill}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="grid gap-4">
-            {isLoading ? (
+            {isLoading || isProcessingCV ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="w-8 h-8 animate-spin text-primary" />
               </div>
