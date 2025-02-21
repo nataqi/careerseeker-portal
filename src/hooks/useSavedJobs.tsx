@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from "@/lib/auth";
 import type { SavedJob } from "@/types/saved-job";
 import type { JobListing } from "@/types/job";
 
@@ -9,13 +10,20 @@ export const useSavedJobs = () => {
   const [savedJobs, setSavedJobs] = useState<SavedJob[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   useEffect(() => {
-    fetchSavedJobs();
-    subscribeToSavedJobs();
-  }, []);
+    if (user) {
+      fetchSavedJobs();
+      subscribeToSavedJobs();
+    } else {
+      setSavedJobs([]);
+    }
+  }, [user]);
 
   const fetchSavedJobs = async () => {
+    if (!user) return;
+
     try {
       const { data, error } = await supabase
         .from('saved_jobs')
@@ -37,6 +45,8 @@ export const useSavedJobs = () => {
   };
 
   const subscribeToSavedJobs = () => {
+    if (!user) return;
+
     const channel = supabase
       .channel('saved_jobs_changes')
       .on(
@@ -55,6 +65,15 @@ export const useSavedJobs = () => {
   };
 
   const toggleSaveJob = async (job: JobListing) => {
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to save jobs",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const existingSave = savedJobs.find(saved => saved.job_id === job.id);
 
     if (existingSave) {
@@ -83,6 +102,7 @@ export const useSavedJobs = () => {
         const { error } = await supabase
           .from('saved_jobs')
           .insert({
+            user_id: user.id,
             job_id: job.id,
             headline: job.headline,
             employer_name: job.employer.name,
