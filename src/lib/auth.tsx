@@ -1,7 +1,7 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import type { User } from "@supabase/supabase-js";
+import type { User, AuthResponse } from "@supabase/supabase-js";
 import { useNavigate } from "react-router-dom";
 
 interface AuthState {
@@ -10,7 +10,7 @@ interface AuthState {
 }
 
 interface AuthContextType extends AuthState {
-  signUp: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string) => Promise<AuthResponse>;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
@@ -46,21 +46,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string) => {
-    const { error, data } = await supabase.auth.signUp({
+  const signUp = async (email: string, password: string): Promise<AuthResponse> => {
+    const response = await supabase.auth.signUp({
       email,
       password,
       options: {
-        emailRedirectTo: window.location.origin + '/auth'
+        emailRedirectTo: `${window.location.origin}/auth`,
+        data: {
+          full_name: "",
+          avatar_url: "",
+        }
       }
     });
     
-    if (error) {
-      console.error("Signup error:", error);
-      throw error;
+    if (response.error) {
+      console.error("Signup error:", response.error);
+      throw response.error;
     }
     
-    return data;
+    return response;
   };
 
   const signIn = async (email: string, password: string) => {

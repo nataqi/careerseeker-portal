@@ -35,17 +35,19 @@ const Auth = () => {
           description: "You have successfully signed in.",
         });
       } else {
-        const result = await signUp(email, password);
-        console.log("Signup result:", result); // Add logging to help debug
+        const { data, error } = await signUp(email, password);
+        console.log("Signup response:", { data, error }); // Detailed logging
+        
+        if (error) throw error;
+        
         toast({
           title: "Account created!",
           description: "Please check your email to confirm your registration.",
         });
-        // Switch to login view after successful registration
         setIsLogin(true);
       }
     } catch (error) {
-      console.error("Auth error:", error); // Add logging to help debug
+      console.error("Auth error:", error);
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "An error occurred during authentication",
@@ -99,7 +101,7 @@ const Auth = () => {
 
             <Button
               type="submit"
-              className="w-full bg-primary hover:bg-primary-hover text-white"
+              className="w-full"
               disabled={isLoading}
             >
               {isLoading ? "Processing..." : isLogin ? "Sign In" : "Create Account"}
