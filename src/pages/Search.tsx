@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { Search as SearchIcon, Upload, BriefcaseIcon, LogOut, Loader2, Info, Star, BookmarkIcon } from "lucide-react";
+import { Search as SearchIcon, Upload, BriefcaseIcon, LogIn, Loader2, Info, Star, BookmarkIcon } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/lib/auth";
 import { useNavigate } from "react-router-dom";
@@ -32,29 +32,11 @@ const Search = () => {
   const [searchMode, setSearchMode] = useState<SearchMode>("OR");
   const [isLoading, setIsLoading] = useState(false);
   const [jobs, setJobs] = useState<JobListing[]>([]);
-  const {
-    toast
-  } = useToast();
-  const {
-    user,
-    signOut
-  } = useAuth();
+  const { toast } = useToast();
+  const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
   const { toggleSaveJob, isJobSaved } = useSavedJobs();
-
-  useEffect(() => {
-    if (!user) {
-      navigate("/auth");
-    }
-  }, [user, navigate]);
-
-  const formatSearchQuery = (query: string, mode: SearchMode): string => {
-    if (mode === "AND") {
-      return query.split(" ").filter(Boolean).map(term => `+${term}`).join(" ");
-    }
-    return query;
-  };
 
   useEffect(() => {
     const fetchJobs = async () => {
@@ -81,7 +63,12 @@ const Search = () => {
     fetchJobs();
   }, [debouncedSearchQuery, searchMode, toast]);
 
-  if (!user) return null;
+  const formatSearchQuery = (query: string, mode: SearchMode): string => {
+    if (mode === "AND") {
+      return query.split(" ").filter(Boolean).map(term => `+${term}`).join(" ");
+    }
+    return query;
+  };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -103,22 +90,35 @@ const Search = () => {
     <div className="min-h-screen bg-secondary p-4 md:p-8">
       <div className="container mx-auto max-w-6xl">
         <div className="flex justify-between mb-4">
-          <Button
-            variant="ghost"
-            onClick={() => navigate("/saved-jobs")}
-            className="text-gray-600 hover:text-gray-900"
-          >
-            <BookmarkIcon className="w-4 h-4 mr-2" />
-            Saved Jobs
-          </Button>
-          <Button
-            variant="ghost"
-            onClick={signOut}
-            className="text-gray-600 hover:text-gray-900"
-          >
-            <LogOut className="w-4 h-4 mr-2" />
-            Sign Out
-          </Button>
+          {user ? (
+            <>
+              <Button
+                variant="ghost"
+                onClick={() => navigate("/saved-jobs")}
+                className="text-gray-600 hover:text-gray-900"
+              >
+                <BookmarkIcon className="w-4 h-4 mr-2" />
+                Saved Jobs
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={signOut}
+                className="text-gray-600 hover:text-gray-900"
+              >
+                <LogOut className="w-4 h-4 mr-2" />
+                Sign Out
+              </Button>
+            </>
+          ) : (
+            <Button
+              variant="ghost"
+              onClick={() => navigate("/auth")}
+              className="text-gray-600 hover:text-gray-900 ml-auto"
+            >
+              <LogIn className="w-4 h-4 mr-2" />
+              Sign In
+            </Button>
+          )}
         </div>
 
         <div className="space-y-6">
@@ -179,55 +179,65 @@ const Search = () => {
                     variant="ghost"
                     size="icon"
                     className="absolute top-4 right-4 hover:bg-transparent"
-                    onClick={() => toggleSaveJob(job)}
+                    onClick={() => {
+                      if (!user) {
+                        navigate("/auth");
+                        toast({
+                          title: "Sign in required",
+                          description: "Please sign in to save jobs",
+                          variant: "default",
+                        });
+                        return;
+                      }
+                      toggleSaveJob(job);
+                    }}
                   >
                     <Star
                       className={`w-5 h-5 ${
                         isJobSaved(job.id)
                           ? "text-pink-500 fill-pink-500"
                           : "text-gray-400 hover:text-pink-500"
-                      }`}
-                    />
-                  </Button>
-                  <div className="flex items-start pr-12">
-                    <div className="space-y-2">
-                      <h3 className="text-xl font-semibold text-gray-900">{job.headline}</h3>
-                      <div className="flex items-center gap-2 text-gray-600">
-                        <BriefcaseIcon className="w-4 h-4" />
-                        <span>{job.employer?.name}</span>
-                        {job.workplace?.city && (
-                          <>
-                            <span>•</span>
-                            <span>{job.workplace.city}</span>
-                          </>
-                        )}
-                      </div>
-                      <div className="flex gap-2">
-                        {job.working_hours_type?.label && (
-                          <span className="inline-block bg-accent text-primary text-sm px-3 py-1 rounded-full">
-                            {job.working_hours_type.label}
-                          </span>
-                        )}
-                        {job.salary_type?.label && (
-                          <span className="inline-block bg-secondary text-gray-600 text-sm px-3 py-1 rounded-full">
-                            {job.salary_type.label}
-                          </span>
-                        )}
-                      </div>
+                    }`}
+                  />
+                </Button>
+                <div className="flex items-start pr-12">
+                  <div className="space-y-2">
+                    <h3 className="text-xl font-semibold text-gray-900">{job.headline}</h3>
+                    <div className="flex items-center gap-2 text-gray-600">
+                      <BriefcaseIcon className="w-4 h-4" />
+                      <span>{job.employer?.name}</span>
+                      {job.workplace?.city && (
+                        <>
+                          <span>•</span>
+                          <span>{job.workplace.city}</span>
+                        </>
+                      )}
                     </div>
-                    <Button
-                      onClick={() => {
-                        window.open(`${AF_BASE_URL}/${job.id}`, '_blank');
-                      }}
-                      className="ml-auto bg-primary hover:bg-primary-hover text-white"
-                    >
-                      Apply Now
-                    </Button>
+                    <div className="flex gap-2">
+                      {job.working_hours_type?.label && (
+                        <span className="inline-block bg-accent text-primary text-sm px-3 py-1 rounded-full">
+                          {job.working_hours_type.label}
+                        </span>
+                      )}
+                      {job.salary_type?.label && (
+                        <span className="inline-block bg-secondary text-gray-600 text-sm px-3 py-1 rounded-full">
+                          {job.salary_type.label}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                </Card>
-              ))
-            )}
-          </div>
+                  <Button
+                    onClick={() => {
+                      window.open(`${AF_BASE_URL}/${job.id}`, '_blank');
+                    }}
+                    className="ml-auto bg-primary hover:bg-primary-hover text-white"
+                  >
+                    Apply Now
+                  </Button>
+                </div>
+              </Card>
+            ))
+          )}
         </div>
       </div>
     </div>
