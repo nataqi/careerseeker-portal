@@ -3,7 +3,7 @@ import { JobSearchResponse } from "@/types/job";
 
 const API_URL = "https://jobsearch.api.jobtechdev.se/search";
 
-export const searchJobs = async (query: string, mode: "OR" | "AND" | "NOT"): Promise<JobSearchResponse> => {
+export const searchJobs = async (query: string, mode: "OR" | "AND"): Promise<JobSearchResponse> => {
   try {
     const response = await fetch(`${API_URL}?q=${encodeURIComponent(query)}`, {
       headers: {

@@ -20,12 +20,11 @@ import {
 
 const AF_BASE_URL = "https://arbetsformedlingen.se/platsbanken/annonser";
 
-type SearchMode = "OR" | "AND" | "NOT";
+type SearchMode = "OR" | "AND";
 
 const searchModeHelp = {
   OR: "Find jobs containing any of the words (e.g., 'developer designer')",
   AND: "Find jobs containing all words (e.g., 'frontend react')",
-  NOT: "Exclude jobs with specific words (e.g., 'developer -junior -intern')",
 };
 
 const Search = () => {
@@ -45,15 +44,10 @@ const Search = () => {
   }, [user, navigate]);
 
   const formatSearchQuery = (query: string, mode: SearchMode): string => {
-    switch (mode) {
-      case "NOT":
-        return query; // User adds minus signs manually
-      case "AND":
-        return query.split(" ").filter(Boolean).map(term => `+${term}`).join(" ");
-      case "OR":
-      default:
-        return query;
+    if (mode === "AND") {
+      return query.split(" ").filter(Boolean).map(term => `+${term}`).join(" ");
     }
+    return query;
   };
 
   useEffect(() => {
@@ -144,7 +138,6 @@ const Search = () => {
                 <SelectContent>
                   <SelectItem value="OR">Any words (OR)</SelectItem>
                   <SelectItem value="AND">All words (AND)</SelectItem>
-                  <SelectItem value="NOT">Exclude words (NOT)</SelectItem>
                 </SelectContent>
               </Select>
               <Button 
