@@ -156,14 +156,20 @@ const Search = () => {
                       <h3 className="text-xl font-semibold text-gray-900">{job.headline}</h3>
                       <div className="flex items-center gap-2 text-gray-600">
                         <BriefcaseIcon className="w-4 h-4" />
-                        <span>{job.employer.name}</span>
-                        <span>•</span>
-                        <span>{job.workplace.city}</span>
+                        <span>{job.employer?.name}</span>
+                        {job.workplace?.city && (
+                          <>
+                            <span>•</span>
+                            <span>{job.workplace.city}</span>
+                          </>
+                        )}
                       </div>
                       <div className="flex gap-2">
-                        <span className="inline-block bg-accent text-primary text-sm px-3 py-1 rounded-full">
-                          {job.working_hours_type.label}
-                        </span>
+                        {job.working_hours_type?.label && (
+                          <span className="inline-block bg-accent text-primary text-sm px-3 py-1 rounded-full">
+                            {job.working_hours_type.label}
+                          </span>
+                        )}
                         {job.salary_type?.label && (
                           <span className="inline-block bg-secondary text-gray-600 text-sm px-3 py-1 rounded-full">
                             {job.salary_type.label}
@@ -173,7 +179,7 @@ const Search = () => {
                     </div>
                     <Button
                       onClick={() => {
-                        if (job.application.url) {
+                        if (job.application?.url) {
                           window.open(job.application.url, '_blank');
                         } else {
                           toast({
