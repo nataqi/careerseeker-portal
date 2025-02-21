@@ -172,68 +172,78 @@ const Search = () => {
         </div>
 
         <div className="space-y-6">
-          <div className="flex flex-col md:flex-row gap-4 items-stretch md:items-center">
-            <div className="flex-1 space-y-2">
-              <div className="relative">
-                <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                <Input 
-                  type="text" 
-                  placeholder="Search jobs by title, company, or keywords..." 
-                  value={searchQuery} 
-                  onChange={e => setSearchQuery(e.target.value)} 
-                  className="pl-10 w-full" 
-                />
+          {/* Search Section */}
+          <div className="bg-white p-6 rounded-lg shadow-sm">
+            <div className="flex flex-col md:flex-row gap-4 items-center">
+              <div className="flex-1 w-full">
+                <div className="relative">
+                  <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                  <Input 
+                    type="text" 
+                    placeholder="Search jobs by title, company, or keywords..." 
+                    value={searchQuery} 
+                    onChange={e => setSearchQuery(e.target.value)} 
+                    className="pl-10 w-full" 
+                  />
+                </div>
+              </div>
+              <div className="flex gap-2 w-full md:w-auto">
+                <Select value={searchMode} onValueChange={value => setSearchMode(value as SearchMode)}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Search mode" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="OR">Any words (OR)</SelectItem>
+                    <SelectItem value="AND">All words (AND)</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button className="bg-primary hover:bg-primary-hover text-white" disabled={isLoading}>
+                  {isLoading ? <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Searching...
+                    </> : <>
+                      <SearchIcon className="w-4 h-4 mr-2" />
+                      Search
+                    </>}
+                </Button>
               </div>
             </div>
-            <div className="flex gap-2 items-start">
-              <Select value={searchMode} onValueChange={value => setSearchMode(value as SearchMode)}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Search mode" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="OR">Any words (OR)</SelectItem>
-                  <SelectItem value="AND">All words (AND)</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button className="bg-primary hover:bg-primary-hover text-white" disabled={isLoading}>
-                {isLoading ? <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Searching...
-                  </> : <>
-                    <SearchIcon className="w-4 h-4 mr-2" />
-                    Search
-                  </>}
-              </Button>
-              <div className="relative">
-                <input 
-                  type="file" 
-                  accept=".pdf" 
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) handleFileUpload(file);
-                  }} 
-                  className="hidden" 
-                  id="cv-upload" 
-                  disabled={isProcessingCV}
-                />
-                <div
-                  onDrop={handleDrop}
-                  onDragOver={handleDragOver}
-                  onDragLeave={handleDragLeave}
-                  className={`relative border-2 ${
-                    isDragging ? 'border-primary bg-primary/10' : 'border-dashed border-gray-300'
-                  } rounded-lg p-6 transition-all cursor-pointer hover:border-primary/50`}
-                  onClick={() => document.getElementById('cv-upload')?.click()}
-                >
-                  {isProcessingCV ? (
-                    <div className="flex flex-col items-center justify-center space-y-2">
-                      <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                      <p className="text-sm text-gray-600">Processing CV...</p>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center space-y-2">
-                      <Upload className="w-8 h-8 text-gray-400" />
-                      <p className="text-sm text-center text-gray-600">
+          </div>
+
+          {/* CV Upload Section */}
+          <div className="bg-white p-6 rounded-lg shadow-sm">
+            <h2 className="text-lg font-semibold mb-4 text-gray-900">Upload Your CV</h2>
+            <div className="max-w-2xl mx-auto">
+              <input 
+                type="file" 
+                accept=".pdf" 
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleFileUpload(file);
+                }} 
+                className="hidden" 
+                id="cv-upload" 
+                disabled={isProcessingCV}
+              />
+              <div
+                onDrop={handleDrop}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                className={`relative border-2 ${
+                  isDragging ? 'border-primary bg-primary/10' : 'border-dashed border-gray-300'
+                } rounded-lg p-8 transition-all cursor-pointer hover:border-primary/50`}
+                onClick={() => document.getElementById('cv-upload')?.click()}
+              >
+                {isProcessingCV ? (
+                  <div className="flex flex-col items-center justify-center space-y-2">
+                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                    <p className="text-sm text-gray-600">Processing CV...</p>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center space-y-3">
+                    <Upload className="w-12 h-12 text-gray-400" />
+                    <div className="text-center">
+                      <p className="text-sm font-medium text-gray-700">
                         {isDragging ? (
                           "Drop your CV here"
                         ) : (
@@ -244,17 +254,18 @@ const Search = () => {
                           </>
                         )}
                       </p>
-                      <p className="text-xs text-gray-400">PDF files only</p>
+                      <p className="text-xs text-gray-500 mt-1">PDF files only</p>
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
 
+          {/* Skills Section */}
           {extractedSkills.length > 0 && (
-            <div className="bg-white p-4 rounded-lg shadow-sm">
-              <h3 className="text-sm font-medium text-gray-700 mb-2">Skills Extracted from CV:</h3>
+            <div className="bg-white p-6 rounded-lg shadow-sm">
+              <h3 className="text-sm font-medium text-gray-700 mb-3">Skills Extracted from CV:</h3>
               <div className="flex flex-wrap gap-2">
                 {extractedSkills.map((skill, index) => (
                   <span
@@ -268,6 +279,7 @@ const Search = () => {
             </div>
           )}
 
+          {/* Jobs Section */}
           <div className="grid gap-4">
             {isLoading || isProcessingCV ? (
               <div className="flex items-center justify-center py-8">
