@@ -24,11 +24,11 @@ export const parseSearchQuery = (query: string): ParsedQuery => {
   // Process remaining terms
   remainingQuery.split(/\s+/).filter(Boolean).forEach(term => {
     if (term.startsWith('+')) {
-      result.andTerms.push(term.slice(1));
+      result.andTerms.push(term.slice(1).toLowerCase());
     } else if (term.startsWith('-')) {
-      result.notTerms.push(term.slice(1));
+      result.notTerms.push(term.slice(1).toLowerCase());
     } else {
-      result.orTerms.push(term);
+      result.orTerms.push(term.toLowerCase());
     }
   });
 
@@ -41,17 +41,17 @@ export const buildSearchQuery = (parsed: ParsedQuery): string => {
   // Add phrases in quotes
   parts.push(...parsed.phrases.map(phrase => `"${phrase}"`));
 
-  // Add AND terms
+  // Add AND terms with + prefix
   if (parsed.andTerms.length > 0) {
-    parts.push(parsed.andTerms.join(' AND '));
+    parts.push(...parsed.andTerms.map(term => `+${term}`));
   }
 
-  // Add OR terms
+  // Add OR terms (no special prefix)
   if (parsed.orTerms.length > 0) {
-    parts.push(parsed.orTerms.join(' OR '));
+    parts.push(...parsed.orTerms);
   }
 
-  // Add NOT terms
+  // Add NOT terms with - prefix
   parts.push(...parsed.notTerms.map(term => `-${term}`));
 
   return parts.join(' ');
