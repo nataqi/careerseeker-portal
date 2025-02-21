@@ -1,1 +1,3 @@
-project_id = "bermzimdfevdpjcnxmkv"
+
+[functions.process-cv]
+verify_jwt = true
