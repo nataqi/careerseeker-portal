@@ -5,7 +5,14 @@ const API_URL = "https://jobsearch.api.jobtechdev.se/search";
 
 export const searchJobs = async (query: string): Promise<JobSearchResponse> => {
   try {
-    const response = await fetch(`${API_URL}?q=${encodeURIComponent(query)}`);
+    const response = await fetch(`${API_URL}?q=${encodeURIComponent(query)}`, {
+      headers: {
+        'accept': 'application/json',
+        'x-feature-freetext-bool-method': 'or',
+        'x-feature-disable-smart-freetext': 'false',
+        'x-feature-enable-false-negative': 'true'
+      }
+    });
     
     if (!response.ok) {
       throw new Error(`API error: ${response.status}`);
