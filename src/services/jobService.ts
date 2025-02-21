@@ -1,7 +1,7 @@
 
 import { JobSearchResponse } from "@/types/job";
 
-const API_URL = "https://links.api.jobtechdev.se/joblinks/search";
+const API_URL = "https://jobsearch.api.jobtechdev.se/search"; 
 
 export const searchJobs = async (query: string): Promise<JobSearchResponse> => {
   try {
