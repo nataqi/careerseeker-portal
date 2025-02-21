@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +11,8 @@ import type { JobListing } from "@/types/job";
 import { useDebounce } from "@/hooks/useDebounce";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { parseSearchQuery, buildSearchQuery } from "@/utils/searchParser";
+
+const AF_BASE_URL = "https://arbetsformedlingen.se/platsbanken/annonser/";
 
 const Search = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -72,6 +73,11 @@ const Search = () => {
         variant: "destructive",
       });
     }
+  };
+
+  const handleApply = (job: JobListing) => {
+    const applicationUrl = `${AF_BASE_URL}${job.id}`;
+    window.open(applicationUrl, '_blank', 'noopener,noreferrer');
   };
 
   return (
@@ -213,19 +219,7 @@ const Search = () => {
                       </div>
                     </div>
                     <Button
-                      onClick={() => {
-                        if (job.application_details?.url) {
-                          window.open(job.application_details.url, '_blank');
-                        } else if (job.application_details?.email) {
-                          window.location.href = `mailto:${job.application_details.email}`;
-                        } else {
-                          toast({
-                            title: "Application unavailable",
-                            description: "The application details for this job are not available.",
-                            variant: "destructive",
-                          });
-                        }
-                      }}
+                      onClick={() => handleApply(job)}
                       className="bg-primary hover:bg-primary-hover text-white"
                     >
                       Apply Now
