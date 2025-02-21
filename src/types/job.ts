@@ -8,8 +8,10 @@ export interface JobListing {
   description: {
     text: string;
   };
-  application: {
+  application_details: {
     url: string;
+    email?: string;
+    other?: string;
   };
   workplace: {
     city: string;

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,7 +19,6 @@ const Search = () => {
   const navigate = useNavigate();
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
   
-  // Protect this route
   useEffect(() => {
     if (!user) {
       navigate("/auth");
@@ -179,12 +177,14 @@ const Search = () => {
                     </div>
                     <Button
                       onClick={() => {
-                        if (job.application?.url) {
-                          window.open(job.application.url, '_blank');
+                        if (job.application_details?.url) {
+                          window.open(job.application_details.url, '_blank');
+                        } else if (job.application_details?.email) {
+                          window.location.href = `mailto:${job.application_details.email}`;
                         } else {
                           toast({
                             title: "Application unavailable",
-                            description: "The application link for this job is not available.",
+                            description: "The application details for this job are not available.",
                             variant: "destructive",
                           });
                         }
