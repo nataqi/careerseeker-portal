@@ -11,11 +11,6 @@ const corsHeaders = {
 
 const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 
-interface SkillCategories {
-  compound_skills: string[];
-  single_skills: string[];
-}
-
 async function extractTextFromPDF(pdfBuffer: ArrayBuffer): Promise<string> {
   try {
     const buffer = Buffer.from(pdfBuffer);
@@ -43,18 +38,8 @@ async function extractTextFromPDF(pdfBuffer: ArrayBuffer): Promise<string> {
   }
 }
 
-function buildSearchQuery(skills: SkillCategories): string {
-  const compoundQueries = skills.compound_skills.map(skill => 
-    `(${skill.split(' ').map(word => `+${word}`).join(' ')})`
-  );
-  
-  const singleQueries = skills.single_skills.map(skill => `+${skill}`);
-  
-  // Combine all queries with OR operator
-  return [...compoundQueries, ...singleQueries].join(' ');
-}
-
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -75,7 +60,10 @@ serve(async (req) => {
       throw new Error('File must be a PDF');
     }
 
+    // Convert the File to ArrayBuffer
     const pdfBuffer = await file.arrayBuffer();
+    
+    // Extract text from PDF
     console.log('Starting PDF text extraction...');
     const pdfText = await extractTextFromPDF(pdfBuffer);
     console.log('PDF text extracted, length:', pdfText.length);
@@ -84,6 +72,7 @@ serve(async (req) => {
       throw new Error('No text could be extracted from the PDF');
     }
 
+    // Process with OpenAI to extract skills
     console.log('Sending text to OpenAI for analysis...');
     const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -96,22 +85,10 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `You are a skilled CV analyzer. Extract and categorize technical skills, tools, programming languages, and professional competencies from the CV into two categories:
-
-1. Compound Skills: Multi-word technical terms and skills (e.g., "Machine Learning", "React Native", "Project Management")
-2. Single Skills: Single-word skills, tools, and technologies (e.g., "JavaScript", "Python", "Git")
-
-Format the output as a JSON object with two arrays:
-{
-  "compound_skills": ["Machine Learning", "React Native", "Project Management"],
-  "single_skills": ["JavaScript", "Python", "Git"]
-}
-
-Keep the skills relevant and avoid generic terms. Be precise in categorization:
-- Compound skills must be actual multi-word technical terms, not just any multiple words
-- Single skills should be standalone technologies or tools
-- Remove any generic or non-technical terms
-- Preserve the exact skill names as they appear in the CV`
+            content: `You are a skilled CV analyzer. Extract technical skills, tools, programming languages, and relevant professional competencies from the CV.
+            Format the output as a comma-separated list of skills only.
+            Example: "JavaScript, React, Node.js, Project Management"
+            Keep the skills relevant and avoid generic terms.`
           },
           {
             role: 'user',
@@ -135,18 +112,18 @@ Keep the skills relevant and avoid generic terms. Be precise in categorization:
       throw new Error('Invalid response from OpenAI');
     }
 
-    const skills: SkillCategories = JSON.parse(openAIData.choices[0].message.content);
-    console.log('Skills extracted successfully:', skills);
+    const extractedSkills = openAIData.choices[0].message.content;
+    console.log('Skills extracted successfully:', extractedSkills);
 
-    // Build optimized search query
-    const searchQuery = buildSearchQuery(skills);
-    console.log('Built search query:', searchQuery);
+    // Convert skills to search query
+    const searchQuery = extractedSkills.replace(/,/g, ' OR ');
 
-    // Search for jobs using the optimized query
+    // Search for jobs using the extracted skills
+    console.log('Searching for matching jobs...');
     const jobResponse = await fetch(`https://jobsearch.api.jobtechdev.se/search?q=${encodeURIComponent(searchQuery)}`, {
       headers: {
         'accept': 'application/json',
-        'x-feature-freetext-bool-method': 'and',
+        'x-feature-freetext-bool-method': 'or',
         'x-feature-disable-smart-freetext': 'false',
         'x-feature-enable-false-negative': 'true'
       }
@@ -161,15 +138,11 @@ Keep the skills relevant and avoid generic terms. Be precise in categorization:
     const jobData = await jobResponse.json();
     console.log(`Found ${jobData.hits?.length || 0} matching jobs`);
 
-    // Combine all skills for the response
-    const allSkills = [...skills.compound_skills, ...skills.single_skills];
-
     return new Response(
       JSON.stringify({
         data: {
-          skills: allSkills,
-          categorizedSkills: skills,
-          jobs: jobData.hits?.slice(0, 10) || [],
+          skills: extractedSkills.split(',').map((skill: string) => skill.trim()),
+          jobs: jobData.hits?.slice(0, 10) || [], // Return top 10 matching jobs
           totalJobs: jobData.total?.value || 0
         }
       }),
@@ -191,4 +164,3 @@ Keep the skills relevant and avoid generic terms. Be precise in categorization:
     );
   }
 });
-
