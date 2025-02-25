@@ -160,11 +160,22 @@ export const useSavedJobs = () => {
     const [removed] = newJobs.splice(startIndex, 1);
     newJobs.splice(endIndex, 0, removed);
 
-    // Update display order for all affected jobs
+    // Update display order while preserving all required fields
     try {
       const updates = newJobs.map((job, index) => ({
         id: job.id,
         display_order: index,
+        // Include all required fields from the original job
+        employer_name: job.employer_name,
+        headline: job.headline,
+        job_id: job.job_id,
+        user_id: job.user_id,
+        // Include optional fields if they exist
+        workplace_city: job.workplace_city,
+        response_status: job.response_status,
+        application_date: job.application_date,
+        interview_date: job.interview_date,
+        notes: job.notes
       }));
 
       const { error } = await supabase
