@@ -38,29 +38,50 @@ export type Database = {
       }
       saved_jobs: {
         Row: {
+          application_date: string | null
           created_at: string
+          display_order: number | null
           employer_name: string
           headline: string
           id: string
+          interview_date: string | null
           job_id: string
+          notes: string | null
+          response_status:
+            | Database["public"]["Enums"]["application_status"]
+            | null
           user_id: string
           workplace_city: string | null
         }
         Insert: {
+          application_date?: string | null
           created_at?: string
+          display_order?: number | null
           employer_name: string
           headline: string
           id?: string
+          interview_date?: string | null
           job_id: string
+          notes?: string | null
+          response_status?:
+            | Database["public"]["Enums"]["application_status"]
+            | null
           user_id: string
           workplace_city?: string | null
         }
         Update: {
+          application_date?: string | null
           created_at?: string
+          display_order?: number | null
           employer_name?: string
           headline?: string
           id?: string
+          interview_date?: string | null
           job_id?: string
+          notes?: string | null
+          response_status?:
+            | Database["public"]["Enums"]["application_status"]
+            | null
           user_id?: string
           workplace_city?: string | null
         }
@@ -74,6 +95,15 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
+      application_status:
+        | "Not Applied"
+        | "Applied"
+        | "No Response"
+        | "Rejected"
+        | "Interview Scheduled"
+        | "Offer Received"
+        | "Offer Accepted"
+        | "Offer Declined"
       cv_match_status: "pending" | "processing" | "completed" | "failed"
     }
     CompositeTypes: {

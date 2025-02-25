@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/lib/auth";
-import type { SavedJob } from "@/types/saved-job";
+import type { SavedJob, ApplicationStatus } from "@/types/saved-job";
 import type { JobListing } from "@/types/job";
 
 export const useSavedJobs = () => {
@@ -28,7 +28,7 @@ export const useSavedJobs = () => {
       const { data, error } = await supabase
         .from('saved_jobs')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('display_order', { ascending: true });
 
       if (error) throw error;
       setSavedJobs(data);
@@ -107,6 +107,8 @@ export const useSavedJobs = () => {
             headline: job.headline,
             employer_name: job.employer.name,
             workplace_city: job.workplace?.city || null,
+            response_status: 'Not Applied',
+            display_order: savedJobs.length,
           });
 
         if (error) throw error;
@@ -126,6 +128,68 @@ export const useSavedJobs = () => {
     }
   };
 
+  const updateJobApplication = async (
+    jobId: string,
+    updates: Partial<SavedJob>
+  ) => {
+    try {
+      const { error } = await supabase
+        .from('saved_jobs')
+        .update(updates)
+        .eq('id', jobId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Updated",
+        description: "Job application updated successfully",
+      });
+    } catch (error) {
+      console.error('Error updating job application:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update job application",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const reorderJobs = async (startIndex: number, endIndex: number) => {
+    const newJobs = Array.from(savedJobs);
+    const [removed] = newJobs.splice(startIndex, 1);
+    newJobs.splice(endIndex, 0, removed);
+
+    // Update display_order for affected jobs
+    const updates = newJobs.map((job, index) => ({
+      id: job.id,
+      display_order: index,
+    }));
+
+    try {
+      // Optimistically update the UI
+      setSavedJobs(newJobs);
+
+      // Update the database
+      const { error } = await supabase
+        .from('saved_jobs')
+        .upsert(updates.map(update => ({
+          id: update.id,
+          display_order: update.display_order,
+        })));
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error reordering jobs:', error);
+      // Revert optimistic update on error
+      fetchSavedJobs();
+      toast({
+        title: "Error",
+        description: "Failed to reorder jobs",
+        variant: "destructive",
+      });
+    }
+  };
+
   const isJobSaved = (jobId: string) => {
     return savedJobs.some(saved => saved.job_id === jobId);
   };
@@ -135,5 +199,8 @@ export const useSavedJobs = () => {
     isLoading,
     toggleSaveJob,
     isJobSaved,
+    updateJobApplication,
+    reorderJobs,
   };
 };
+
