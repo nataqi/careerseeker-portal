@@ -160,22 +160,19 @@ export const useSavedJobs = () => {
     newJobs.splice(endIndex, 0, removed);
 
     // Update display_order for affected jobs
-    const updates = newJobs.map((job, index) => ({
-      id: job.id,
-      display_order: index,
+    const updates = newJobs.map((job) => ({
+      ...job, // Keep all existing fields
+      display_order: newJobs.indexOf(job), // Update only the display_order
     }));
 
     try {
       // Optimistically update the UI
       setSavedJobs(newJobs);
 
-      // Update the database
+      // Update the database with all required fields
       const { error } = await supabase
         .from('saved_jobs')
-        .upsert(updates.map(update => ({
-          id: update.id,
-          display_order: update.display_order,
-        })));
+        .upsert(updates);
 
       if (error) throw error;
     } catch (error) {
@@ -203,4 +200,3 @@ export const useSavedJobs = () => {
     reorderJobs,
   };
 };
-
