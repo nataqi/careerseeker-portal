@@ -1,10 +1,9 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { BriefcaseIcon, ArrowLeft, Home, Loader2, Star } from "lucide-react";
+import { BriefcaseIcon, ArrowLeft, Home, Loader2, ArrowRight } from "lucide-react";
 import { useSavedJobs } from "@/hooks/useSavedJobs";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import type { SavedJob } from "@/types/saved-job";
@@ -69,15 +68,14 @@ const Tracker = () => {
         ) : (
           <DragDropContext onDragEnd={handleDragEnd}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Left side - Saved Jobs */}
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <h2 className="text-xl font-semibold mb-4">Saved Jobs</h2>
                 <Droppable droppableId="savedJobs">
                   {(provided) => (
                     <div
                       {...provided.droppableProps}
                       ref={provided.innerRef}
-                      className="space-y-4"
+                      className="space-y-3"
                     >
                       {savedJobs.map((job, index) => (
                         <Draggable key={job.id} draggableId={job.id} index={index}>
@@ -86,18 +84,18 @@ const Tracker = () => {
                               ref={provided.innerRef}
                               {...provided.draggableProps}
                               {...provided.dragHandleProps}
-                              className={`p-6 card-hover bg-white ${
+                              className={`p-3 card-hover bg-white ${
                                 snapshot.isDragging ? "shadow-lg ring-2 ring-primary" : ""
                               }`}
                             >
-                              <div className="flex items-start justify-between">
-                                <div className="space-y-2">
-                                  <h3 className="text-xl font-semibold text-gray-900">
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="space-y-1 flex-1">
+                                  <h3 className="font-semibold text-gray-900 line-clamp-1">
                                     {job.headline}
                                   </h3>
-                                  <div className="flex items-center gap-2 text-gray-600">
-                                    <BriefcaseIcon className="w-4 h-4" />
-                                    <span>{job.employer_name}</span>
+                                  <div className="flex items-center gap-1.5 text-sm text-gray-600">
+                                    <BriefcaseIcon className="w-3.5 h-3.5" />
+                                    <span className="line-clamp-1">{job.employer_name}</span>
                                     {job.workplace_city && (
                                       <>
                                         <span>•</span>
@@ -106,15 +104,14 @@ const Tracker = () => {
                                     )}
                                   </div>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                  <Button
-                                    onClick={() => window.open(`${AF_BASE_URL}/${job.job_id}`, '_blank')}
-                                    className="bg-primary hover:bg-primary-hover text-white"
-                                  >
-                                    Apply Now
-                                  </Button>
-                                  <Star className="w-5 h-5 text-pink-500 fill-pink-500" />
-                                </div>
+                                <Button
+                                  size="sm"
+                                  onClick={() => window.open(`${AF_BASE_URL}/${job.job_id}`, '_blank')}
+                                  className="bg-primary hover:bg-primary-hover text-white shrink-0"
+                                >
+                                  Apply
+                                  <ArrowRight className="w-4 h-4 ml-1" />
+                                </Button>
                               </div>
                             </Card>
                           )}
@@ -126,7 +123,6 @@ const Tracker = () => {
                 </Droppable>
               </div>
 
-              {/* Right side - Tracker */}
               <div className="bg-white rounded-lg p-6 border">
                 <h2 className="text-xl font-semibold mb-4">Job Tracker</h2>
                 <Droppable droppableId="tracker">
