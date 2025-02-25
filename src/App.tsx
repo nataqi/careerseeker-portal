@@ -9,7 +9,6 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Search from "./pages/Search";
 import SavedJobs from "./pages/SavedJobs";
-import Tracker from "./pages/Tracker";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,7 +25,6 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/search" element={<Search />} />
             <Route path="/saved-jobs" element={<SavedJobs />} />
-            <Route path="/tracker" element={<Tracker />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

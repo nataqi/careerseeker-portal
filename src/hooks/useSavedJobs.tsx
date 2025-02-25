@@ -28,7 +28,7 @@ export const useSavedJobs = () => {
       const { data, error } = await supabase
         .from('saved_jobs')
         .select('*')
-        .order('display_order', { ascending: true });
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
       setSavedJobs(data);
@@ -126,73 +126,8 @@ export const useSavedJobs = () => {
     }
   };
 
-  const updateJobApplication = async (jobId: string, updates: Partial<SavedJob>) => {
-    if (!user) return;
-
-    try {
-      const { error } = await supabase
-        .from('saved_jobs')
-        .update(updates)
-        .eq('id', jobId);
-
-      if (error) throw error;
-
-      toast({
-        title: "Updated",
-        description: "Job application updated successfully",
-      });
-    } catch (error) {
-      console.error('Error updating job application:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update job application",
-        variant: "destructive",
-      });
-    }
-  };
-
   const isJobSaved = (jobId: string) => {
     return savedJobs.some(saved => saved.job_id === jobId);
-  };
-
-  const reorderJobs = async (startIndex: number, endIndex: number) => {
-    const newJobs = Array.from(savedJobs);
-    const [removed] = newJobs.splice(startIndex, 1);
-    newJobs.splice(endIndex, 0, removed);
-
-    // Update display order while preserving all required fields
-    try {
-      const updates = newJobs.map((job, index) => ({
-        id: job.id,
-        display_order: index,
-        // Include all required fields from the original job
-        employer_name: job.employer_name,
-        headline: job.headline,
-        job_id: job.job_id,
-        user_id: job.user_id,
-        // Include optional fields if they exist
-        workplace_city: job.workplace_city,
-        response_status: job.response_status,
-        application_date: job.application_date,
-        interview_date: job.interview_date,
-        notes: job.notes
-      }));
-
-      const { error } = await supabase
-        .from('saved_jobs')
-        .upsert(updates, { onConflict: 'id' });
-
-      if (error) throw error;
-
-      setSavedJobs(newJobs);
-    } catch (error) {
-      console.error('Error reordering jobs:', error);
-      toast({
-        title: "Error",
-        description: "Failed to reorder jobs",
-        variant: "destructive",
-      });
-    }
   };
 
   return {
@@ -200,7 +135,5 @@ export const useSavedJobs = () => {
     isLoading,
     toggleSaveJob,
     isJobSaved,
-    updateJobApplication,
-    reorderJobs,
   };
 };
