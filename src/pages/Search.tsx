@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { Search as SearchIcon, Upload, BriefcaseIcon, LogOut, Loader2, Info, Star, BookmarkIcon, BarChartIcon } from "lucide-react";
+import { Search as SearchIcon, Upload, BriefcaseIcon, LogOut, Loader2, Info, Star, BookmarkIcon } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/lib/auth";
 import { useNavigate } from "react-router-dom";
@@ -153,24 +153,14 @@ const Search = () => {
     <div className="min-h-screen bg-secondary p-4 md:p-8">
       <div className="container mx-auto max-w-6xl">
         <div className="flex justify-between mb-4">
-          <div className="flex gap-2">
-            <Button
-              variant="ghost"
-              onClick={() => navigate("/saved-jobs")}
-              className="text-gray-600 hover:text-gray-900"
-            >
-              <BookmarkIcon className="w-4 h-4 mr-2" />
-              Saved Jobs
-            </Button>
-            <Button
-              variant="ghost"
-              onClick={() => navigate("/tracking")}
-              className="text-gray-600 hover:text-gray-900"
-            >
-              <BarChartIcon className="w-4 h-4 mr-2" />
-              Track Applications
-            </Button>
-          </div>
+          <Button
+            variant="ghost"
+            onClick={() => navigate("/saved-jobs")}
+            className="text-gray-600 hover:text-gray-900"
+          >
+            <BookmarkIcon className="w-4 h-4 mr-2" />
+            Saved Jobs
+          </Button>
           <Button
             variant="ghost"
             onClick={signOut}
@@ -365,3 +355,4 @@ const Search = () => {
 };
 
 export default Search;
+
