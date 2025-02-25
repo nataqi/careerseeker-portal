@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
@@ -7,8 +8,30 @@ import { BriefcaseIcon, ArrowLeft, Home, Loader2, ArrowRight } from "lucide-reac
 import { useSavedJobs } from "@/hooks/useSavedJobs";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import type { SavedJob } from "@/types/saved-job";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const AF_BASE_URL = "https://arbetsformedlingen.se/platsbanken/annonser";
+
+const APPLICATION_STATUSES = [
+  { value: "Applied", label: "Applied" },
+  { value: "Declined", label: "Declined" },
+  { value: "Awaiting", label: "Awaiting" },
+  { value: "Offer", label: "Offer" },
+] as const;
 
 const Tracker = () => {
   const { user } = useAuth();
@@ -32,6 +55,14 @@ const Tracker = () => {
         setTrackedJobs(prev => [...prev, draggedJob]);
       }
     }
+  };
+
+  const handleStatusChange = (jobId: string, status: string) => {
+    setTrackedJobs(prev =>
+      prev.map(job =>
+        job.id === jobId ? { ...job, response_status: status } : job
+      )
+    );
   };
 
   if (!user) return null;
@@ -67,8 +98,8 @@ const Tracker = () => {
           </div>
         ) : (
           <DragDropContext onDragEnd={handleDragEnd}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="space-y-3 md:col-span-1">
                 <h2 className="text-xl font-semibold mb-4">Saved Jobs</h2>
                 <Droppable droppableId="savedJobs">
                   {(provided) => (
@@ -90,27 +121,21 @@ const Tracker = () => {
                             >
                               <div className="flex items-start justify-between gap-2">
                                 <div className="space-y-1 flex-1">
-                                  <h3 className="font-semibold text-gray-900 line-clamp-1">
+                                  <h3 className="font-semibold text-gray-900 line-clamp-1 text-sm">
                                     {job.headline}
                                   </h3>
-                                  <div className="flex items-center gap-1.5 text-sm text-gray-600">
-                                    <BriefcaseIcon className="w-3.5 h-3.5" />
+                                  <div className="flex items-center gap-1.5 text-xs text-gray-600">
+                                    <BriefcaseIcon className="w-3 h-3" />
                                     <span className="line-clamp-1">{job.employer_name}</span>
-                                    {job.workplace_city && (
-                                      <>
-                                        <span>•</span>
-                                        <span>{job.workplace_city}</span>
-                                      </>
-                                    )}
                                   </div>
                                 </div>
                                 <Button
                                   size="sm"
                                   onClick={() => window.open(`${AF_BASE_URL}/${job.job_id}`, '_blank')}
-                                  className="bg-primary hover:bg-primary-hover text-white shrink-0"
+                                  className="bg-primary hover:bg-primary-hover text-white shrink-0 h-7 text-xs px-2"
                                 >
                                   Apply
-                                  <ArrowRight className="w-4 h-4 ml-1" />
+                                  <ArrowRight className="w-3 h-3 ml-1" />
                                 </Button>
                               </div>
                             </Card>
@@ -123,41 +148,59 @@ const Tracker = () => {
                 </Droppable>
               </div>
 
-              <div className="bg-white rounded-lg p-6 border">
+              <div className="bg-white rounded-lg p-6 border md:col-span-2">
                 <h2 className="text-xl font-semibold mb-4">Job Tracker</h2>
                 <Droppable droppableId="tracker">
                   {(provided) => (
                     <div
                       {...provided.droppableProps}
                       ref={provided.innerRef}
-                      className="min-h-[400px] border-2 border-dashed border-gray-200 rounded-lg p-4"
+                      className="min-h-[400px] border rounded-lg"
                     >
-                      {trackedJobs.length === 0 ? (
-                        <div className="flex items-center justify-center h-full text-gray-500">
-                          Drag jobs here to track them
-                        </div>
-                      ) : (
-                        <div className="space-y-4">
-                          {trackedJobs.map((job, index) => (
-                            <div
-                              key={job.id}
-                              className="p-4 bg-gray-50 rounded-lg border"
-                            >
-                              <div className="flex justify-between items-start">
-                                <div>
-                                  <h3 className="font-medium">{job.headline}</h3>
-                                  <p className="text-sm text-gray-600">
-                                    {job.employer_name} • {job.workplace_city}
-                                  </p>
-                                </div>
-                                <div className="text-sm text-gray-500">
-                                  Status: {job.response_status || 'Not Applied'}
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Job Title</TableHead>
+                            <TableHead>Employer</TableHead>
+                            <TableHead>Location</TableHead>
+                            <TableHead>Status</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {trackedJobs.length === 0 ? (
+                            <TableRow>
+                              <TableCell colSpan={4} className="text-center text-gray-500 h-[300px]">
+                                Drag jobs here to track them
+                              </TableCell>
+                            </TableRow>
+                          ) : (
+                            trackedJobs.map((job) => (
+                              <TableRow key={job.id}>
+                                <TableCell className="font-medium">{job.headline}</TableCell>
+                                <TableCell>{job.employer_name}</TableCell>
+                                <TableCell>{job.workplace_city || '-'}</TableCell>
+                                <TableCell>
+                                  <Select
+                                    value={job.response_status || "Awaiting"}
+                                    onValueChange={(value) => handleStatusChange(job.id, value)}
+                                  >
+                                    <SelectTrigger className="w-[140px]">
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {APPLICATION_STATUSES.map((status) => (
+                                        <SelectItem key={status.value} value={status.value}>
+                                          {status.label}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                </TableCell>
+                              </TableRow>
+                            ))
+                          )}
+                        </TableBody>
+                      </Table>
                       {provided.placeholder}
                     </div>
                   )}
