@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { BriefcaseIcon, ArrowLeft, Home, Loader2, ArrowRight } from "lucide-react";
+import { BriefcaseIcon, ArrowLeft, Home, Loader2, ArrowRight, Trash2 } from "lucide-react";
 import { useSavedJobs } from "@/hooks/useSavedJobs";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import type { SavedJob } from "@/types/saved-job";
@@ -44,6 +44,7 @@ const Tracker = () => {
   const navigate = useNavigate();
   const { savedJobs, isLoading } = useSavedJobs();
   const [trackedJobs, setTrackedJobs] = useState<SavedJob[]>([]);
+  const [availableJobs, setAvailableJobs] = useState<SavedJob[]>([]);
 
   useEffect(() => {
     if (!user) {
@@ -51,12 +52,18 @@ const Tracker = () => {
     }
   }, [user, navigate]);
 
+  useEffect(() => {
+    if (savedJobs) {
+      setAvailableJobs(savedJobs.filter(job => !trackedJobs.some(tracked => tracked.id === job.id)));
+    }
+  }, [savedJobs, trackedJobs]);
+
   const handleDragEnd = (result: any) => {
     if (!result.destination) return;
 
     const sourceIndex = result.source.index;
     if (result.source.droppableId === "savedJobs" && result.destination.droppableId === "tracker") {
-      const draggedJob = savedJobs[sourceIndex];
+      const draggedJob = availableJobs[sourceIndex];
       if (!trackedJobs.some(job => job.id === draggedJob.id)) {
         setTrackedJobs(prev => [...prev, draggedJob]);
       }
@@ -69,6 +76,10 @@ const Tracker = () => {
         job.id === jobId ? { ...job, response_status: status } : job
       )
     );
+  };
+
+  const handleRemoveJob = (jobId: string) => {
+    setTrackedJobs(prev => prev.filter(job => job.id !== jobId));
   };
 
   if (!user) return null;
@@ -114,7 +125,7 @@ const Tracker = () => {
                       ref={provided.innerRef}
                       className="space-y-3"
                     >
-                      {savedJobs.map((job, index) => (
+                      {availableJobs.map((job, index) => (
                         <Draggable key={job.id} draggableId={job.id} index={index}>
                           {(provided, snapshot) => (
                             <Card
@@ -170,12 +181,13 @@ const Tracker = () => {
                             <TableHead>Employer</TableHead>
                             <TableHead>Location</TableHead>
                             <TableHead>Status</TableHead>
+                            <TableHead>Actions</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
                           {trackedJobs.length === 0 ? (
                             <TableRow>
-                              <TableCell colSpan={4} className="text-center text-gray-500 h-[300px]">
+                              <TableCell colSpan={5} className="text-center text-gray-500 h-[300px]">
                                 Drag jobs here to track them
                               </TableCell>
                             </TableRow>
@@ -201,6 +213,16 @@ const Tracker = () => {
                                       ))}
                                     </SelectContent>
                                   </Select>
+                                </TableCell>
+                                <TableCell>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => handleRemoveJob(job.id)}
+                                    className="h-8 w-8 text-gray-500 hover:text-red-600"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
                                 </TableCell>
                               </TableRow>
                             ))
