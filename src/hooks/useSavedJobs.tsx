@@ -64,6 +64,38 @@ export const useSavedJobs = () => {
     };
   };
 
+  const updateJobStatus = async (jobId: string, status: SavedJob['response_status']) => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from('saved_jobs')
+        .update({ response_status: status })
+        .eq('id', jobId);
+
+      if (error) throw error;
+
+      // Optimistic update
+      setSavedJobs(prev =>
+        prev.map(job =>
+          job.id === jobId ? { ...job, response_status: status } : job
+        )
+      );
+
+      toast({
+        title: "Status updated",
+        description: "Job status has been updated successfully",
+      });
+    } catch (error) {
+      console.error('Error updating job status:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update job status",
+        variant: "destructive",
+      });
+    }
+  };
+
   const toggleSaveJob = async (job: JobListing) => {
     if (!user) {
       toast({
@@ -135,5 +167,6 @@ export const useSavedJobs = () => {
     isLoading,
     toggleSaveJob,
     isJobSaved,
+    updateJobStatus,
   };
 };

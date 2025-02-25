@@ -42,7 +42,7 @@ type ApplicationStatus = typeof APPLICATION_STATUSES[number]['value'];
 const Tracker = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { savedJobs, isLoading } = useSavedJobs();
+  const { savedJobs, isLoading, updateJobStatus } = useSavedJobs();
   const [trackedJobs, setTrackedJobs] = useState<SavedJob[]>([]);
   const [availableJobs, setAvailableJobs] = useState<SavedJob[]>([]);
 
@@ -70,12 +70,16 @@ const Tracker = () => {
     }
   };
 
-  const handleStatusChange = (jobId: string, status: ApplicationStatus) => {
+  const handleStatusChange = async (jobId: string, status: ApplicationStatus) => {
+    // Optimistic update for the tracked jobs
     setTrackedJobs(prev =>
       prev.map(job =>
         job.id === jobId ? { ...job, response_status: status } : job
       )
     );
+    
+    // Update the status in the database
+    await updateJobStatus(jobId, status);
   };
 
   const handleRemoveJob = (jobId: string) => {
@@ -199,7 +203,7 @@ const Tracker = () => {
                                 <TableCell>{job.workplace_city || '-'}</TableCell>
                                 <TableCell>
                                   <Select
-                                    value={job.response_status || "Not Applied"}
+                                    defaultValue={job.response_status || "Not Applied"}
                                     onValueChange={(value) => handleStatusChange(job.id, value as ApplicationStatus)}
                                   >
                                     <SelectTrigger className="w-[140px]">
