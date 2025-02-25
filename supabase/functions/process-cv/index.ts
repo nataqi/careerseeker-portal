@@ -116,7 +116,8 @@ serve(async (req) => {
     console.log('Skills extracted successfully:', extractedSkills);
 
     // Convert skills to search query
-    const searchQuery = extractedSkills.replace(/,/g, ' OR ');
+    const skillsArray = extractedSkills.split(',').map(skill => skill.trim());
+    const searchQuery = skillsArray.join(' '); // Just space-separated
 
     // Search for jobs using the extracted skills
     console.log('Searching for matching jobs...');
@@ -128,6 +129,7 @@ serve(async (req) => {
         'x-feature-enable-false-negative': 'true'
       }
     });
+
 
     if (!jobResponse.ok) {
       const errorText = await jobResponse.text();
