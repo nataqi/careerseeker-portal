@@ -27,11 +27,17 @@ import {
 const AF_BASE_URL = "https://arbetsformedlingen.se/platsbanken/annonser";
 
 const APPLICATION_STATUSES = [
+  { value: "Not Applied", label: "Not Applied" },
   { value: "Applied", label: "Applied" },
-  { value: "Declined", label: "Declined" },
-  { value: "Awaiting", label: "Awaiting" },
-  { value: "Offer", label: "Offer" },
+  { value: "No Response", label: "No Response" },
+  { value: "Rejected", label: "Rejected" },
+  { value: "Interview Scheduled", label: "Interview Scheduled" },
+  { value: "Offer Received", label: "Offer Received" },
+  { value: "Offer Accepted", label: "Offer Accepted" },
+  { value: "Offer Declined", label: "Offer Declined" },
 ] as const;
+
+type ApplicationStatus = typeof APPLICATION_STATUSES[number]['value'];
 
 const Tracker = () => {
   const { user } = useAuth();
@@ -57,7 +63,7 @@ const Tracker = () => {
     }
   };
 
-  const handleStatusChange = (jobId: string, status: string) => {
+  const handleStatusChange = (jobId: string, status: ApplicationStatus) => {
     setTrackedJobs(prev =>
       prev.map(job =>
         job.id === jobId ? { ...job, response_status: status } : job
@@ -181,8 +187,8 @@ const Tracker = () => {
                                 <TableCell>{job.workplace_city || '-'}</TableCell>
                                 <TableCell>
                                   <Select
-                                    value={job.response_status || "Awaiting"}
-                                    onValueChange={(value) => handleStatusChange(job.id, value)}
+                                    value={job.response_status || "Not Applied"}
+                                    onValueChange={(value) => handleStatusChange(job.id, value as ApplicationStatus)}
                                   >
                                     <SelectTrigger className="w-[140px]">
                                       <SelectValue />
