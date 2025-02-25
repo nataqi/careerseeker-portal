@@ -1,10 +1,9 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { BriefcaseIcon, ArrowLeft, Home, Loader2, ArrowRight, Trash2 } from "lucide-react";
+import { BriefcaseIcon, ArrowLeft, Home, Loader2, Trash2 } from "lucide-react";
 import { useSavedJobs } from "@/hooks/useSavedJobs";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import type { SavedJob } from "@/types/saved-job";
@@ -34,7 +33,7 @@ const APPLICATION_STATUSES = [
   { value: "Interview Scheduled", label: "Interview Scheduled" },
   { value: "Offer Received", label: "Offer Received" },
   { value: "Offer Accepted", label: "Offer Accepted" },
-  { value: "Offer Declined", label: "Offer Declined" },
+  { value: "Offer Declined", label: "Offer Declined" } as const,
 ] as const;
 
 type ApplicationStatus = typeof APPLICATION_STATUSES[number]['value'];
@@ -71,14 +70,12 @@ const Tracker = () => {
   };
 
   const handleStatusChange = async (jobId: string, status: ApplicationStatus) => {
-    // Optimistic update for the tracked jobs
     setTrackedJobs(prev =>
       prev.map(job =>
         job.id === jobId ? { ...job, response_status: status } : job
       )
     );
     
-    // Update the status in the database
     await updateJobStatus(jobId, status);
   };
 
@@ -152,10 +149,9 @@ const Tracker = () => {
                                   <Button
                                     size="sm"
                                     onClick={() => window.open(`${AF_BASE_URL}/${job.job_id}`, '_blank')}
-                                    className="bg-primary hover:bg-primary-hover text-white shrink-0 h-7 text-xs px-2"
+                                    className="bg-primary hover:bg-primary-hover text-white shrink-0 h-7 text-xs px-2.5"
                                   >
                                     Apply
-                                    <ArrowRight className="w-3 h-3 ml-1" />
                                   </Button>
                                 </div>
                               </div>
@@ -170,74 +166,64 @@ const Tracker = () => {
               </div>
 
               <div className="col-span-12 md:col-span-9 xl:col-span-10">
-                <div className="bg-white rounded-lg p-6 border">
-                  <h2 className="text-xl font-semibold mb-4">Job Tracker</h2>
-                  <Droppable droppableId="tracker">
-                    {(provided) => (
-                      <div
-                        {...provided.droppableProps}
-                        ref={provided.innerRef}
-                        className="min-h-[400px] border rounded-lg overflow-x-auto"
-                      >
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead className="min-w-[300px] max-w-[400px]">Job Title</TableHead>
-                              <TableHead className="min-w-[200px]">Employer</TableHead>
-                              <TableHead className="min-w-[150px]">Location</TableHead>
-                              <TableHead className="min-w-[180px]">Status</TableHead>
-                              <TableHead className="w-[100px]">Actions</TableHead>
+                <div className="bg-white rounded-lg border">
+                  <div className="min-h-[400px] overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="min-w-[300px] max-w-[400px]">Job Title</TableHead>
+                          <TableHead className="min-w-[200px]">Employer</TableHead>
+                          <TableHead className="min-w-[150px]">Location</TableHead>
+                          <TableHead className="min-w-[180px]">Status</TableHead>
+                          <TableHead className="w-[100px]">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {trackedJobs.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={5} className="text-center text-gray-500 h-[300px]">
+                              Drag jobs here to track them
+                            </TableCell>
+                          </TableRow>
+                        ) : (
+                          trackedJobs.map((job) => (
+                            <TableRow key={job.id}>
+                              <TableCell className="font-medium">{job.headline}</TableCell>
+                              <TableCell>{job.employer_name}</TableCell>
+                              <TableCell>{job.workplace_city || '-'}</TableCell>
+                              <TableCell>
+                                <Select
+                                  defaultValue={job.response_status || "Not Applied"}
+                                  onValueChange={(value) => handleStatusChange(job.id, value as ApplicationStatus)}
+                                >
+                                  <SelectTrigger className="w-[180px]">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {APPLICATION_STATUSES.map((status) => (
+                                      <SelectItem key={status.value} value={status.value}>
+                                        {status.label}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </TableCell>
+                              <TableCell>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => handleRemoveJob(job.id)}
+                                  className="h-8 w-8 text-gray-500 hover:text-red-600"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </TableCell>
                             </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {trackedJobs.length === 0 ? (
-                              <TableRow>
-                                <TableCell colSpan={5} className="text-center text-gray-500 h-[300px]">
-                                  Drag jobs here to track them
-                                </TableCell>
-                              </TableRow>
-                            ) : (
-                              trackedJobs.map((job) => (
-                                <TableRow key={job.id}>
-                                  <TableCell className="font-medium">{job.headline}</TableCell>
-                                  <TableCell>{job.employer_name}</TableCell>
-                                  <TableCell>{job.workplace_city || '-'}</TableCell>
-                                  <TableCell>
-                                    <Select
-                                      defaultValue={job.response_status || "Not Applied"}
-                                      onValueChange={(value) => handleStatusChange(job.id, value as ApplicationStatus)}
-                                    >
-                                      <SelectTrigger className="w-[180px]">
-                                        <SelectValue />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        {APPLICATION_STATUSES.map((status) => (
-                                          <SelectItem key={status.value} value={status.value}>
-                                            {status.label}
-                                          </SelectItem>
-                                        ))}
-                                      </SelectContent>
-                                    </Select>
-                                  </TableCell>
-                                  <TableCell>
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      onClick={() => handleRemoveJob(job.id)}
-                                      className="h-8 w-8 text-gray-500 hover:text-red-600"
-                                    >
-                                      <Trash2 className="h-4 w-4" />
-                                    </Button>
-                                  </TableCell>
-                                </TableRow>
-                              ))
-                            )}
-                          </TableBody>
-                        </Table>
-                        {provided.placeholder}
-                      </div>
-                    )}
-                  </Droppable>
+                          ))
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
                 </div>
               </div>
             </div>
