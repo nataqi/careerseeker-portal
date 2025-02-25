@@ -5,7 +5,6 @@ import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -23,15 +22,11 @@ import {
 } from "@/components/ui/table";
 import {
   ArrowLeft,
-  Calendar,
-  CheckCircle,
   Edit2,
-  GripVertical,
   Home,
   Loader2,
-  MessageSquare,
   Star,
-  XCircle,
+  GripVertical,
 } from "lucide-react";
 import { useSavedJobs } from "@/hooks/useSavedJobs";
 import type { SavedJob, ApplicationStatus } from "@/types/saved-job";
@@ -293,4 +288,3 @@ const SavedJobs = () => {
 };
 
 export default SavedJobs;
-
