@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
@@ -60,11 +61,13 @@ const Tracker = () => {
   const handleDragEnd = (result: any) => {
     if (!result.destination) return;
 
-    const sourceIndex = result.source.index;
-    if (result.source.droppableId === "savedJobs" && result.destination.droppableId === "tracker") {
-      const draggedJob = availableJobs[sourceIndex];
+    const { source, destination } = result;
+
+    if (source.droppableId === "savedJobs" && destination.droppableId === "trackerTable") {
+      const draggedJob = availableJobs[source.index];
       if (!trackedJobs.some(job => job.id === draggedJob.id)) {
         setTrackedJobs(prev => [...prev, draggedJob]);
+        setAvailableJobs(prev => prev.filter(job => job.id !== draggedJob.id));
       }
     }
   };
@@ -80,7 +83,11 @@ const Tracker = () => {
   };
 
   const handleRemoveJob = (jobId: string) => {
-    setTrackedJobs(prev => prev.filter(job => job.id !== jobId));
+    const jobToRemove = trackedJobs.find(job => job.id === jobId);
+    if (jobToRemove) {
+      setTrackedJobs(prev => prev.filter(job => job.id !== jobId));
+      setAvailableJobs(prev => [...prev, jobToRemove]);
+    }
   };
 
   if (!user) return null;
@@ -167,7 +174,7 @@ const Tracker = () => {
 
               <div className="col-span-12 md:col-span-9 xl:col-span-10">
                 <div className="bg-white rounded-lg border">
-                  <div className="min-h-[400px] overflow-x-auto">
+                  <div className="overflow-x-auto">
                     <Table>
                       <TableHeader>
                         <TableRow>
@@ -178,50 +185,76 @@ const Tracker = () => {
                           <TableHead className="w-[100px]">Actions</TableHead>
                         </TableRow>
                       </TableHeader>
-                      <TableBody>
-                        {trackedJobs.length === 0 ? (
-                          <TableRow>
-                            <TableCell colSpan={5} className="text-center text-gray-500 h-[300px]">
-                              Drag jobs here to track them
-                            </TableCell>
-                          </TableRow>
-                        ) : (
-                          trackedJobs.map((job) => (
-                            <TableRow key={job.id}>
-                              <TableCell className="font-medium">{job.headline}</TableCell>
-                              <TableCell>{job.employer_name}</TableCell>
-                              <TableCell>{job.workplace_city || '-'}</TableCell>
-                              <TableCell>
-                                <Select
-                                  defaultValue={job.response_status || "Not Applied"}
-                                  onValueChange={(value) => handleStatusChange(job.id, value as ApplicationStatus)}
+                      <Droppable droppableId="trackerTable">
+                        {(provided) => (
+                          <TableBody
+                            {...provided.droppableProps}
+                            ref={provided.innerRef}
+                            className={`min-h-[400px] relative`}
+                          >
+                            {trackedJobs.length === 0 ? (
+                              <TableRow>
+                                <TableCell 
+                                  colSpan={5} 
+                                  className="text-center text-gray-500 h-[300px]"
                                 >
-                                  <SelectTrigger className="w-[180px]">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {APPLICATION_STATUSES.map((status) => (
-                                      <SelectItem key={status.value} value={status.value}>
-                                        {status.label}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              </TableCell>
-                              <TableCell>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => handleRemoveJob(job.id)}
-                                  className="h-8 w-8 text-gray-500 hover:text-red-600"
+                                  Drag jobs here to track them
+                                </TableCell>
+                              </TableRow>
+                            ) : (
+                              trackedJobs.map((job, index) => (
+                                <Draggable
+                                  key={job.id}
+                                  draggableId={job.id}
+                                  index={index}
                                 >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </TableCell>
-                            </TableRow>
-                          ))
+                                  {(provided) => (
+                                    <TableRow
+                                      ref={provided.innerRef}
+                                      {...provided.draggableProps}
+                                      {...provided.dragHandleProps}
+                                    >
+                                      <TableCell className="font-medium">
+                                        {job.headline}
+                                      </TableCell>
+                                      <TableCell>{job.employer_name}</TableCell>
+                                      <TableCell>{job.workplace_city || '-'}</TableCell>
+                                      <TableCell>
+                                        <Select
+                                          defaultValue={job.response_status || "Not Applied"}
+                                          onValueChange={(value) => handleStatusChange(job.id, value as ApplicationStatus)}
+                                        >
+                                          <SelectTrigger className="w-[180px]">
+                                            <SelectValue />
+                                          </SelectTrigger>
+                                          <SelectContent>
+                                            {APPLICATION_STATUSES.map((status) => (
+                                              <SelectItem key={status.value} value={status.value}>
+                                                {status.label}
+                                              </SelectItem>
+                                            ))}
+                                          </SelectContent>
+                                        </Select>
+                                      </TableCell>
+                                      <TableCell>
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          onClick={() => handleRemoveJob(job.id)}
+                                          className="h-8 w-8 text-gray-500 hover:text-red-600"
+                                        >
+                                          <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                      </TableCell>
+                                    </TableRow>
+                                  )}
+                                </Draggable>
+                              ))
+                            )}
+                            {provided.placeholder}
+                          </TableBody>
                         )}
-                      </TableBody>
+                      </Droppable>
                     </Table>
                   </div>
                 </div>
