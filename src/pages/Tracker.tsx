@@ -26,6 +26,8 @@ import {
   Loader2,
   Star,
   Edit2,
+  Search,
+  Bookmark,
 } from "lucide-react";
 import { useSavedJobs } from "@/hooks/useSavedJobs";
 import type { SavedJob } from "@/types/saved-job";
@@ -62,10 +64,15 @@ const Tracker = () => {
 
     if (result.source.droppableId === "savedJobs" && result.destination.droppableId === "trackedJobs") {
       const draggedJob = savedJobs[result.source.index];
-      updateJobApplication(draggedJob.id, {
-        response_status: "Applied",
-        application_date: new Date().toISOString(),
-      });
+      if (draggedJob) {
+        updateJobApplication(draggedJob.id, {
+          response_status: "Applied",
+          application_date: new Date().toISOString(),
+          employer_name: draggedJob.employer_name,
+          headline: draggedJob.headline,
+          workplace_city: draggedJob.workplace_city,
+        });
+      }
     }
   };
 
@@ -125,6 +132,22 @@ const Tracker = () => {
             >
               <Home className="w-4 h-4 mr-2" />
               Home
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => navigate("/search")}
+              className="text-gray-600 hover:text-gray-900"
+            >
+              <Search className="w-4 h-4 mr-2" />
+              Search Jobs
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => navigate("/saved-jobs")}
+              className="text-gray-600 hover:text-gray-900"
+            >
+              <Bookmark className="w-4 h-4 mr-2" />
+              Saved Jobs
             </Button>
           </div>
           <h1 className="text-2xl font-semibold text-gray-900">Application Tracker</h1>
@@ -189,9 +212,11 @@ const Tracker = () => {
                       <Table>
                         <TableHeader>
                           <TableRow>
-                            <TableHead>Job Details</TableHead>
-                            <TableHead>Application Date</TableHead>
+                            <TableHead>Employer</TableHead>
+                            <TableHead>Job Title</TableHead>
+                            <TableHead>Location</TableHead>
                             <TableHead>Status</TableHead>
+                            <TableHead>Application Date</TableHead>
                             <TableHead>Interview Date</TableHead>
                             <TableHead>Notes</TableHead>
                             <TableHead className="w-20">Actions</TableHead>
@@ -206,31 +231,9 @@ const Tracker = () => {
                                   {...provided.draggableProps}
                                   {...provided.dragHandleProps}
                                 >
-                                  <TableCell>
-                                    <div className="font-medium">{job.headline}</div>
-                                    <div className="text-sm text-gray-600">{job.employer_name}</div>
-                                    {job.workplace_city && (
-                                      <div className="text-sm text-gray-500">{job.workplace_city}</div>
-                                    )}
-                                  </TableCell>
-                                  <TableCell>
-                                    {editingState[job.id] ? (
-                                      <Input
-                                        type="date"
-                                        defaultValue={job.application_date?.split('T')[0] || ''}
-                                        onChange={(e) => handleUpdate(job.id, {
-                                          application_date: e.target.value ? new Date(e.target.value).toISOString() : null
-                                        })}
-                                        className="w-36"
-                                      />
-                                    ) : (
-                                      <span>
-                                        {job.application_date ? 
-                                          new Date(job.application_date).toLocaleDateString() : 
-                                          '-'}
-                                      </span>
-                                    )}
-                                  </TableCell>
+                                  <TableCell>{job.employer_name}</TableCell>
+                                  <TableCell>{job.headline}</TableCell>
+                                  <TableCell>{job.workplace_city || '-'}</TableCell>
                                   <TableCell>
                                     {editingState[job.id] ? (
                                       <Select
@@ -251,6 +254,24 @@ const Tracker = () => {
                                     ) : (
                                       <span className={getStatusColor(job.response_status || '')}>
                                         {job.response_status || 'Not Applied'}
+                                      </span>
+                                    )}
+                                  </TableCell>
+                                  <TableCell>
+                                    {editingState[job.id] ? (
+                                      <Input
+                                        type="date"
+                                        defaultValue={job.application_date?.split('T')[0] || ''}
+                                        onChange={(e) => handleUpdate(job.id, {
+                                          application_date: e.target.value ? new Date(e.target.value).toISOString() : null
+                                        })}
+                                        className="w-36"
+                                      />
+                                    ) : (
+                                      <span>
+                                        {job.application_date ? 
+                                          new Date(job.application_date).toLocaleDateString() : 
+                                          '-'}
                                       </span>
                                     )}
                                   </TableCell>
