@@ -177,7 +177,7 @@ const Tracker = () => {
                 onClick={() => {
                   // Create Excel data
                   const data = trackedJobs.map(job => ({
-                    'Job Title': `=HYPERLINK("https://arbetsformedlingen.se/platsbanken/annonser/${job.job_id}", "${job.headline}")`,
+                    'Job Title': job.headline,
                     'Employer': job.employer_name,
                     'Location': job.workplace_city || '',
                     'Status': job.response_status,
@@ -251,14 +251,7 @@ const Tracker = () => {
                               >
                                 <div className="space-y-2">
                                   <h3 className="font-medium text-sm leading-tight break-words">
-                                    <a
-                                      href={`https://arbetsformedlingen.se/platsbanken/annonser/${job.job_id}`}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="text-primary hover:underline"
-                                    >
-                                      {job.headline}
-                                    </a>
+                                    {job.headline}
                                   </h3>
                                   <div className="flex flex-wrap items-center gap-2">
                                     <div className="flex items-center gap-1.5 text-xs text-gray-600 min-w-0 flex-1">
