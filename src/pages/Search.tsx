@@ -1,8 +1,9 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { Search as SearchIcon, Upload, BriefcaseIcon, LogOut, Loader2, Info, Star, BookmarkIcon, LogIn } from "lucide-react";
+import { Search as SearchIcon, Upload, BriefcaseIcon, LogOut, Loader2, Info, Star, BookmarkIcon } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/lib/auth";
 import { useNavigate } from "react-router-dom";
@@ -44,7 +45,7 @@ const Search = () => {
 
   useEffect(() => {
     if (!user) {
-      // navigate("/auth");
+      navigate("/auth");
     }
   }, [user, navigate]);
 
@@ -146,71 +147,28 @@ const Search = () => {
     setIsDragging(false);
   };
 
-  // if (!user) return null;
+  if (!user) return null;
 
   return (
     <div className="min-h-screen bg-secondary p-4 md:p-8">
       <div className="container mx-auto max-w-6xl">
         <div className="flex justify-between mb-4">
-          <div className="flex gap-2">
-            <Button
-              variant="ghost"
-              onClick={() => {
-                if (!user) {
-                  toast({
-                    title: "Authentication required",
-                    description: "Please sign in to access Saved Jobs",
-                    variant: "destructive",
-                  });
-                  navigate("/auth");
-                  return;
-                }
-                navigate("/saved-jobs")
-              }}
-              className="text-gray-600 hover:text-gray-900"
-            >
-              <BookmarkIcon className="w-4 h-4 mr-2" />
-              Saved Jobs
-            </Button>
-            <Button
-              variant="ghost"
-              onClick={() => {
-                if (!user) {
-                  toast({
-                    title: "Authentication required",
-                    description: "Please sign in to access the Job Tracker",
-                    variant: "destructive",
-                  });
-                  navigate("/auth");
-                  return;
-                }
-                navigate("/tracker");
-              }}
-              className="text-gray-600 hover:text-gray-900"
-            >
-              <BriefcaseIcon className="w-4 h-4 mr-2" />
-              Jobs Tracker
-            </Button>
-          </div>
-          {user ? (
-            <Button
-              variant="ghost"
-              onClick={signOut}
-              className="text-gray-600 hover:text-gray-900"
-            >
-              <LogOut className="w-4 h-4 mr-2" />
-              Sign Out
-            </Button>
-          ) : (
-            <Button
-              variant="ghost"
-              onClick={() => navigate("/auth")}
-              className="text-gray-600 hover:text-gray-900"
-            >
-              <LogIn className="w-4 h-4 mr-2" />
-              Log In
-            </Button>
-          )}
+          <Button
+            variant="ghost"
+            onClick={() => navigate("/saved-jobs")}
+            className="text-gray-600 hover:text-gray-900"
+          >
+            <BookmarkIcon className="w-4 h-4 mr-2" />
+            Saved Jobs
+          </Button>
+          <Button
+            variant="ghost"
+            onClick={signOut}
+            className="text-gray-600 hover:text-gray-900"
+          >
+            <LogOut className="w-4 h-4 mr-2" />
+            Sign Out
+          </Button>
         </div>
 
         <div className="space-y-6">
@@ -332,77 +290,62 @@ const Search = () => {
                 {searchQuery.trim() ? "No jobs found. Try different keywords." : "Start searching for jobs..."}
               </div>
             ) : (
-              jobs.map((job) => {
-                const handleSaveClick = () => {
-                  if (!user) {
-                    toast({
-                      title: "Authentication required",
-                      description: "Please sign in to save jobs.",
-                      variant: "destructive",
-                    });
-                    navigate("/auth");
-                    return;
-                  }
-                  toggleSaveJob(job);
-                };
-
-                return (
-                  <Card
-                    key={job.id}
-                    className="p-6 card-hover bg-white relative"
+              jobs.map((job) => (
+                <Card
+                  key={job.id}
+                  className="p-6 card-hover bg-white relative"
+                >
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute top-4 right-4 hover:bg-transparent"
+                    onClick={() => toggleSaveJob(job)}
                   >
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="absolute top-4 right-4 hover:bg-transparent"
-                      onClick={handleSaveClick}
-                    >
-                      <Star
-                        className={`w-5 h-5 ${
-                          isJobSaved(job.id)
-                            ? "text-pink-500 fill-pink-500"
-                            : "text-gray-400 hover:text-pink-500"
-                        }`}
-                      />
-                    </Button>
-                    <div className="flex items-start pr-12">
-                      <div className="space-y-2">
-                        <h3 className="text-xl font-semibold text-gray-900">{job.headline}</h3>
-                        <div className="flex items-center gap-2 text-gray-600">
-                          <BriefcaseIcon className="w-4 h-4" />
-                          <span>{job.employer?.name}</span>
-                          {job.workplace?.city && (
-                            <>
-                              <span>•</span>
-                              <span>{job.workplace.city}</span>
-                            </>
-                          )}
-                        </div>
-                        <div className="flex gap-2">
-                          {job.working_hours_type?.label && (
-                            <span className="inline-block bg-accent text-primary text-sm px-3 py-1 rounded-full">
-                              {job.working_hours_type.label}
-                            </span>
-                          )}
-                          {job.salary_type?.label && (
-                            <span className="inline-block bg-secondary text-gray-600 text-sm px-3 py-1 rounded-full">
-                              {job.salary_type.label}
-                            </span>
-                          )}
-                        </div>
+                    <Star
+                      className={`w-5 h-5 ${
+                        isJobSaved(job.id)
+                          ? "text-pink-500 fill-pink-500"
+                          : "text-gray-400 hover:text-pink-500"
+                      }`}
+                    />
+                  </Button>
+                  <div className="flex items-start pr-12">
+                    <div className="space-y-2">
+                      <h3 className="text-xl font-semibold text-gray-900">{job.headline}</h3>
+                      <div className="flex items-center gap-2 text-gray-600">
+                        <BriefcaseIcon className="w-4 h-4" />
+                        <span>{job.employer?.name}</span>
+                        {job.workplace?.city && (
+                          <>
+                            <span>•</span>
+                            <span>{job.workplace.city}</span>
+                          </>
+                        )}
                       </div>
-                      <Button
-                        onClick={() => {
-                          window.open(`${AF_BASE_URL}/${job.id}`, '_blank');
-                        }}
-                        className="ml-auto bg-primary hover:bg-primary-hover text-white"
-                      >
-                        Apply Now
-                      </Button>
+                      <div className="flex gap-2">
+                        {job.working_hours_type?.label && (
+                          <span className="inline-block bg-accent text-primary text-sm px-3 py-1 rounded-full">
+                            {job.working_hours_type.label}
+                          </span>
+                        )}
+                        {job.salary_type?.label && (
+                          <span className="inline-block bg-secondary text-gray-600 text-sm px-3 py-1 rounded-full">
+                            {job.salary_type.label}
+                          </span>
+                        )}
+                      </div>
                     </div>
-                  </Card>
-                );
-              })
+                    <Button
+                      onClick={() => {
+                        window.open(`${AF_BASE_URL}/${job.id}`, '_blank');
+                      }}
+                      className="ml-auto bg-primary hover:bg-primary-hover text-white"
+                    >
+                      Apply Now
+                    </Button>
+                  </div>
+                </Card>
+              ))
             )}
           </div>
         </div>
@@ -412,3 +355,4 @@ const Search = () => {
 };
 
 export default Search;
+
