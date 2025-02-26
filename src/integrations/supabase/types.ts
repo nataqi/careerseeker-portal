@@ -50,6 +50,7 @@ export type Database = {
           response_status:
             | Database["public"]["Enums"]["application_status"]
             | null
+          tracking_date: string | null
           user_id: string
           workplace_city: string | null
         }
@@ -66,6 +67,7 @@ export type Database = {
           response_status?:
             | Database["public"]["Enums"]["application_status"]
             | null
+          tracking_date?: string | null
           user_id: string
           workplace_city?: string | null
         }
@@ -82,6 +84,7 @@ export type Database = {
           response_status?:
             | Database["public"]["Enums"]["application_status"]
             | null
+          tracking_date?: string | null
           user_id?: string
           workplace_city?: string | null
         }

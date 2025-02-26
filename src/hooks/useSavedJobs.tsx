@@ -33,7 +33,7 @@ export const useSavedJobs = () => {
       if (error) throw error;
 
       // Initialize tracking_date for each job with created_at date if not set
-      const formattedData: SavedJob[] = data.map(job => {
+      const formattedData: SavedJob[] = (data as any[]).map(job => {
         const jobWithDefaults = {
           ...job,
           application_date: job.application_date || null,
@@ -45,7 +45,7 @@ export const useSavedJobs = () => {
         };
 
         // Set tracking_date to either existing value or formatted created_at date
-        jobWithDefaults.tracking_date = job.tracking_date || formatDate(new Date(job.created_at));
+        jobWithDefaults.tracking_date = jobWithDefaults.tracking_date || formatDate(new Date(job.created_at));
         
         return jobWithDefaults;
       });
