@@ -7,7 +7,7 @@ export interface SavedJob {
   employer_name: string;
   workplace_city: string | null;
   created_at: string;
-  response_status: 'Not Applied' | 'Applied' | 'No Response' | 'Rejected' | 'Interview Scheduled' | 'Offer Received' | 'Offer Accepted' | 'Offer Declined' | null;
+  response_status: 'Not Applied' | 'APPLIED' | 'INTERVIEWING' | 'OFFER_RECEIVED' | 'REJECTED' | null;
   application_date: string | null;
   interview_date: string | null;
   notes: string | null;
