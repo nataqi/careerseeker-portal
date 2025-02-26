@@ -172,6 +172,41 @@ const Tracker = () => {
                 <BookmarkIcon className="w-4 h-4 mr-2" />
                 Saved Jobs
               </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  // Create Excel data
+                  const data = trackedJobs.map(job => ({
+                    'Job Title': job.headline,
+                    'Employer': job.employer_name,
+                    'Location': job.workplace_city || '',
+                    'Status': job.response_status,
+                    'Date': job.tracking_date,
+                    'Notes': job.notes || ''
+                  }));
+
+                  // Convert to CSV
+                  const headers = ['Job Title', 'Employer', 'Location', 'Status', 'Date', 'Notes'];
+                  const csvContent = [
+                    headers.join(','),
+                    ...data.map(row => 
+                      headers.map(header => 
+                        `"${String(row[header as keyof typeof row]).replace(/"/g, '""')}"`
+                      ).join(',')
+                    )
+                  ].join('\n');
+
+                  // Create and download file
+                  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                  const link = document.createElement('a');
+                  link.href = URL.createObjectURL(blob);
+                  link.download = 'job_tracker.csv';
+                  link.click();
+                  URL.revokeObjectURL(link.href);
+                }}
+              >
+                Export to CSV
+              </Button>
             </div>
           </div>
           <div className="text-center py-16 space-y-4">

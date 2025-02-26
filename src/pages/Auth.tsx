@@ -1,57 +1,40 @@
 
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { useToast } from "@/components/ui/use-toast";
 import { Card } from "@/components/ui/card";
-import { useAuth } from "@/lib/auth";
-import { useNavigate } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 
 const Auth = () => {
-  const [isLogin, setIsLogin] = useState(true);
-  const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const { signIn, signUp, user } = useAuth();
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const { signIn, signUp } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
-
-  // Redirect if user is already logged in
-  if (user) {
-    navigate("/search");
-    return null;
-  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      if (isLogin) {
-        await signIn(email, password);
+      if (isSignUp) {
+        await signUp(email, password);
         toast({
-          title: "Welcome back!",
-          description: "You have successfully signed in.",
+          title: "Success",
+          description: "Please check your email to verify your account",
         });
       } else {
-        const { data, error } = await signUp(email, password);
-        console.log("Signup response:", { data, error }); // Detailed logging
-        
-        if (error) throw error;
-        
-        toast({
-          title: "Account created!",
-          description: "Please check your email to confirm your registration.",
-        });
-        setIsLogin(true);
+        await signIn(email, password);
+        navigate("/search");
       }
-    } catch (error) {
-      console.error("Auth error:", error);
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "An error occurred during authentication",
+        description: error.message || "Something went wrong",
         variant: "destructive",
       });
     } finally {
@@ -61,72 +44,60 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen bg-secondary flex items-center justify-center p-4">
-      <Card className="w-full max-w-md p-8 bg-white rounded-xl shadow-sm animate-fadeIn relative">
-        <Button
-          variant="ghost"
-          className="absolute left-4 top-4"
-          onClick={() => navigate("/")}
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Home
-        </Button>
-        
-        <div className="space-y-6">
-          <div className="text-center mt-6">
-            <h1 className="text-2xl font-bold">{isLogin ? "Welcome Back" : "Create Account"}</h1>
-            <p className="text-gray-600 mt-2">
-              {isLogin
-                ? "Enter your details to sign in"
-                : "Fill in your information to get started"}
-            </p>
+      <Card className="w-full max-w-md p-6 space-y-6 bg-white">
+        <div className="text-center space-y-2">
+          <h1 className="text-2xl font-bold">
+            {isSignUp ? "Create an account" : "Welcome back"}
+          </h1>
+          <p className="text-gray-500">
+            {isSignUp
+              ? "Sign up to start your job search journey"
+              : "Sign in to continue your job search"}
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Input
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
           </div>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="Enter your email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="w-full"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="Enter your password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="w-full"
-                minLength={6}
-              />
-            </div>
-
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={isLoading}
-            >
-              {isLoading ? "Processing..." : isLogin ? "Sign In" : "Create Account"}
-            </Button>
-          </form>
-
-          <div className="text-center">
-            <button
-              type="button"
-              onClick={() => setIsLogin(!isLogin)}
-              className="text-primary hover:underline text-sm"
-            >
-              {isLogin ? "Need an account? Sign up" : "Already have an account? Sign in"}
-            </button>
+          <div className="space-y-2">
+            <Input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
           </div>
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={isLoading}
+          >
+            {isLoading
+              ? "Loading..."
+              : isSignUp
+              ? "Sign Up"
+              : "Sign In"}
+          </Button>
+        </form>
+
+        <div className="text-center">
+          <Button
+            variant="link"
+            onClick={() => setIsSignUp(!isSignUp)}
+            className="text-gray-500"
+          >
+            {isSignUp
+              ? "Already have an account? Sign in"
+              : "Don't have an account? Sign up"}
+          </Button>
         </div>
       </Card>
     </div>

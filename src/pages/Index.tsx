@@ -1,5 +1,4 @@
 
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 
@@ -11,14 +10,11 @@ const Index = () => {
       <div className="container mx-auto px-4 py-16">
         <div className="max-w-3xl mx-auto text-center space-y-8 animate-fadeIn">
           <div className="space-y-2">
-            <div className="inline-block bg-accent px-4 py-1 rounded-full">
-              <p className="text-primary text-sm font-medium">Your Career Journey Starts Here</p>
-            </div>
             <h1 className="text-4xl md:text-5xl font-bold text-gray-900 tracking-tight">
-              Find Your Dream Job With CareerSeeker
+              Find Your Perfect Job in Sweden
             </h1>
             <p className="text-lg text-gray-600 mt-4">
-              Upload your CV or search through thousands of job listings to find your perfect match
+              Leverage Arbetsförmedlingen's job listings with smart AI-powered tools.
             </p>
           </div>
 
@@ -27,7 +23,7 @@ const Index = () => {
               className="button-animation bg-white text-primary border-2 border-primary hover:bg-accent px-8 py-6"
               onClick={() => navigate("/auth")}
             >
-              Sign Up / Login
+              Start
             </Button>
           </div>
 
