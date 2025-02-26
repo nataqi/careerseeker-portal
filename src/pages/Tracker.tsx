@@ -175,9 +175,9 @@ const Tracker = () => {
               <Button
                 variant="outline"
                 onClick={() => {
-                  // Create Excel data
+                  // Create Excel data with clickable links
                   const data = trackedJobs.map(job => ({
-                    'Job Title': job.headline,
+                    'Job Title': `=HYPERLINK("https://arbetsformedlingen.se/platsbanken/annonser/${job.job_id}","${job.headline}")`,
                     'Employer': job.employer_name,
                     'Location': job.workplace_city || '',
                     'Status': job.response_status,
@@ -352,7 +352,14 @@ const Tracker = () => {
                                             onChange={(e) => setEditForm(prev => ({ ...prev, headline: e.target.value }))}
                                           />
                                         ) : (
-                                          job.headline
+                                          <a
+                                            href={`https://arbetsformedlingen.se/platsbanken/annonser/${job.job_id}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-primary hover:underline"
+                                          >
+                                            {job.headline}
+                                          </a>
                                         )}
                                       </TableCell>
                                       <TableCell>
