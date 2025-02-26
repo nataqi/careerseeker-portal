@@ -12,5 +12,4 @@ export interface SavedJob {
   interview_date: string | null;
   notes: string | null;
   display_order: number | null;
-  tracking_date: string | null;
 }
