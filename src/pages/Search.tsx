@@ -1,8 +1,9 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { Search as SearchIcon, Upload, BriefcaseIcon, LogOut, Loader2, Info, Star, BookmarkIcon } from "lucide-react";
+import { Search as SearchIcon, Upload, BriefcaseIcon, LogOut, LogIn, Loader2, Info, Star, BookmarkIcon } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/lib/auth";
 import { useNavigate } from "react-router-dom";
