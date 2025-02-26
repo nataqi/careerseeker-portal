@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -153,14 +152,24 @@ const Search = () => {
     <div className="min-h-screen bg-secondary p-4 md:p-8">
       <div className="container mx-auto max-w-6xl">
         <div className="flex justify-between mb-4">
-          <Button
-            variant="ghost"
-            onClick={() => navigate("/saved-jobs")}
-            className="text-gray-600 hover:text-gray-900"
-          >
-            <BookmarkIcon className="w-4 h-4 mr-2" />
-            Saved Jobs
-          </Button>
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              onClick={() => navigate("/saved-jobs")}
+              className="text-gray-600 hover:text-gray-900"
+            >
+              <BookmarkIcon className="w-4 h-4 mr-2" />
+              Saved Jobs
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => navigate("/tracker")}
+              className="text-gray-600 hover:text-gray-900"
+            >
+              <BriefcaseIcon className="w-4 h-4 mr-2" />
+              Jobs Tracker
+            </Button>
+          </div>
           <Button
             variant="ghost"
             onClick={signOut}
@@ -355,4 +364,3 @@ const Search = () => {
 };
 
 export default Search;
-
