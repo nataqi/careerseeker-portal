@@ -6,13 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 
 const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSignUp, setIsSignUp] = useState(false);
-  const [isReset, setIsReset] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { signIn, signUp } = useAuth();
   const { toast } = useToast();
@@ -23,15 +21,7 @@ const Auth = () => {
     setIsLoading(true);
 
     try {
-      if (isReset) {
-        const { error } = await supabase.auth.resetPasswordForEmail(email);
-        if (error) throw error;
-        toast({
-          title: "Success",
-          description: "Password reset instructions have been sent to your email",
-        });
-        setIsReset(false);
-      } else if (isSignUp) {
+      if (isSignUp) {
         await signUp(email, password);
         toast({
           title: "Success",
@@ -57,16 +47,10 @@ const Auth = () => {
       <Card className="w-full max-w-md p-6 space-y-6 bg-white">
         <div className="text-center space-y-2">
           <h1 className="text-2xl font-bold">
-            {isReset
-              ? "Reset Password"
-              : isSignUp
-              ? "Create an account"
-              : "Welcome back"}
+            {isSignUp ? "Create an account" : "Welcome back"}
           </h1>
           <p className="text-gray-500">
-            {isReset
-              ? "Enter your email to receive reset instructions"
-              : isSignUp
+            {isSignUp
               ? "Sign up to start your job search journey"
               : "Sign in to continue your job search"}
           </p>
@@ -82,17 +66,15 @@ const Auth = () => {
               required
             />
           </div>
-          {!isReset && (
-            <div className="space-y-2">
-              <Input
-                type="password"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-          )}
+          <div className="space-y-2">
+            <Input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </div>
           <Button
             type="submit"
             className="w-full"
@@ -100,45 +82,22 @@ const Auth = () => {
           >
             {isLoading
               ? "Loading..."
-              : isReset
-              ? "Send Reset Instructions"
               : isSignUp
               ? "Sign Up"
               : "Sign In"}
           </Button>
         </form>
 
-        <div className="text-center space-y-2">
+        <div className="text-center">
           <Button
             variant="link"
-            onClick={() => {
-              setIsSignUp(!isSignUp);
-              setIsReset(false);
-            }}
+            onClick={() => setIsSignUp(!isSignUp)}
             className="text-gray-500"
           >
             {isSignUp
               ? "Already have an account? Sign in"
               : "Don't have an account? Sign up"}
           </Button>
-          {!isReset && !isSignUp && (
-            <Button
-              variant="link"
-              onClick={() => setIsReset(true)}
-              className="text-gray-500 block mx-auto"
-            >
-              Forgot password?
-            </Button>
-          )}
-          {isReset && (
-            <Button
-              variant="link"
-              onClick={() => setIsReset(false)}
-              className="text-gray-500"
-            >
-              Back to sign in
-            </Button>
-          )}
         </div>
       </Card>
     </div>

@@ -158,11 +158,11 @@ const Tracker = () => {
             <div className="flex items-center gap-4">
               <Button
                 variant="ghost"
-                onClick={() => navigate("/search")}
+                onClick={() => navigate("/")}
                 className="text-gray-600 hover:text-gray-900"
               >
                 <Home className="w-4 h-4 mr-2" />
-                Search
+                Home
               </Button>
               <Button
                 variant="ghost"
@@ -352,14 +352,7 @@ const Tracker = () => {
                                             onChange={(e) => setEditForm(prev => ({ ...prev, headline: e.target.value }))}
                                           />
                                         ) : (
-                                          <a
-                                            href={`https://arbetsformedlingen.se/platsbanken/annonser/${job.job_id}`}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="text-primary hover:underline"
-                                          >
-                                            {job.headline}
-                                          </a>
+                                          job.headline
                                         )}
                                       </TableCell>
                                       <TableCell>

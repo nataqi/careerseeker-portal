@@ -21,7 +21,7 @@ const Index = () => {
           <div className="flex justify-center mt-8">
             <Button
               className="button-animation bg-white text-primary border-2 border-primary hover:bg-accent px-8 py-6"
-              onClick={() => navigate("/search")}
+              onClick={() => navigate("/auth")}
             >
               Start
             </Button>

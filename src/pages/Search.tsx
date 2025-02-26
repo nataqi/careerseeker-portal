@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { Search as SearchIcon, Upload, BriefcaseIcon, LogOut, LogIn, Loader2, Info, Star, BookmarkIcon } from "lucide-react";
+import { Search as SearchIcon, Upload, BriefcaseIcon, LogOut, Loader2, Info, Star, BookmarkIcon } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/lib/auth";
 import { useNavigate } from "react-router-dom";
@@ -153,66 +153,26 @@ const Search = () => {
     <div className="min-h-screen bg-secondary p-4 md:p-8">
       <div className="container mx-auto max-w-6xl">
         <div className="flex justify-between mb-4">
-          <div className="flex gap-2">
-            <Button
-              variant="ghost"
-              onClick={() => {
-                if (!user) {
-                  toast({
-                    title: "Authentication required",
-                    description: "Please sign in to access saved jobs",
-                    variant: "destructive",
-                  });
-                  return;
-                }
-                navigate("/saved-jobs");
-              }}
-              className="text-gray-600 hover:text-gray-900"
-            >
-              <BookmarkIcon className="w-4 h-4 mr-2" />
-              Saved Jobs
-            </Button>
-            <Button
-              variant="ghost"
-              onClick={() => {
-                if (!user) {
-                  toast({
-                    title: "Authentication required",
-                    description: "Please sign in to access the Job Tracker",
-                    variant: "destructive",
-                  });
-                  return;
-                }
-                navigate("/tracker");
-              }}
-              className="text-gray-600 hover:text-gray-900"
-            >
-              <BriefcaseIcon className="w-4 h-4 mr-2" />
-              Jobs Tracker
-            </Button>
-          </div>
-          {user ? (
-            <Button
-              variant="ghost"
-              onClick={signOut}
-              className="text-gray-600 hover:text-gray-900"
-            >
-              <LogOut className="w-4 h-4 mr-2" />
-              Sign Out
-            </Button>
-          ) : (
-            <Button
-              variant="ghost"
-              onClick={() => navigate("/auth")}
-              className="text-gray-600 hover:text-gray-900"
-            >
-              <LogIn className="w-4 h-4 mr-2" />
-              Log In
-            </Button>
-          )}
+          <Button
+            variant="ghost"
+            onClick={() => navigate("/saved-jobs")}
+            className="text-gray-600 hover:text-gray-900"
+          >
+            <BookmarkIcon className="w-4 h-4 mr-2" />
+            Saved Jobs
+          </Button>
+          <Button
+            variant="ghost"
+            onClick={signOut}
+            className="text-gray-600 hover:text-gray-900"
+          >
+            <LogOut className="w-4 h-4 mr-2" />
+            Sign Out
+          </Button>
         </div>
 
         <div className="space-y-6">
+          {/* Search Section */}
           <div className="bg-white p-6 rounded-lg shadow-sm">
             <div className="flex flex-col md:flex-row gap-4 items-center">
               <div className="flex-1 w-full">
@@ -250,6 +210,7 @@ const Search = () => {
             </div>
           </div>
 
+          {/* CV Upload Section */}
           <div className="bg-white p-6 rounded-lg shadow-sm">
             <h2 className="text-lg font-semibold mb-4 text-gray-900">Upload Your CV</h2>
             <div className="max-w-2xl mx-auto">
@@ -301,6 +262,7 @@ const Search = () => {
             </div>
           </div>
 
+          {/* Skills Section */}
           {extractedSkills.length > 0 && (
             <div className="bg-white p-6 rounded-lg shadow-sm">
               <h3 className="text-sm font-medium text-gray-700 mb-3">Skills Extracted from CV:</h3>
@@ -317,6 +279,7 @@ const Search = () => {
             </div>
           )}
 
+          {/* Jobs Section */}
           <div className="grid gap-4">
             {isLoading || isProcessingCV ? (
               <div className="flex items-center justify-center py-8">
@@ -328,30 +291,21 @@ const Search = () => {
               </div>
             ) : (
               jobs.map((job) => (
-                <Card key={job.id}>
+                <Card
+                  key={job.id}
+                  className="p-6 card-hover bg-white relative"
+                >
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => {
-                      if (!user) {
-                        toast({
-                          title: "Authentication required",
-                          description: "Please sign in to save jobs",
-                          variant: "destructive",
-                        });
-                        return;
-                      }
-                      toggleSaveJob(job);
-                    }}
-                    className={`absolute top-4 right-4 hover:bg-transparent ${
-                      isJobSaved(job.id)
-                        ? "text-pink-500"
-                        : "text-gray-400 hover:text-pink-500"
-                    }`}
+                    className="absolute top-4 right-4 hover:bg-transparent"
+                    onClick={() => toggleSaveJob(job)}
                   >
                     <Star
                       className={`w-5 h-5 ${
-                        isJobSaved(job.id) ? "fill-pink-500" : ""
+                        isJobSaved(job.id)
+                          ? "text-pink-500 fill-pink-500"
+                          : "text-gray-400 hover:text-pink-500"
                       }`}
                     />
                   </Button>
@@ -401,3 +355,4 @@ const Search = () => {
 };
 
 export default Search;
+

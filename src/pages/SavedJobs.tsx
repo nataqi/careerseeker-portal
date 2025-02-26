@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
@@ -54,19 +55,11 @@ const SavedJobs = () => {
             </Button>
             <Button
               variant="ghost"
-              onClick={() => navigate("/search")}
+              onClick={() => navigate("/")}
               className="text-gray-600 hover:text-gray-900"
             >
               <Home className="w-4 h-4 mr-2" />
-              Search
-            </Button>
-            <Button
-              variant="ghost"
-              onClick={() => navigate("/tracker")}
-              className="text-gray-600 hover:text-gray-900"
-            >
-              <BriefcaseIcon className="w-4 h-4 mr-2" />
-              Jobs Tracker
+              Home
             </Button>
           </div>
           <h1 className="text-2xl font-semibold text-gray-900">Saved Jobs</h1>
