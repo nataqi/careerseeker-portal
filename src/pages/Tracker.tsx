@@ -1,10 +1,9 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { BriefcaseIcon, ArrowLeft, Home, Loader2, Trash2 } from "lucide-react";
+import { BriefcaseIcon, ArrowLeft, Home, Loader2, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 import { useSavedJobs } from "@/hooks/useSavedJobs";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import type { SavedJob } from "@/types/saved-job";
@@ -23,8 +22,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const AF_BASE_URL = "https://arbetsformedlingen.se/platsbanken/annonser";
+const JOBS_PER_PAGE = 10;
 
 const APPLICATION_STATUSES = [
   { value: "Not Applied", label: "Not Applied" },
@@ -45,6 +50,7 @@ const Tracker = () => {
   const { savedJobs, isLoading, updateJobStatus } = useSavedJobs();
   const [trackedJobs, setTrackedJobs] = useState<SavedJob[]>([]);
   const [availableJobs, setAvailableJobs] = useState<SavedJob[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     if (!user) {
@@ -57,6 +63,11 @@ const Tracker = () => {
       setAvailableJobs(savedJobs.filter(job => !trackedJobs.some(tracked => tracked.id === job.id)));
     }
   }, [savedJobs, trackedJobs]);
+
+  const totalPages = Math.ceil(availableJobs.length / JOBS_PER_PAGE);
+  const startIndex = (currentPage - 1) * JOBS_PER_PAGE;
+  const endIndex = startIndex + JOBS_PER_PAGE;
+  const currentJobs = availableJobs.slice(startIndex, endIndex);
 
   const handleDragEnd = (result: any) => {
     if (!result.destination) return;
@@ -123,53 +134,92 @@ const Tracker = () => {
           </div>
         ) : (
           <DragDropContext onDragEnd={handleDragEnd}>
-            <div className="grid grid-cols-12 gap-6">
+            <div className="grid grid-cols-12 gap-6 items-start">
               <div className="col-span-12 md:col-span-3 xl:col-span-2">
-                <h2 className="text-xl font-semibold mb-4">Saved Jobs</h2>
-                <Droppable droppableId="savedJobs">
-                  {(provided) => (
-                    <div
-                      {...provided.droppableProps}
-                      ref={provided.innerRef}
-                      className="space-y-3"
-                    >
-                      {availableJobs.map((job, index) => (
-                        <Draggable key={job.id} draggableId={job.id} index={index}>
-                          {(provided, snapshot) => (
-                            <Card
-                              ref={provided.innerRef}
-                              {...provided.draggableProps}
-                              {...provided.dragHandleProps}
-                              className={`p-4 card-hover bg-white ${
-                                snapshot.isDragging ? "shadow-lg ring-2 ring-primary" : ""
-                              }`}
-                            >
-                              <div className="space-y-2">
-                                <h3 className="font-semibold text-gray-900 text-sm leading-tight">
-                                  {job.headline}
-                                </h3>
-                                <div className="flex items-center justify-between gap-2">
-                                  <div className="flex items-center gap-1.5 text-xs text-gray-600">
-                                    <BriefcaseIcon className="w-3 h-3 shrink-0" />
-                                    <span className="truncate">{job.employer_name}</span>
+                <div className="bg-white rounded-lg p-4">
+                  <h2 className="text-xl font-semibold mb-4">Saved Jobs</h2>
+                  <Droppable droppableId="savedJobs">
+                    {(provided) => (
+                      <div
+                        {...provided.droppableProps}
+                        ref={provided.innerRef}
+                        className="space-y-3"
+                      >
+                        {currentJobs.map((job, index) => (
+                          <Draggable key={job.id} draggableId={job.id} index={index}>
+                            {(provided, snapshot) => (
+                              <Card
+                                ref={provided.innerRef}
+                                {...provided.draggableProps}
+                                {...provided.dragHandleProps}
+                                className={`p-4 card-hover ${
+                                  snapshot.isDragging ? "shadow-lg ring-2 ring-primary" : ""
+                                }`}
+                              >
+                                <div className="space-y-2">
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <h3 className="font-semibold text-gray-900 text-sm leading-tight truncate max-w-full">
+                                        {job.headline}
+                                      </h3>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="bottom">
+                                      <p className="max-w-[300px] text-sm">{job.headline}</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                  <div className="flex items-center justify-between gap-2">
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <div className="flex items-center gap-1.5 text-xs text-gray-600 max-w-[120px]">
+                                          <BriefcaseIcon className="w-3 h-3 shrink-0" />
+                                          <span className="truncate">{job.employer_name}</span>
+                                        </div>
+                                      </TooltipTrigger>
+                                      <TooltipContent side="bottom">
+                                        <p className="text-sm">{job.employer_name}</p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                    <Button
+                                      size="sm"
+                                      onClick={() => window.open(`${AF_BASE_URL}/${job.job_id}`, '_blank')}
+                                      className="bg-primary hover:bg-primary-hover text-white shrink-0 h-7 text-xs px-2.5"
+                                    >
+                                      Apply
+                                    </Button>
                                   </div>
-                                  <Button
-                                    size="sm"
-                                    onClick={() => window.open(`${AF_BASE_URL}/${job.job_id}`, '_blank')}
-                                    className="bg-primary hover:bg-primary-hover text-white shrink-0 h-7 text-xs px-2.5"
-                                  >
-                                    Apply
-                                  </Button>
                                 </div>
-                              </div>
-                            </Card>
-                          )}
-                        </Draggable>
-                      ))}
-                      {provided.placeholder}
+                              </Card>
+                            )}
+                          </Draggable>
+                        ))}
+                        {provided.placeholder}
+                      </div>
+                    )}
+                  </Droppable>
+                  {totalPages > 1 && (
+                    <div className="flex items-center justify-between mt-4 border-t pt-3">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                        disabled={currentPage === 1}
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                      <span className="text-sm text-gray-600">
+                        {currentPage} / {totalPages}
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                        disabled={currentPage === totalPages}
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
                     </div>
                   )}
-                </Droppable>
+                </div>
               </div>
 
               <div className="col-span-12 md:col-span-9 xl:col-span-10">
@@ -190,7 +240,7 @@ const Tracker = () => {
                           <TableBody
                             {...provided.droppableProps}
                             ref={provided.innerRef}
-                            className={`min-h-[400px] relative`}
+                            className="min-h-[400px] relative"
                           >
                             {trackedJobs.length === 0 ? (
                               <TableRow>
