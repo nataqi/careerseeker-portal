@@ -1,10 +1,11 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { BriefcaseIcon, ArrowLeft, Home, Loader2, Trash2, ChevronLeft, ChevronRight, Edit } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { BriefcaseIcon, ArrowLeft, Home, Loader2, Trash2, ChevronLeft, ChevronRight, Edit, Save, X } from "lucide-react";
 import { useSavedJobs } from "@/hooks/useSavedJobs";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import type { SavedJob } from "@/types/saved-job";
@@ -47,6 +48,8 @@ const Tracker = () => {
   const [trackedJobs, setTrackedJobs] = useState<SavedJob[]>([]);
   const [availableJobs, setAvailableJobs] = useState<SavedJob[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [editingJob, setEditingJob] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState<Partial<SavedJob>>({});
 
   useEffect(() => {
     if (!user) {
@@ -70,11 +73,32 @@ const Tracker = () => {
       if (!trackedJobs.some(job => job.id === draggedJob.id)) {
         setTrackedJobs(prev => [...prev, {
           ...draggedJob,
-          workplace_city: draggedJob.workplace_city || 'Not specified'
+          workplace_city: draggedJob.workplace_city || 'Not specified',
+          notes: null
         }]);
         setAvailableJobs(prev => prev.filter(job => job.id !== draggedJob.id));
       }
     }
+  };
+
+  const handleEditClick = (job: SavedJob) => {
+    setEditingJob(job.id);
+    setEditForm(job);
+  };
+
+  const handleSaveEdit = async (jobId: string) => {
+    setTrackedJobs(prev =>
+      prev.map(job =>
+        job.id === jobId ? { ...job, ...editForm } : job
+      )
+    );
+    setEditingJob(null);
+    setEditForm({});
+  };
+
+  const handleCancelEdit = () => {
+    setEditingJob(null);
+    setEditForm({});
   };
 
   const handleStatusChange = async (jobId: string, status: ApplicationStatus) => {
@@ -104,11 +128,20 @@ const Tracker = () => {
 
   return (
     <div className="min-h-screen bg-secondary">
-      <div className="max-w-[1920px] mx-auto px-4 pt-16 pb-6">
-        <div className="flex justify-center items-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900">Job Tracking Dashboard</h1>
+      <div className="bg-white py-16 border-b">
+        <div className="max-w-[1920px] mx-auto px-4">
+          <div className="text-center space-y-4">
+            <h1 className="text-5xl font-bold text-gray-900">
+              Track Your Job Applications
+            </h1>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              Manage your saved jobs and keep track of your applications in one place.
+            </p>
+          </div>
         </div>
+      </div>
 
+      <div className="max-w-[1920px] mx-auto px-4 py-12">
         {isLoading ? (
           <div className="flex items-center justify-center py-8">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -195,11 +228,12 @@ const Tracker = () => {
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead className="min-w-[300px] max-w-[400px]">Job Title</TableHead>
+                          <TableHead className="min-w-[250px]">Job Title</TableHead>
                           <TableHead className="min-w-[200px]">Employer</TableHead>
                           <TableHead className="min-w-[150px]">Location</TableHead>
                           <TableHead className="min-w-[180px]">Status</TableHead>
-                          <TableHead className="w-[120px]">Actions</TableHead>
+                          <TableHead className="min-w-[200px]">Notes</TableHead>
+                          <TableHead className="w-[100px]">Actions</TableHead>
                         </TableRow>
                       </TableHeader>
                       <Droppable droppableId="trackerTable">
@@ -212,7 +246,7 @@ const Tracker = () => {
                             {trackedJobs.length === 0 ? (
                               <TableRow>
                                 <TableCell 
-                                  colSpan={5} 
+                                  colSpan={6} 
                                   className="text-center text-gray-500 h-[300px]"
                                 >
                                   Drag jobs here to track them
@@ -232,10 +266,35 @@ const Tracker = () => {
                                       {...provided.dragHandleProps}
                                     >
                                       <TableCell className="font-medium">
-                                        {job.headline}
+                                        {editingJob === job.id ? (
+                                          <Input
+                                            value={editForm.headline || ''}
+                                            onChange={(e) => setEditForm(prev => ({ ...prev, headline: e.target.value }))}
+                                          />
+                                        ) : (
+                                          job.headline
+                                        )}
                                       </TableCell>
-                                      <TableCell>{job.employer_name}</TableCell>
-                                      <TableCell>{job.workplace_city}</TableCell>
+                                      <TableCell>
+                                        {editingJob === job.id ? (
+                                          <Input
+                                            value={editForm.employer_name || ''}
+                                            onChange={(e) => setEditForm(prev => ({ ...prev, employer_name: e.target.value }))}
+                                          />
+                                        ) : (
+                                          job.employer_name
+                                        )}
+                                      </TableCell>
+                                      <TableCell>
+                                        {editingJob === job.id ? (
+                                          <Input
+                                            value={editForm.workplace_city || ''}
+                                            onChange={(e) => setEditForm(prev => ({ ...prev, workplace_city: e.target.value }))}
+                                          />
+                                        ) : (
+                                          job.workplace_city
+                                        )}
+                                      </TableCell>
                                       <TableCell>
                                         <Select
                                           defaultValue={job.response_status || "Not Applied"}
@@ -254,23 +313,63 @@ const Tracker = () => {
                                         </Select>
                                       </TableCell>
                                       <TableCell>
+                                        {editingJob === job.id ? (
+                                          <Textarea
+                                            value={editForm.notes || ''}
+                                            onChange={(e) => setEditForm(prev => ({ ...prev, notes: e.target.value }))}
+                                            className="min-h-[80px]"
+                                          />
+                                        ) : (
+                                          <div className="max-h-[100px] overflow-hidden text-sm">
+                                            {job.notes ? (
+                                              job.notes.length > 100 ? 
+                                                `${job.notes.slice(0, 100)}...` : 
+                                                job.notes
+                                            ) : '-'}
+                                          </div>
+                                        )}
+                                      </TableCell>
+                                      <TableCell>
                                         <div className="flex items-center gap-2">
-                                          <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() => handleRemoveJob(job.id)}
-                                            className="h-8 w-8 text-gray-500 hover:text-red-600"
-                                          >
-                                            <Trash2 className="h-4 w-4" />
-                                          </Button>
-                                          <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() => {/* TODO: Implement edit functionality */}}
-                                            className="h-8 w-8 text-gray-500 hover:text-primary"
-                                          >
-                                            <Edit className="h-4 w-4" />
-                                          </Button>
+                                          {editingJob === job.id ? (
+                                            <>
+                                              <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() => handleSaveEdit(job.id)}
+                                                className="h-8 w-8 text-gray-500 hover:text-green-600"
+                                              >
+                                                <Save className="h-4 w-4" />
+                                              </Button>
+                                              <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={handleCancelEdit}
+                                                className="h-8 w-8 text-gray-500 hover:text-red-600"
+                                              >
+                                                <X className="h-4 w-4" />
+                                              </Button>
+                                            </>
+                                          ) : (
+                                            <>
+                                              <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() => handleRemoveJob(job.id)}
+                                                className="h-8 w-8 text-gray-500 hover:text-red-600"
+                                              >
+                                                <Trash2 className="h-4 w-4" />
+                                              </Button>
+                                              <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() => handleEditClick(job)}
+                                                className="h-8 w-8 text-gray-500 hover:text-primary"
+                                              >
+                                                <Edit className="h-4 w-4" />
+                                              </Button>
+                                            </>
+                                          )}
                                         </div>
                                       </TableCell>
                                     </TableRow>
