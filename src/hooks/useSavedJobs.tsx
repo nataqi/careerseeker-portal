@@ -31,7 +31,14 @@ export const useSavedJobs = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setSavedJobs(data);
+
+      // Initialize tracking_date for each job with created_at date if not set
+      const formattedData: SavedJob[] = data.map(job => ({
+        ...job,
+        tracking_date: job.tracking_date || formatDate(new Date(job.created_at))
+      }));
+
+      setSavedJobs(formattedData);
     } catch (error) {
       console.error('Error fetching saved jobs:', error);
       toast({
@@ -42,6 +49,14 @@ export const useSavedJobs = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: '2-digit',
+      year: '2-digit'
+    }).replace(/\//g, '.');
   };
 
   const subscribeToSavedJobs = () => {
@@ -131,6 +146,7 @@ export const useSavedJobs = () => {
       }
     } else {
       try {
+        const currentDate = formatDate(new Date());
         const { error } = await supabase
           .from('saved_jobs')
           .insert({
@@ -139,6 +155,7 @@ export const useSavedJobs = () => {
             headline: job.headline,
             employer_name: job.employer.name,
             workplace_city: job.workplace?.city || null,
+            tracking_date: currentDate
           });
 
         if (error) throw error;
