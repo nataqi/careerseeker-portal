@@ -1,8 +1,9 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { Search as SearchIcon, Upload, BriefcaseIcon, LogOut, Loader2, Info, Star, BookmarkIcon } from "lucide-react";
+import { Search as SearchIcon, Upload, BriefcaseIcon, LogOut, Loader2, Info, Star, BookmarkIcon, Filter, ChevronDown, ChevronUp } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/lib/auth";
 import { useNavigate } from "react-router-dom";
@@ -18,24 +19,56 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 
 const AF_BASE_URL = "https://arbetsformedlingen.se/platsbanken/annonser";
 
 type SearchMode = "OR" | "AND";
+type PublishDateFilter = "last-hour" | "today" | "last-7-days" | "last-30-days" | "";
 
 const searchModeHelp = {
   OR: "Find jobs containing any of the words (e.g., 'developer designer')",
   AND: "Find jobs containing all words (e.g., 'frontend react')",
 };
 
+const publishDateOptions = [
+  { value: "", label: "Any time" },
+  { value: "last-hour", label: "Last hour" },
+  { value: "today", label: "Today" },
+  { value: "last-7-days", label: "Last 7 days" },
+  { value: "last-30-days", label: "Last 30 days" },
+];
+
+const RESULTS_PER_PAGE = 10;
+const SEARCH_LIMIT = 100;
+
 const Search = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchMode, setSearchMode] = useState<SearchMode>("OR");
+  const [publishDateFilter, setPublishDateFilter] = useState<PublishDateFilter>("");
   const [isLoading, setIsLoading] = useState(false);
   const [jobs, setJobs] = useState<JobListing[]>([]);
   const [isProcessingCV, setIsProcessingCV] = useState(false);
   const [extractedSkills, setExtractedSkills] = useState<string[]>([]);
   const [isDragging, setIsDragging] = useState(false);
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalJobs, setTotalJobs] = useState(0);
   const { toast } = useToast();
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
@@ -59,13 +92,21 @@ const Search = () => {
     const fetchJobs = async () => {
       if (!debouncedSearchQuery.trim()) {
         setJobs([]);
+        setTotalJobs(0);
         return;
       }
       setIsLoading(true);
       try {
         const formattedQuery = formatSearchQuery(debouncedSearchQuery, searchMode);
-        const response = await searchJobs(formattedQuery, searchMode);
+        const response = await searchJobs(
+          formattedQuery, 
+          searchMode, 
+          publishDateFilter, 
+          SEARCH_LIMIT,
+          (currentPage - 1) * RESULTS_PER_PAGE
+        );
         setJobs(response.hits);
+        setTotalJobs(response.total.value);
       } catch (error) {
         console.error("Search error:", error);
         toast({
@@ -78,7 +119,7 @@ const Search = () => {
       }
     };
     fetchJobs();
-  }, [debouncedSearchQuery, searchMode, toast]);
+  }, [debouncedSearchQuery, searchMode, publishDateFilter, currentPage, toast]);
 
   const handleFileUpload = async (file: File) => {
     if (!file) return;
@@ -106,6 +147,7 @@ const Search = () => {
       const { skills, jobs: matchedJobs } = functionData;
       setExtractedSkills(skills);
       setJobs(matchedJobs);
+      setTotalJobs(matchedJobs.length);
       
       toast({
         title: "CV Processed Successfully",
@@ -146,6 +188,98 @@ const Search = () => {
     setIsDragging(false);
   };
 
+  const handleFiltersToggle = () => {
+    setIsFiltersOpen(!isFiltersOpen);
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo(0, 0);
+  };
+
+  const totalPages = Math.ceil(totalJobs / RESULTS_PER_PAGE);
+
+  const renderPaginationItems = () => {
+    const items = [];
+    const maxVisiblePages = 5;
+    
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) {
+        items.push(
+          <PaginationItem key={i}>
+            <PaginationLink 
+              onClick={() => handlePageChange(i)}
+              isActive={currentPage === i}
+            >
+              {i}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      }
+    } else {
+      // Always show first page
+      items.push(
+        <PaginationItem key={1}>
+          <PaginationLink 
+            onClick={() => handlePageChange(1)}
+            isActive={currentPage === 1}
+          >
+            1
+          </PaginationLink>
+        </PaginationItem>
+      );
+
+      // Show ellipsis if current page is more than 3
+      if (currentPage > 3) {
+        items.push(
+          <PaginationItem key="ellipsis1">
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
+      }
+
+      // Show pages around current page
+      const startPage = Math.max(2, currentPage - 1);
+      const endPage = Math.min(totalPages - 1, currentPage + 1);
+
+      for (let i = startPage; i <= endPage; i++) {
+        items.push(
+          <PaginationItem key={i}>
+            <PaginationLink 
+              onClick={() => handlePageChange(i)}
+              isActive={currentPage === i}
+            >
+              {i}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      }
+
+      // Show ellipsis if current page is less than totalPages - 2
+      if (currentPage < totalPages - 2) {
+        items.push(
+          <PaginationItem key="ellipsis2">
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
+      }
+
+      // Always show last page
+      items.push(
+        <PaginationItem key={totalPages}>
+          <PaginationLink 
+            onClick={() => handlePageChange(totalPages)}
+            isActive={currentPage === totalPages}
+          >
+            {totalPages}
+          </PaginationLink>
+        </PaginationItem>
+      );
+    }
+
+    return items;
+  };
+
   if (!user) return null;
 
   return (
@@ -180,7 +314,7 @@ const Search = () => {
           </Button>
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-4">
           {/* Search Section */}
           <div className="bg-white p-6 rounded-lg shadow-sm">
             <div className="flex flex-col md:flex-row gap-4 items-center">
@@ -217,64 +351,90 @@ const Search = () => {
                 </Button>
               </div>
             </div>
-          </div>
 
-          {/* CV Upload Section */}
-          <div className="bg-white p-6 rounded-lg shadow-sm">
-            <h2 className="text-lg font-semibold mb-4 text-gray-900">Upload Your CV</h2>
-            <div className="max-w-2xl mx-auto">
-              <input 
-                type="file" 
-                accept=".pdf" 
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) handleFileUpload(file);
-                }} 
-                className="hidden" 
-                id="cv-upload" 
-                disabled={isProcessingCV}
-              />
-              <div
-                onDrop={handleDrop}
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                className={`relative border-2 ${
-                  isDragging ? 'border-primary bg-primary/10' : 'border-dashed border-gray-300'
-                } rounded-lg p-8 transition-all cursor-pointer hover:border-primary/50`}
-                onClick={() => document.getElementById('cv-upload')?.click()}
-              >
-                {isProcessingCV ? (
-                  <div className="flex flex-col items-center justify-center space-y-2">
-                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                    <p className="text-sm text-gray-600">Processing CV...</p>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center space-y-3">
-                    <Upload className="w-12 h-12 text-gray-400" />
-                    <div className="text-center">
-                      <p className="text-sm font-medium text-gray-700">
-                        {isDragging ? (
-                          "Drop your CV here"
-                        ) : (
-                          <>
-                            Drag and drop your CV here
-                            <br />
-                            or click to select a file
-                          </>
-                        )}
-                      </p>
-                      <p className="text-xs text-gray-500 mt-1">PDF files only</p>
+            <div className="mt-4">
+              <Collapsible open={isFiltersOpen} onOpenChange={setIsFiltersOpen}>
+                <CollapsibleTrigger asChild>
+                  <Button variant="outline" className="w-full md:w-auto">
+                    <Filter className="mr-2 h-4 w-4" />
+                    Filters
+                    {isFiltersOpen ? (
+                      <ChevronUp className="ml-2 h-4 w-4" />
+                    ) : (
+                      <ChevronDown className="ml-2 h-4 w-4" />
+                    )}
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="mt-4 p-4 border rounded-md">
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="font-medium mb-2">Publishing Date</h3>
+                      <RadioGroup 
+                        value={publishDateFilter} 
+                        onValueChange={(value) => setPublishDateFilter(value as PublishDateFilter)}
+                        className="flex flex-wrap gap-4"
+                      >
+                        {publishDateOptions.map((option) => (
+                          <div key={option.value} className="flex items-center space-x-2">
+                            <RadioGroupItem value={option.value} id={`date-${option.value}`} />
+                            <Label htmlFor={`date-${option.value}`}>{option.label}</Label>
+                          </div>
+                        ))}
+                      </RadioGroup>
                     </div>
                   </div>
-                )}
+                </CollapsibleContent>
+              </Collapsible>
+            </div>
+          </div>
+
+          {/* CV Upload Section - Made Smaller */}
+          <div className="bg-white p-4 rounded-lg shadow-sm">
+            <div className="flex items-center gap-4">
+              <h2 className="text-sm font-semibold text-gray-900 whitespace-nowrap">Upload Your CV</h2>
+              <div className="flex-1">
+                <input 
+                  type="file" 
+                  accept=".pdf" 
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleFileUpload(file);
+                  }} 
+                  className="hidden" 
+                  id="cv-upload" 
+                  disabled={isProcessingCV}
+                />
+                <div
+                  onDrop={handleDrop}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  className={`relative border-2 ${
+                    isDragging ? 'border-primary bg-primary/10' : 'border-dashed border-gray-300'
+                  } rounded-lg p-3 transition-all cursor-pointer hover:border-primary/50`}
+                  onClick={() => document.getElementById('cv-upload')?.click()}
+                >
+                  {isProcessingCV ? (
+                    <div className="flex items-center justify-center h-12 gap-2">
+                      <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                      <p className="text-sm text-gray-600">Processing CV...</p>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center h-12 gap-3">
+                      <Upload className="w-5 h-5 text-gray-400" />
+                      <p className="text-sm font-medium text-gray-700">
+                        {isDragging ? "Drop your CV here" : "Drag and drop your CV here or click to select"}
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
 
           {/* Skills Section */}
           {extractedSkills.length > 0 && (
-            <div className="bg-white p-6 rounded-lg shadow-sm">
-              <h3 className="text-sm font-medium text-gray-700 mb-3">Skills Extracted from CV:</h3>
+            <div className="bg-white p-4 rounded-lg shadow-sm">
+              <h3 className="text-sm font-medium text-gray-700 mb-2">Skills Extracted from CV:</h3>
               <div className="flex flex-wrap gap-2">
                 {extractedSkills.map((skill, index) => (
                   <span
@@ -288,15 +448,22 @@ const Search = () => {
             </div>
           )}
 
+          {/* Jobs Count */}
+          {totalJobs > 0 && (
+            <div className="text-sm text-gray-600">
+              Found {totalJobs} jobs matching your criteria
+            </div>
+          )}
+
           {/* Jobs Section */}
           <div className="grid gap-4">
-            {isLoading || isProcessingCV ? (
+            {isLoading ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="w-8 h-8 animate-spin text-primary" />
               </div>
             ) : jobs.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
-                {searchQuery.trim() ? "No jobs found. Try different keywords." : "Start searching for jobs..."}
+                {searchQuery.trim() ? "No jobs found. Try different keywords or filters." : "Start searching for jobs..."}
               </div>
             ) : (
               jobs.map((job) => (
@@ -357,6 +524,29 @@ const Search = () => {
               ))
             )}
           </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <Pagination className="my-8">
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious 
+                    onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                    className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                  />
+                </PaginationItem>
+                
+                {renderPaginationItems()}
+                
+                <PaginationItem>
+                  <PaginationNext 
+                    onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+                    className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          )}
         </div>
       </div>
     </div>
