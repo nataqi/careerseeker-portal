@@ -85,7 +85,7 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `Act as an expert CV parser with deep knowledge of technical recruiting. Extract ALL job-relevant terms including:
+            content: `Act as an expert CV parser with deep knowledge of technical recruiting. Extract ALL job-relevant terms, **max 255 characters**.
 
             ### **Hard Skills**  
             -**Programming languages** (e.g., Python, Java)  
@@ -118,11 +118,9 @@ serve(async (req) => {
             - Extract terms in this priority order:
               -Hard Skills (tools/lang/frameworks)
               -Job Titles (standardized roles)
-              -Niche Competencies (domain-specific terms)
-            -MAX 255 CHARACTERS (enforce via term count)
+              -Niche Competencies (domain-specific terms
             -Order: Most frequent/relevant terms FIRST
             -Truncate strategy: Remove least important terms from list end`
-
 
            // content: `You are a skilled CV analyzer. Extract technical skills, tools, programming languages, job titles from experience section and relevant professional competencies from the CV.
            // Format the output as a comma-separated list of extracted words only.
