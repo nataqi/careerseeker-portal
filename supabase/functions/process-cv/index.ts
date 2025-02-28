@@ -87,7 +87,7 @@ serve(async (req) => {
             role: 'system',
             content: `### **Role & Task**  
             Act as an **expert CV parser** with deep knowledge of **technical recruiting**.  
-            Extract **ALL** job-relevant terms **(max 255 characters)**.  
+            Extract **ALL** job-relevant terms **(max 255 characters)**, explicitly stated in the cv.  
             
             ### **Output Format**  
             - **STRICT LIMIT:** Never exceed **255 characters** (including spaces).  
@@ -116,7 +116,8 @@ serve(async (req) => {
             ### **Strict Exclusions**  
             🚫 No soft skills (communication, teamwork)  
             🚫 No basic office tools (Word, Excel)  
-            🚫 No company-specific jargon  
+            🚫 No company-specific jargon
+            🚫 No inferred or made-up terms—only extract terms explicitly written in the CV  
             
             ### **Truncation Strategy**  
             - If the list exceeds **255 characters**, remove **least important** terms from the **end** of the list.  
@@ -184,7 +185,7 @@ serve(async (req) => {
       JSON.stringify({
         data: {
           skills: extractedSkills.split(',').map((skill: string) => skill.trim()),
-          jobs: jobData.hits?.slice(0, 10) || [], // Return top 10 matching jobs
+          jobs: jobData.hits?.slice(0, 100) || [], // Return top 10 matching jobs
           totalJobs: jobData.total?.value || 0
         }
       }),
