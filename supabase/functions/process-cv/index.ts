@@ -162,7 +162,7 @@ serve(async (req) => {
 
     // Search for jobs using the extracted skills
     console.log('Searching for matching jobs...');
-    const jobResponse = await fetch(`https://jobsearch.api.jobtechdev.se/search?q=${encodeURIComponent(searchQuery)}`, {
+    const jobResponse = await fetch(`https://jobsearch.api.jobtechdev.se/search?q=${encodeURIComponent(searchQuery)}&limit=100`, {
       headers: {
         'accept': 'application/json',
         'x-feature-freetext-bool-method': 'or',
