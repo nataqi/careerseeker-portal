@@ -85,42 +85,45 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `Act as an expert CV parser with deep knowledge of technical recruiting. Extract ALL job-relevant terms, **max 255 characters**.
-
-            ### **Hard Skills**  
-            -**Programming languages** (e.g., Python, Java)  
-            - **Tools/platforms** (e.g., Docker, AWS)  
-            - **Methodologies** (e.g., Agile, Scrum) 
-
-            ### **Job Titles**  
-            - **Current/past roles** (e.g., DevOps Engineer, Data Scientist)  
-            - **Standardized titles** (e.g., "Frontend Developer" not "Frontend Ninja")  
-
-            ### **Specialized Competencies**  
-            - **Industry-specific skills** (e.g., Hyperledger, ROS)  
-            - **Technical domains** (e.g., Computer Vision, Cybersecurity)  
-
-            ### **Formatting Rules**  
-            - Output **ONLY** a **comma-separated list**  
-            - Use **canonical terms** (e.g., "React" not "ReactJS")  
-
-            ### **Exclude:**  
-            - Soft skills (communication, teamwork)  
-            - Basic office tools (Word, Excel)  
-            - Company-specific jargon  
-
-            ### **Prioritize specificity:**  
-            - "PyTorch" > "Machine Learning"  
-            - Include **seniority indicators**: "Senior Python Developer" not just "Developer"  
-
-            ### **Output:**  
-            -Format the output as a comma-separated list of extracted words only.Example: "JavaScript, React, Node.js, Project Management"
-            - Extract terms in this priority order:
-              -Hard Skills (tools/lang/frameworks)
-              -Job Titles (standardized roles)
-              -Niche Competencies (domain-specific terms
-            -Order: Most frequent/relevant terms FIRST
-            -Truncate strategy: Remove least important terms from list end`
+            content: `### **Role & Task**  
+            Act as an **expert CV parser** with deep knowledge of **technical recruiting**.  
+            Extract **ALL** job-relevant terms **(max 255 characters)**.  
+            
+            ### **Output Format**  
+            - **STRICT LIMIT:** Never exceed **255 characters** (including spaces).  
+            - **Comma-separated list** (no bullet points, no extra text).  
+            - **Canonical terms only** (e.g., "React" not "ReactJS").  
+            - **Order:** Prioritize by **relevance & frequency**.  
+            
+            ### **Extraction Priority Order**  
+            1. **Hard Skills** (Tools, programming languages, frameworks)  
+            2. **Job Titles** (Standardized, seniority included)  
+            3. **Niche Competencies** (Industry/domain-specific terms)  
+            
+            ### **Hard Skills Examples**  
+            - **Programming Languages:** Python, Java, C++  
+            - **Tools & Platforms:** Docker, AWS, Kubernetes  
+            - **Methodologies:** Agile, Scrum  
+            
+            ### **Job Titles Examples**  
+            - **Standardized roles:** "DevOps Engineer", "Data Scientist"  
+            - **Seniority included:** "Senior Python Developer"  
+            
+            ### **Specialized Competencies Examples**  
+            - **Industry-Specific:** Hyperledger, ROS  
+            - **Technical Domains:** Cybersecurity, NLP  
+            
+            ### **Strict Exclusions**  
+            🚫 No soft skills (communication, teamwork)  
+            🚫 No basic office tools (Word, Excel)  
+            🚫 No company-specific jargon  
+            
+            ### **Truncation Strategy**  
+            - If the list exceeds **255 characters**, remove **least important** terms from the **end** of the list.  
+            - Ensure most **critical & high-priority** terms remain.  
+            
+            ### **Example Output**  
+            - JavaScript, React, Node.js, AWS, Docker, DevOps Engineer, NLP, Kubernetes, Scrum`
 
            // content: `You are a skilled CV analyzer. Extract technical skills, tools, programming languages, job titles from experience section and relevant professional competencies from the CV.
            // Format the output as a comma-separated list of extracted words only.
