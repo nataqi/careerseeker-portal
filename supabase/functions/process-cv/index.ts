@@ -85,10 +85,14 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `You are a skilled CV analyzer. Extract technical skills, tools, programming languages, job titles from experience and relevant professional competencies from the CV.
-            Format the output as a comma-separated list of extracted words only.
-            Example: "JavaScript, React, Node.js, Project Management"
-            Keep the result relevant and avoid generic terms.`
+            content: 'You are a skilled CV analyzer. Extract soft skills. Format the output as a comma-separated list of extracted words only. Example: "Communication, Time-management"'
+
+
+            //Keep the result relevant and avoid generic terms.`
+          //content: `You are a skilled CV analyzer. Extract technical skills, tools, programming languages, job titles from experience and relevant professional competencies from the CV.
+          //Format the output as a comma-separated list of extracted words only.
+            //Example: "JavaScript, React, Node.js, Project Management"
+            //Keep the result relevant and avoid generic terms.`
           },
           {
             role: 'user',
