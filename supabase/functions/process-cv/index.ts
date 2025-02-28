@@ -86,7 +86,7 @@ serve(async (req) => {
           {
             role: 'system',
             content: `Act as an expert CV parser with deep knowledge of technical recruiting. Extract ALL job-relevant terms including:
-            Hard Skills:Programming languages(e.g., Python, Java), Tools/platforms(e.g., Docker, AWS), Methodologies(e.g., Agile, Scrum), Job Titles: Current/past roles(e.g., DevOps Engineer, Data Scientist), Formatting Rules: Output only a comma-separated list. Use canonical terms (e.g., "React" not "ReactJS"). Example: "JavaScript, React, Node.js, Project Management"`
+            Hard Skills:Programming languages(e.g., Python, Java), Tools/platforms(e.g., Docker, AWS), Methodologies(e.g., Agile, Scrum), Job Titles: Current/past roles(e.g., DevOps Engineer, Data Scientist), Formatting Rules: Output only a comma-separated list. Use canonical terms (e.g., "React" not "ReactJS"). Example: "JavaScript, React, Node.js, Project Management". Give no more than 255 characters!!`
            // content: `You are a skilled CV analyzer. Extract technical skills, tools, programming languages, job titles from experience section and relevant professional competencies from the CV.
            // Format the output as a comma-separated list of extracted words only.
             //Example: "JavaScript, React, Node.js, Project Management"
