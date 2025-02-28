@@ -158,7 +158,7 @@ serve(async (req) => {
 
     // Convert skills to search query
     const skillsArray = extractedSkills.split(',').map(skill => skill.trim());
-    const searchQuery = skillsArray.join(' '); // Just space-separated
+    const searchQuery = skillsArray.join(' ').substring(0, 255); // Just space-separated
 
     // Search for jobs using the extracted skills
     console.log('Searching for matching jobs...');
