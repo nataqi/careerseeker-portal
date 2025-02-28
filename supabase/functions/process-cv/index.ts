@@ -85,12 +85,41 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: 'You are a skilled CV analyzer. Extract soft skills. Format the output as a comma-separated list of extracted words only. Example: "Communication, Time-management"'
+            content: `Act as an expert CV parser with deep knowledge of technical recruiting. Extract ALL job-relevant terms including:
+            
+            ### **Hard Skills**  
+            -**Programming languages** (e.g., Python, Java)  
+            - **Tools/platforms** (e.g., Docker, AWS)  
+            - **Certifications** (e.g., PMP, CISSP)  
+            - **Methodologies** (e.g., Agile, Scrum) 
 
+            ### **Job Titles**  
+            - **Current/past roles** (e.g., DevOps Engineer, Data Scientist)  
+            - **Standardized titles** (e.g., "Frontend Developer" not "Frontend Ninja")  
 
-            //Keep the result relevant and avoid generic terms.`
-          //content: `You are a skilled CV analyzer. Extract technical skills, tools, programming languages, job titles from experience and relevant professional competencies from the CV.
-          //Format the output as a comma-separated list of extracted words only.
+            ### **Specialized Competencies**  
+            - **Industry-specific skills** (e.g., Hyperledger, ROS)  
+            - **Technical domains** (e.g., Computer Vision, Cybersecurity)  
+
+            ### **Formatting Rules**  
+            - Output **ONLY** a **comma-separated list**  
+            - Use **canonical terms** (e.g., "React" not "ReactJS")  
+
+            ### **Exclude:**  
+            - Soft skills (communication, teamwork)  
+            - Basic office tools (Word, Excel)  
+            - Company-specific jargon  
+
+            ### **Prioritize specificity:**  
+            - "PyTorch" > "Machine Learning"  
+            - Include **seniority indicators**: "Senior Python Developer" not just "Developer"  
+
+            ### **Output:**  
+            -Format the output as a comma-separated list of extracted words only.Example: "JavaScript, React, Node.js, Project Management"`
+
+          
+           // content: `You are a skilled CV analyzer. Extract technical skills, tools, programming languages, job titles from experience section and relevant professional competencies from the CV.
+           // Format the output as a comma-separated list of extracted words only.
             //Example: "JavaScript, React, Node.js, Project Management"
             //Keep the result relevant and avoid generic terms.`
           },
