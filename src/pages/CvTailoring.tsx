@@ -50,8 +50,11 @@ const CvTailoring = () => {
       formData.append('cv', selectedCv);
       formData.append('jobId', selectedJob.job_id);
 
+      // Fix: Use string concatenation instead of accessing the protected url property
+      const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/cv-tailoring`;
+      
       const response = await fetch(
-        `${supabase.functions.url}/cv-tailoring`,
+        functionUrl,
         {
           method: 'POST',
           body: formData,
