@@ -1,5 +1,3 @@
 
-project_id = "bermzimdfevdpjcnxmkv"
-
-[functions.cv-tailoring]
-verify_jwt = false
+[functions.process-cv]
+verify_jwt = true
