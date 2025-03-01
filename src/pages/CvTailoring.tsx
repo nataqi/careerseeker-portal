@@ -83,12 +83,16 @@ const CvTailoring = () => {
       formData.append("cv", selectedFile);
       formData.append("jobId", selectedJobId);
 
-      // Call the Edge Function
-      const functionUrl = `${supabase.functions.url}/process-cv`;
+      // Call the Edge Function using string concatenation for the URL
+      const functionUrl = `${import.meta.env.VITE_SUPABASE_URL || 'https://bermzimdfevdpjcnxmkv.supabase.co'}/functions/v1/process-cv`;
+      
+      // Get the current session token
+      const { data: { session } } = await supabase.auth.getSession();
+      
       const response = await fetch(functionUrl, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${supabase.auth.session()?.access_token}`,
+          Authorization: `Bearer ${session?.access_token}`,
         },
         body: formData,
       });
