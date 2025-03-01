@@ -117,7 +117,7 @@ serve(async (req) => {
             🚫 No soft skills (communication, teamwork)  
             🚫 No basic office tools (Word, Excel)  
             🚫 No company-specific jargon
-            🚫 No inferred or made-up terms—only extract terms explicitly written in the CV  
+            🚫 **No inferred or made-up terms**—only extract terms explicitly written in the CV  
             
             ### **Truncation Strategy**  
             - If the list exceeds **255 characters**, remove **least important** terms from the **end** of the list.  
@@ -185,7 +185,7 @@ serve(async (req) => {
       JSON.stringify({
         data: {
           skills: extractedSkills.split(',').map((skill: string) => skill.trim()),
-          jobs: jobData.hits?.slice(0, 100) || [], // Return top 10 matching jobs
+          jobs: jobData.hits?.slice(0, 100) || [], // Return top 100 matching jobs
           totalJobs: jobData.total?.value || 0
         }
       }),
