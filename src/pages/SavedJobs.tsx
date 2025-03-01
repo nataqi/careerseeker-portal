@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { BriefcaseIcon, ArrowLeft, Home, Loader2, Star, ChevronLeft, ChevronRight } from "lucide-react";
+import { BriefcaseIcon, ArrowLeft, Home, Loader2, Star, ChevronLeft, ChevronRight, Search, FileText } from "lucide-react";
 import { useSavedJobs } from "@/hooks/useSavedJobs";
 
 const AF_BASE_URL = "https://arbetsformedlingen.se/platsbanken/annonser";
@@ -57,7 +57,7 @@ const SavedJobs = () => {
               onClick={() => navigate("/search")}
               className="text-gray-600 hover:text-gray-900"
             >
-              <Home className="w-4 h-4 mr-2" />
+              <Search className="w-4 h-4 mr-2" />
               Search
             </Button>
             <Button
@@ -67,6 +67,14 @@ const SavedJobs = () => {
             >
               <BriefcaseIcon className="w-4 h-4 mr-2" />
               Jobs Tracker
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => navigate("/cv-tailoring")}
+              className="text-gray-600 hover:text-gray-900"
+            >
+              <FileText className="w-4 h-4 mr-2" />
+              CV Tailoring
             </Button>
           </div>
           <h1 className="text-2xl font-semibold text-gray-900">Saved Jobs</h1>
