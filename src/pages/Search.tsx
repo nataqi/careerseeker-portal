@@ -324,14 +324,14 @@ const Search = () => {
           </div>
 
           {/* Skills Section */}
-          {extractedSkills.length > 0 && <div className="bg-white p-4 rounded-lg shadow-sm">
+          {/* {extractedSkills.length > 0 && <div className="bg-white p-4 rounded-lg shadow-sm">
               <h3 className="text-sm font-medium text-gray-700 mb-2">Skills Extracted from CV:</h3>
               <div className="flex flex-wrap gap-2">
                 {extractedSkills.map((skill, index) => <span key={index} className="inline-block bg-accent text-primary text-sm px-3 py-1 rounded-full">
                     {skill}
                   </span>)}
               </div>
-            </div>}
+            </div>} */}
 
           {/* Jobs Count */}
           {totalJobs > 0 && <div className="text-sm text-gray-600">
