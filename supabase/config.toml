@@ -1,5 +1,3 @@
 
-
 [functions.process-cv]
 verify_jwt = true
-
