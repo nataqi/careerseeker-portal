@@ -1,11 +1,42 @@
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { PdfReader } from "npm:pdfreader";
+import { Buffer } from 'node:buffer';
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+
+async function extractTextFromPDF(pdfBuffer: ArrayBuffer): Promise<string> {
+  try {
+    const buffer = Buffer.from(pdfBuffer);
+    return await new Promise((resolve, reject) => {
+      const textItems: string[] = [];
+      new PdfReader().parseBuffer(buffer, (err: Error | null, item: { text?: string } | null) => {
+        if (err) {
+          reject(`PDF parsing error: ${err.message}`);
+          return;
+        }
+        
+        if (!item) { // End of file
+          resolve(textItems.join(' '));
+          return;
+        }
+
+        if (item.text) {
+          textItems.push(item.text);
+        }
+      });
+    });
+  } catch (error) {
+    console.error('[ERROR] PDF extraction error:', error);
+    throw new Error('Failed to extract text from PDF');
+  }
+}
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -14,24 +45,36 @@ serve(async (req) => {
   }
 
   try {
-    const { jobDetails, resumeText } = await req.json();
-    
-    if (!jobDetails || !resumeText) {
-      return new Response(
-        JSON.stringify({ error: 'Missing required parameters' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-      );
-    }
-
-    const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
     if (!openAIApiKey) {
-      return new Response(
-        JSON.stringify({ error: 'OpenAI API key not configured' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-      );
+      throw new Error('OpenAI API key is not configured');
     }
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const formData = await req.formData();
+    const file = formData.get('cv');
+
+    if (!file || !(file instanceof File)) {
+      throw new Error('No CV file provided');
+    }
+
+    if (file.type !== 'application/pdf') {
+      throw new Error('File must be a PDF');
+    }
+
+    // Convert the File to ArrayBuffer
+    const pdfBuffer = await file.arrayBuffer();
+    
+    // Extract text from PDF
+    console.log('Starting PDF text extraction...');
+    const pdfText = await extractTextFromPDF(pdfBuffer);
+    console.log('PDF text extracted, length:', pdfText.length);
+    
+    if (!pdfText || pdfText.trim().length === 0) {
+      throw new Error('No text could be extracted from the PDF');
+    }
+
+    // Process with OpenAI to extract skills
+    console.log('Sending text to OpenAI for analysis...');
+    const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${openAIApiKey}`,
@@ -42,47 +85,125 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `You are a professional CV tailoring assistant. Your task is to help the user tailor their CV/resume to better match a specific job. 
-            Analyze the job description and the user's CV, then provide specific suggestions on how to modify the CV to better align with the job requirements.
-            Focus on:
-            1. Skills and experience that should be highlighted or added
-            2. Sections that could be modified or reordered to better match the job
-            3. Specific achievements that align well with the job requirements
-            4. Keywords from the job description that should be incorporated
-            5. Any unnecessary information that could be removed
+            content: `### **Role & Task**  
+            Act as an **expert CV parser** with deep knowledge of **technical recruiting**.  
+            Extract **ALL** job-relevant terms **(max 255 characters)**, explicitly stated in the cv.  
             
-            Format your response with clear sections and bullet points.`
+            ### **Output Format**  
+            - **STRICT LIMIT:** Never exceed **255 characters** (including spaces).  
+            - **Comma-separated list** (no bullet points, no extra text).  
+            - **Canonical terms only** (e.g., "React" not "ReactJS").  
+            - **Order:** Prioritize by **relevance & frequency**.  
+            
+            ### **Extraction Priority Order**  
+            1. **Hard Skills** (Tools, programming languages, frameworks)  
+            2. **Job Titles** (Standardized, seniority included)  
+            3. **Niche Competencies** (Industry/domain-specific terms)  
+            
+            ### **Hard Skills Examples**  
+            - **Programming Languages:** Python, Java, C++  
+            - **Tools & Platforms:** Docker, AWS, Kubernetes  
+            - **Methodologies:** Agile, Scrum  
+            
+            ### **Job Titles Examples**  
+            - **Standardized roles:** "DevOps Engineer", "Data Scientist"  
+            - **Seniority included:** "Senior Python Developer"  
+            
+            ### **Specialized Competencies Examples**  
+            - **Industry-Specific:** Hyperledger, ROS  
+            - **Technical Domains:** Cybersecurity, NLP  
+            
+            ### **Strict Exclusions**  
+            🚫 No soft skills (communication, teamwork)  
+            🚫 No basic office tools (Word, Excel)  
+            🚫 No company-specific jargon
+            🚫 **No inferred or made-up terms**—only extract terms explicitly written in the CV  
+            
+            ### **Truncation Strategy**  
+            - If the list exceeds **255 characters**, remove **least important** terms from the **end** of the list.  
+            - Ensure most **critical & high-priority** terms remain.  
+            
+            ### **Example Output**  
+            - JavaScript, React, Node.js, AWS, Docker, DevOps Engineer, NLP, Kubernetes, Scrum`
+
+           // content: `You are a skilled CV analyzer. Extract technical skills, tools, programming languages, job titles from experience section and relevant professional competencies from the CV.
+           // Format the output as a comma-separated list of extracted words only.
+            //Example: "JavaScript, React, Node.js, Project Management"
+            //Keep the result relevant and avoid generic terms.`
           },
           {
             role: 'user',
-            content: `Job Description:\n${jobDetails}\n\nMy Current CV:\n${resumeText}\n\nPlease help me tailor my CV to better match this job.`
+            content: pdfText
           }
         ],
         temperature: 0.7,
+        max_tokens: 400,
       }),
     });
 
-    const data = await response.json();
-    
-    if (!response.ok) {
-      console.error('OpenAI API error:', data);
-      return new Response(
-        JSON.stringify({ error: 'Error from OpenAI API', details: data }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-      );
+    if (!openAIResponse.ok) {
+      const errorData = await openAIResponse.text();
+      console.error('OpenAI API error response:', errorData);
+      throw new Error(`Failed to process CV with OpenAI: ${errorData}`);
     }
 
-    const aiSuggestions = data.choices[0].message.content;
+    const openAIData = await openAIResponse.json();
+    if (!openAIData.choices?.[0]?.message?.content) {
+      console.error('Unexpected OpenAI response format:', openAIData);
+      throw new Error('Invalid response from OpenAI');
+    }
+
+    const extractedSkills = openAIData.choices[0].message.content;
+    console.log('Skills extracted successfully:', extractedSkills);
+
+    // Convert skills to search query
+    const skillsArray = extractedSkills.split(',').map(skill => skill.trim());
+    const searchQuery = skillsArray.join(' ').substring(0, 255); // Just space-separated
+
+    // Search for jobs using the extracted skills
+    console.log('Searching for matching jobs...');
+    const jobResponse = await fetch(`https://jobsearch.api.jobtechdev.se/search?q=${encodeURIComponent(searchQuery)}&limit=100`, {
+      headers: {
+        'accept': 'application/json',
+        'x-feature-freetext-bool-method': 'or',
+        'x-feature-disable-smart-freetext': 'false',
+        'x-feature-enable-false-negative': 'true'
+      }
+    });
+
+
+    if (!jobResponse.ok) {
+      const errorText = await jobResponse.text();
+      console.error('Job search API error:', errorText);
+      throw new Error('Failed to fetch matching jobs');
+    }
+
+    const jobData = await jobResponse.json();
+    console.log(`Found ${jobData.hits?.length || 0} matching jobs`);
 
     return new Response(
-      JSON.stringify({ suggestions: aiSuggestions }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      JSON.stringify({
+        data: {
+          skills: extractedSkills.split(',').map((skill: string) => skill.trim()),
+          jobs: jobData.hits?.slice(0, 100) || [], // Return top 100 matching jobs
+          totalJobs: jobData.total?.value || 0
+        }
+      }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
     );
+
   } catch (error) {
-    console.error('Error processing request:', error);
+    console.error('Error processing CV:', error);
     return new Response(
-      JSON.stringify({ error: 'Internal server error', details: error.message }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+      JSON.stringify({
+        error: error.message || 'An unexpected error occurred'
+      }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
     );
   }
 });

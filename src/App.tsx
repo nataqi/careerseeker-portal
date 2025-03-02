@@ -10,7 +10,6 @@ import Auth from "./pages/Auth";
 import Search from "./pages/Search";
 import SavedJobs from "./pages/SavedJobs";
 import Tracker from "./pages/Tracker";
-import CvTailoring from "./pages/CvTailoring";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,7 +27,6 @@ const App = () => (
             <Route path="/search" element={<Search />} />
             <Route path="/saved-jobs" element={<SavedJobs />} />
             <Route path="/tracker" element={<Tracker />} />
-            <Route path="/cv-tailoring" element={<CvTailoring />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
