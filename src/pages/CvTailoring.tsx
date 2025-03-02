@@ -5,11 +5,10 @@ import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { BriefcaseIcon, ChevronLeft, ChevronRight, Upload, Clipboard, Loader2 } from "lucide-react";
+import { BriefcaseIcon, ArrowLeft, Home, Loader2, ChevronLeft, ChevronRight, Upload, Clipboard, Star } from "lucide-react";
 import { useSavedJobs } from "@/hooks/useSavedJobs";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import NavBar from "@/components/NavBar";
 
 const AF_BASE_URL = "https://arbetsformedlingen.se/platsbanken/annonser";
 const JOBS_PER_PAGE = 5;
@@ -114,24 +113,45 @@ const CvTailoring = () => {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-secondary">
-      <NavBar />
-      
-      <div className="bg-white border-b">
-        <div className="container mx-auto max-w-[1200px] px-4">
-          <div className="text-center py-16 space-y-4">
-            <h1 className="text-5xl font-bold text-gray-900">
-              CV Tailoring
-            </h1>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Upload your CV and select a job to get AI-powered tailoring suggestions
-              that help match your CV to the job requirements.
-            </p>
+    <div className="min-h-screen bg-secondary p-4 md:p-8">
+      <div className="container mx-auto max-w-6xl">
+        {/* Enhanced Hero section with gradient background */}
+        <div className="rounded-lg p-8 mb-6 shadow-sm bg-gradient-to-r from-[#243949] to-[#517fa4] text-white">
+          <div className="flex justify-between items-center mb-4">
+            <div className="flex items-center gap-4">
+              <Button
+                variant="ghost"
+                onClick={() => navigate(-1)}
+                className="text-white hover:text-white/90 hover:bg-white/10"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => navigate("/search")}
+                className="text-white hover:text-white/90 hover:bg-white/10"
+              >
+                <Home className="w-4 h-4 mr-2" />
+                Search
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => navigate("/saved-jobs")}
+                className="text-white hover:text-white/90 hover:bg-white/10"
+              >
+                <Star className="w-4 h-4 mr-2" />
+                Saved Jobs
+              </Button>
+            </div>
+            <h1 className="text-2xl font-semibold">CV Tailoring</h1>
           </div>
+          <p className="text-white/90 max-w-3xl">
+            Upload your CV and select a job to get AI-powered tailoring suggestions
+            that help match your CV to the job requirements.
+          </p>
         </div>
-      </div>
 
-      <div className="container mx-auto max-w-[1200px] px-4 py-8">
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Left Column */}
           <div className="w-full lg:w-1/2 space-y-6">
@@ -140,7 +160,7 @@ const CvTailoring = () => {
               <h2 className="text-xl font-semibold mb-3">Upload Your CV</h2>
               <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
                 <div className="flex flex-col items-center justify-center gap-2">
-                  <Upload className="w-6 h-6 text-gray-400" />
+                  <Upload className="w-8 h-8 text-gray-400" />
                   <p className="text-sm text-gray-600">
                     Drag and drop your PDF file here, or click to browse
                   </p>
@@ -169,7 +189,7 @@ const CvTailoring = () => {
               </div>
             </div>
 
-            {/* Saved Jobs Section - Below Upload CV */}
+            {/* Saved Jobs Section - Moved below Upload CV */}
             <div className="bg-white rounded-lg p-4 shadow-sm">
               <h2 className="text-xl font-semibold mb-3">Select a Job</h2>
               <div className="space-y-3">
@@ -187,10 +207,10 @@ const CvTailoring = () => {
                 ) : (
                   <>
                     {displayedJobs.map((job) => (
-                      <Card key={job.id} className={`p-3 card-hover bg-white ${job.job_id === selectedJobId ? 'ring-2 ring-primary' : ''}`}>
+                      <Card key={job.id} className={`p-4 card-hover bg-white ${job.job_id === selectedJobId ? 'ring-2 ring-primary' : ''}`}>
                         <div className="flex items-start justify-between gap-2">
                           <div className="space-y-1 flex-1">
-                            <h3 className="font-semibold text-gray-900 text-sm line-clamp-2">
+                            <h3 className="font-semibold text-gray-900 line-clamp-2">
                               <a 
                                 href={`${AF_BASE_URL}/${job.job_id}`} 
                                 target="_blank" 
@@ -200,8 +220,8 @@ const CvTailoring = () => {
                                 {job.headline}
                               </a>
                             </h3>
-                            <div className="flex flex-wrap items-center gap-1 text-xs text-gray-600">
-                              <BriefcaseIcon className="w-3 h-3 flex-shrink-0" />
+                            <div className="flex flex-wrap items-center gap-1 text-sm text-gray-600">
+                              <BriefcaseIcon className="w-3.5 h-3.5 flex-shrink-0" />
                               <span className="truncate">{job.employer_name}</span>
                               {job.workplace_city && (
                                 <>
@@ -218,7 +238,7 @@ const CvTailoring = () => {
                             disabled={isTailoring}
                           >
                             {isTailoring && job.job_id === selectedJobId ? (
-                              <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                              <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
                             ) : null}
                             Tailor!
                           </Button>

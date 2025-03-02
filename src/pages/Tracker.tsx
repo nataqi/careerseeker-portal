@@ -5,11 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { BriefcaseIcon, Loader2, Trash2, ChevronLeft, ChevronRight, Edit, Save, X } from "lucide-react";
+import { BriefcaseIcon, ArrowLeft, Home, Loader2, Trash2, ChevronLeft, ChevronRight, Edit, Save, X, BookmarkIcon } from "lucide-react";
 import { useSavedJobs } from "@/hooks/useSavedJobs";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import type { SavedJob } from "@/types/saved-job";
-import NavBar from "@/components/NavBar";
 import {
   Table,
   TableBody,
@@ -153,10 +152,63 @@ const Tracker = () => {
 
   return (
     <div className="min-h-screen bg-secondary">
-      <NavBar />
-      
       <div className="bg-white border-b">
-        <div className="container mx-auto max-w-[1200px] px-4">
+        <div className="max-w-[1920px] mx-auto px-4">
+          <div className="flex items-center justify-between py-4 border-b">
+            <div className="flex items-center gap-4">
+              <Button
+                variant="ghost"
+                onClick={() => navigate("/")}
+                className="text-gray-600 hover:text-gray-900"
+              >
+                <Home className="w-4 h-4 mr-2" />
+                Home
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => navigate("/saved-jobs")}
+                className="text-gray-600 hover:text-gray-900"
+              >
+                <BookmarkIcon className="w-4 h-4 mr-2" />
+                Saved Jobs
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  // Create Excel data with clickable links
+                  const data = trackedJobs.map(job => ({
+                    'Job Title': `=HYPERLINK("https://arbetsformedlingen.se/platsbanken/annonser/${job.job_id}","${job.headline}")`,
+                    'Employer': job.employer_name,
+                    'Location': job.workplace_city || '',
+                    'Status': job.response_status,
+                    'Date': job.tracking_date,
+                    'Notes': job.notes || ''
+                  }));
+
+                  // Convert to CSV
+                  const headers = ['Job Title', 'Employer', 'Location', 'Status', 'Date', 'Notes'];
+                  const csvContent = [
+                    headers.join(','),
+                    ...data.map(row => 
+                      headers.map(header => 
+                        `"${String(row[header as keyof typeof row]).replace(/"/g, '""')}"`
+                      ).join(',')
+                    )
+                  ].join('\n');
+
+                  // Create and download file
+                  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                  const link = document.createElement('a');
+                  link.href = URL.createObjectURL(blob);
+                  link.download = 'job_tracker.csv';
+                  link.click();
+                  URL.revokeObjectURL(link.href);
+                }}
+              >
+                Export to CSV
+              </Button>
+            </div>
+          </div>
           <div className="text-center py-16 space-y-4">
             <h1 className="text-5xl font-bold text-gray-900">
               Track Your Job Applications
@@ -168,7 +220,7 @@ const Tracker = () => {
         </div>
       </div>
 
-      <div className="container mx-auto max-w-[1200px] px-4 py-12">
+      <div className="max-w-[1920px] mx-auto px-4 py-12">
         {isLoading ? (
           <div className="flex items-center justify-center py-8">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />

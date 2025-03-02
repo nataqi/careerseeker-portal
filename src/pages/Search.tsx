@@ -1,20 +1,79 @@
-import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/lib/auth";
-import NavBar from "@/components/NavBar";
+
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { BriefcaseIcon, Star, AlertTriangle } from "lucide-react";
+import { Search as SearchIcon, Upload, BriefcaseIcon, LogOut, Loader2, Info, Star, BookmarkIcon, Filter, ChevronDown, ChevronUp } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/lib/auth";
+import { useNavigate } from "react-router-dom";
+import { searchJobs } from "@/services/jobService";
+import type { JobListing } from "@/types/job";
+import { useDebounce } from "@/hooks/useDebounce";
+import { useSavedJobs } from "@/hooks/useSavedJobs";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+
+const AF_BASE_URL = "https://arbetsformedlingen.se/platsbanken/annonser";
+
+type SearchMode = "OR" | "AND";
+type PublishDateFilter = "last-hour" | "today" | "last-7-days" | "last-30-days" | "";
+
+const searchModeHelp = {
+  OR: "Find jobs containing any of the words (e.g., 'developer designer')",
+  AND: "Find jobs containing all words (e.g., 'frontend react')",
+};
+
+const publishDateOptions = [
+  { value: "", label: "Any time" },
+  { value: "last-hour", label: "Last hour" },
+  { value: "today", label: "Today" },
+  { value: "last-7-days", label: "Last 7 days" },
+  { value: "last-30-days", label: "Last 30 days" },
+];
+
+const RESULTS_PER_PAGE = 10;
+const SEARCH_LIMIT = 100;
 
 const Search = () => {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [searchResults, setSearchResults] = useState([]);
-  const { user } = useAuth();
-  const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchMode, setSearchMode] = useState<SearchMode>("OR");
+  const [publishDateFilter, setPublishDateFilter] = useState<PublishDateFilter>("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [jobs, setJobs] = useState<JobListing[]>([]);
+  const [isProcessingCV, setIsProcessingCV] = useState(false);
+  const [extractedSkills, setExtractedSkills] = useState<string[]>([]);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalJobs, setTotalJobs] = useState(0);
   const { toast } = useToast();
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+  const debouncedSearchQuery = useDebounce(searchQuery, 500);
+  const { toggleSaveJob, isJobSaved } = useSavedJobs();
 
   useEffect(() => {
     if (!user) {
@@ -22,141 +81,471 @@ const Search = () => {
     }
   }, [user, navigate]);
 
-  const handleSearch = async () => {
-    if (!searchTerm) {
+  const formatSearchQuery = (query: string, mode: SearchMode): string => {
+    if (mode === "AND") {
+      return query.split(" ").filter(Boolean).map(term => `+${term}`).join(" ");
+    }
+    return query;
+  };
+
+  useEffect(() => {
+    const fetchJobs = async () => {
+      if (!debouncedSearchQuery.trim()) {
+        setJobs([]);
+        setTotalJobs(0);
+        return;
+      }
+      setIsLoading(true);
+      try {
+        const formattedQuery = formatSearchQuery(debouncedSearchQuery, searchMode);
+        const response = await searchJobs(
+          formattedQuery, 
+          searchMode, 
+          publishDateFilter, 
+          SEARCH_LIMIT,
+          (currentPage - 1) * RESULTS_PER_PAGE
+        );
+        setJobs(response.hits);
+        setTotalJobs(response.total.value);
+      } catch (error) {
+        console.error("Search error:", error);
+        toast({
+          title: "Error",
+          description: "Failed to fetch job listings. Please try again.",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchJobs();
+  }, [debouncedSearchQuery, searchMode, publishDateFilter, currentPage, toast]);
+
+  const handleFileUpload = async (file: File) => {
+    if (!file) return;
+
+    if (file.type !== "application/pdf") {
       toast({
-        title: "Error",
-        description: "Please enter a search term",
-        variant: "destructive",
+        title: "Invalid file",
+        description: "Please upload a PDF file",
+        variant: "destructive"
       });
       return;
     }
 
+    setIsProcessingCV(true);
+    const formData = new FormData();
+    formData.append('cv', file);
+
     try {
-      const response = await fetch(
-        `https://jobsearchai-79e5bfa49931.herokuapp.com/search?query=${searchTerm}`
-      );
-      const data = await response.json();
-      setSearchResults(data);
+      const { data: { data: functionData }, error: functionError } = await supabase.functions.invoke('process-cv', {
+        body: formData,
+      });
+
+      if (functionError) throw functionError;
+
+      const { skills, jobs: matchedJobs } = functionData;
+      setExtractedSkills(skills);
+      setJobs(matchedJobs);
+      setTotalJobs(matchedJobs.length);
+      
+      toast({
+        title: "CV Processed Successfully",
+        description: `Found ${matchedJobs.length} matching jobs based on your skills!`,
+      });
     } catch (error) {
-      console.error("Search error:", error);
+      console.error("CV processing error:", error);
       toast({
         title: "Error",
-        description: "Failed to fetch search results",
-        variant: "destructive",
+        description: "Failed to process your CV. Please try again.",
+        variant: "destructive"
       });
+    } finally {
+      setIsProcessingCV(false);
     }
   };
 
-  const handleSaveJob = async (job: any) => {
-    try {
-      const response = await fetch(
-        "https://jobsearchai-79e5bfa49931.herokuapp.com/save-job",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            user_id: user?.id,
-            job_id: job.id,
-            headline: job.headline,
-            employer_name: job.employer_name,
-            workplace_city: job.workplace_city,
-          }),
-        }
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    
+    const file = e.dataTransfer.files[0];
+    if (file) {
+      handleFileUpload(file);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleFiltersToggle = () => {
+    setIsFiltersOpen(!isFiltersOpen);
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo(0, 0);
+  };
+
+  const totalPages = Math.ceil(totalJobs / RESULTS_PER_PAGE);
+
+  const renderPaginationItems = () => {
+    const items = [];
+    const maxVisiblePages = 5;
+    
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) {
+        items.push(
+          <PaginationItem key={i}>
+            <PaginationLink 
+              onClick={() => handlePageChange(i)}
+              isActive={currentPage === i}
+            >
+              {i}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      }
+    } else {
+      // Always show first page
+      items.push(
+        <PaginationItem key={1}>
+          <PaginationLink 
+            onClick={() => handlePageChange(1)}
+            isActive={currentPage === 1}
+          >
+            1
+          </PaginationLink>
+        </PaginationItem>
       );
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      // Show ellipsis if current page is more than 3
+      if (currentPage > 3) {
+        items.push(
+          <PaginationItem key="ellipsis1">
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
       }
 
-      const result = await response.json();
-      toast({
-        title: "Job Saved",
-        description: result.message || "Job saved successfully!",
-      });
-    } catch (error: any) {
-      console.error("Save job error:", error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to save job",
-        variant: "destructive",
-      });
+      // Show pages around current page
+      const startPage = Math.max(2, currentPage - 1);
+      const endPage = Math.min(totalPages - 1, currentPage + 1);
+
+      for (let i = startPage; i <= endPage; i++) {
+        items.push(
+          <PaginationItem key={i}>
+            <PaginationLink 
+              onClick={() => handlePageChange(i)}
+              isActive={currentPage === i}
+            >
+              {i}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      }
+
+      // Show ellipsis if current page is less than totalPages - 2
+      if (currentPage < totalPages - 2) {
+        items.push(
+          <PaginationItem key="ellipsis2">
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
+      }
+
+      // Always show last page
+      items.push(
+        <PaginationItem key={totalPages}>
+          <PaginationLink 
+            onClick={() => handlePageChange(totalPages)}
+            isActive={currentPage === totalPages}
+          >
+            {totalPages}
+          </PaginationLink>
+        </PaginationItem>
+      );
     }
+
+    return items;
   };
 
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-secondary">
-      <NavBar />
-      
-      <div className="bg-white border-b">
-        <div className="container mx-auto max-w-[1200px] px-4">
-          <div className="text-center py-16 space-y-4">
-            <h1 className="text-5xl font-bold text-gray-900">
-              Search Jobs
-            </h1>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Find the perfect job opportunity from thousands of listings.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div className="container mx-auto max-w-[1200px] px-4 py-8">
-        <div className="flex flex-col gap-4">
+    <div className="min-h-screen bg-secondary p-4 md:p-8">
+      <div className="container mx-auto max-w-6xl">
+        <div className="flex justify-between mb-4">
           <div className="flex gap-2">
-            <Input
-              type="text"
-              placeholder="Search for jobs"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-            <Button onClick={handleSearch}>Search</Button>
+            <Button
+              variant="ghost"
+              onClick={() => navigate("/saved-jobs")}
+              className="text-gray-600 hover:text-gray-900"
+            >
+              <BookmarkIcon className="w-4 h-4 mr-2" />
+              Saved Jobs
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => navigate("/tracker")}
+              className="text-gray-600 hover:text-gray-900"
+            >
+              <BriefcaseIcon className="w-4 h-4 mr-2" />
+              Jobs Tracker
+            </Button>
+          </div>
+          <Button
+            variant="ghost"
+            onClick={signOut}
+            className="text-gray-600 hover:text-gray-900"
+          >
+            <LogOut className="w-4 h-4 mr-2" />
+            Sign Out
+          </Button>
+        </div>
+
+        <div className="space-y-4">
+          {/* Search Section */}
+          <div className="bg-white p-6 rounded-lg shadow-sm">
+            <div className="flex flex-col md:flex-row gap-4 items-center">
+              <div className="flex-1 w-full">
+                <div className="relative">
+                  <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                  <Input 
+                    type="text" 
+                    placeholder="Search jobs by title, company, or keywords..." 
+                    value={searchQuery} 
+                    onChange={e => setSearchQuery(e.target.value)} 
+                    className="pl-10 w-full" 
+                  />
+                </div>
+              </div>
+              <div className="flex gap-2 w-full md:w-auto">
+                <Select value={searchMode} onValueChange={value => setSearchMode(value as SearchMode)}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Search mode" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="OR">Any words (OR)</SelectItem>
+                    <SelectItem value="AND">All words (AND)</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button className="bg-primary hover:bg-primary-hover text-white" disabled={isLoading}>
+                  {isLoading ? <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Searching...
+                    </> : <>
+                      <SearchIcon className="w-4 h-4 mr-2" />
+                      Search
+                    </>}
+                </Button>
+              </div>
+            </div>
+
+            <div className="mt-4">
+              <Collapsible open={isFiltersOpen} onOpenChange={setIsFiltersOpen}>
+                <CollapsibleTrigger asChild>
+                  <Button variant="outline" className="w-full md:w-auto">
+                    <Filter className="mr-2 h-4 w-4" />
+                    Filters
+                    {isFiltersOpen ? (
+                      <ChevronUp className="ml-2 h-4 w-4" />
+                    ) : (
+                      <ChevronDown className="ml-2 h-4 w-4" />
+                    )}
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="mt-4 p-4 border rounded-md">
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="font-medium mb-2">Publishing Date</h3>
+                      <RadioGroup 
+                        value={publishDateFilter} 
+                        onValueChange={(value) => setPublishDateFilter(value as PublishDateFilter)}
+                        className="flex flex-wrap gap-4"
+                      >
+                        {publishDateOptions.map((option) => (
+                          <div key={option.value} className="flex items-center space-x-2">
+                            <RadioGroupItem value={option.value} id={`date-${option.value}`} />
+                            <Label htmlFor={`date-${option.value}`}>{option.label}</Label>
+                          </div>
+                        ))}
+                      </RadioGroup>
+                    </div>
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+            </div>
           </div>
 
-          {searchResults.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {searchResults.map((job: any) => (
-                <Card key={job.id} className="p-4 card-hover bg-white">
-                  <div className="flex items-start justify-between">
+          {/* CV Upload Section - Made Smaller */}
+          <div className="bg-white p-4 rounded-lg shadow-sm">
+            <div className="flex items-center gap-4">
+              <h2 className="text-sm font-semibold text-gray-900 whitespace-nowrap">Upload Your CV</h2>
+              <div className="flex-1">
+                <input 
+                  type="file" 
+                  accept=".pdf" 
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleFileUpload(file);
+                  }} 
+                  className="hidden" 
+                  id="cv-upload" 
+                  disabled={isProcessingCV}
+                />
+                <div
+                  onDrop={handleDrop}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  className={`relative border-2 ${
+                    isDragging ? 'border-primary bg-primary/10' : 'border-dashed border-gray-300'
+                  } rounded-lg p-3 transition-all cursor-pointer hover:border-primary/50`}
+                  onClick={() => document.getElementById('cv-upload')?.click()}
+                >
+                  {isProcessingCV ? (
+                    <div className="flex items-center justify-center h-12 gap-2">
+                      <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                      <p className="text-sm text-gray-600">Processing CV...</p>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center h-12 gap-3">
+                      <Upload className="w-5 h-5 text-gray-400" />
+                      <p className="text-sm font-medium text-gray-700">
+                        {isDragging ? "Drop your CV here" : "Drag and drop your CV here or click to select"}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Skills Section */}
+          {extractedSkills.length > 0 && (
+            <div className="bg-white p-4 rounded-lg shadow-sm">
+              <h3 className="text-sm font-medium text-gray-700 mb-2">Skills Extracted from CV:</h3>
+              <div className="flex flex-wrap gap-2">
+                {extractedSkills.map((skill, index) => (
+                  <span
+                    key={index}
+                    className="inline-block bg-accent text-primary text-sm px-3 py-1 rounded-full"
+                  >
+                    {skill}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Jobs Count */}
+          {totalJobs > 0 && (
+            <div className="text-sm text-gray-600">
+              Found {totalJobs} jobs matching your criteria
+            </div>
+          )}
+
+          {/* Jobs Section */}
+          <div className="grid gap-4">
+            {isLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              </div>
+            ) : jobs.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                {searchQuery.trim() ? "No jobs found. Try different keywords or filters." : "Start searching for jobs..."}
+              </div>
+            ) : (
+              jobs.map((job) => (
+                <Card
+                  key={job.id}
+                  className="p-6 card-hover bg-white relative"
+                >
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute top-4 right-4 hover:bg-transparent"
+                    onClick={() => toggleSaveJob(job)}
+                  >
+                    <Star
+                      className={`w-5 h-5 ${
+                        isJobSaved(job.id)
+                          ? "text-pink-500 fill-pink-500"
+                          : "text-gray-400 hover:text-pink-500"
+                      }`}
+                    />
+                  </Button>
+                  <div className="flex items-start pr-12">
                     <div className="space-y-2">
-                      <h3 className="font-semibold text-gray-900 line-clamp-2">
-                        {job.headline}
-                      </h3>
-                      <div className="flex flex-wrap items-center gap-1 text-sm text-gray-600">
-                        <BriefcaseIcon className="w-3.5 h-3.5 flex-shrink-0" />
-                        <span>{job.employer_name}</span>
-                        {job.workplace_city && (
+                      <h3 className="text-xl font-semibold text-gray-900">{job.headline}</h3>
+                      <div className="flex items-center gap-2 text-gray-600">
+                        <BriefcaseIcon className="w-4 h-4" />
+                        <span>{job.employer?.name}</span>
+                        {job.workplace?.city && (
                           <>
                             <span>•</span>
-                            <span>{job.workplace_city}</span>
+                            <span>{job.workplace.city}</span>
                           </>
+                        )}
+                      </div>
+                      <div className="flex gap-2">
+                        {job.working_hours_type?.label && (
+                          <span className="inline-block bg-accent text-primary text-sm px-3 py-1 rounded-full">
+                            {job.working_hours_type.label}
+                          </span>
+                        )}
+                        {job.salary_type?.label && (
+                          <span className="inline-block bg-secondary text-gray-600 text-sm px-3 py-1 rounded-full">
+                            {job.salary_type.label}
+                          </span>
                         )}
                       </div>
                     </div>
                     <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => handleSaveJob(job)}
+                      onClick={() => {
+                        window.open(`${AF_BASE_URL}/${job.id}`, '_blank');
+                      }}
+                      className="ml-auto bg-primary hover:bg-primary-hover text-white"
                     >
-                      <Star className="h-4 w-4" />
+                      Apply Now
                     </Button>
                   </div>
                 </Card>
-              ))}
-            </div>
-          ) : (
-            searchTerm && (
-              <Card className="p-4 bg-white">
-                <div className="flex items-center space-x-3 text-gray-500">
-                  <AlertTriangle className="w-5 h-5" />
-                  <p>No results found.</p>
-                </div>
-              </Card>
-            )
+              ))
+            )}
+          </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <Pagination className="my-8">
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious 
+                    onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                    className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                  />
+                </PaginationItem>
+                
+                {renderPaginationItems()}
+                
+                <PaginationItem>
+                  <PaginationNext 
+                    onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+                    className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
           )}
         </div>
       </div>
