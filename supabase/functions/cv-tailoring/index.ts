@@ -41,28 +41,37 @@ async function extractTextFromPDF(pdfBuffer: ArrayBuffer): Promise<string> {
 
 async function getJobDescription(jobId: string): Promise<{ description: string, headline: string } | null> {
   try {
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    // Go directly to the API
+    console.log(`[INFO] Fetching job details from API for job ID: ${jobId}`);
     
-    // First try to get the job description from the saved_jobs table
-    const { data: jobData, error } = await supabase
-      .from('saved_jobs')
-      .select('headline, job_id')
-      .eq('job_id', jobId)
-      .single();
-      
-    if (error) {
-      console.error('[ERROR] Failed to get job data:', error);
-      return null;
+    // Construct the API URL for the specific job
+    const apiUrl = `https://jobsearch.api.jobtechdev.se/ad/${jobId}`;
+    
+    // Make the API request
+    const response = await fetch(apiUrl, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`API responded with status: ${response.status}`);
     }
-
-    // Since we don't store the full job description in our database,
-    // we'll use a placeholder for now
-    // In a real implementation, you would fetch this from the Arbetsförmedlingen API
+    
+    const jobDetails = await response.json();
+    
+    // Extract only the headline and description we know exist
+    const headline = jobDetails.headline || "Job Position";
+    const description = jobDetails.description?.text || 
+                        jobDetails.description?.text_formatted || 
+                        "No detailed description available.";
+    
+    console.log(`[INFO] Successfully fetched job details from API`);
+    
     return {
-      description: `This is a position for ${jobData.headline}. The ideal candidate should have strong communication skills, 
-      problem-solving abilities, and relevant experience in the field. The role involves working in a team environment, 
-      handling multiple tasks, and delivering high-quality results.`,
-      headline: jobData.headline
+      description: description,
+      headline: headline
     };
   } catch (error) {
     console.error('[ERROR] Failed to get job description:', error);
@@ -75,6 +84,8 @@ async function tailorCVWithOpenAI(cvText: string, jobTitle: string, jobDescripti
     if (!openAIApiKey) {
       throw new Error('OpenAI API key is not configured');
     }
+
+    console.log(`[INFO] Sending data to OpenAI - Job Title: ${jobTitle}, Description length: ${jobDescription.length} chars`);
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -122,6 +133,7 @@ async function tailorCVWithOpenAI(cvText: string, jobTitle: string, jobDescripti
       throw new Error(`OpenAI API error: ${data.error?.message || 'Unknown error'}`);
     }
     
+    console.log('[INFO] Successfully received response from OpenAI');
     return data.choices[0].message.content;
   } catch (error) {
     console.error('[ERROR] OpenAI processing error:', error);
@@ -224,6 +236,9 @@ serve(async (req) => {
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    // Log the job info to verify we have the data
+    console.log(`[INFO] Retrieved job info - Title: ${jobInfo.headline}, Description length: ${jobInfo.description.length} chars`);
 
     // Extract text from PDF
     console.log(`[INFO] Extracting text from PDF`);
