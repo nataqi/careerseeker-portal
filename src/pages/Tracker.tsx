@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
@@ -174,7 +175,8 @@ const Tracker = () => {
         ) : (
           <DragDropContext onDragEnd={handleDragEnd}>
             <div className="grid grid-cols-12 gap-6 items-start">
-              <div className="col-span-12 md:col-span-3 xl:col-span-2">
+              {/* Updated column width for saved jobs section */}
+              <div className="col-span-12 md:col-span-4 xl:col-span-3">
                 <div className="bg-white rounded-lg p-4 shadow-sm">
                   <h2 className="text-xl font-semibold mb-4">Saved Jobs</h2>
                   <Droppable droppableId="savedJobs">
@@ -247,7 +249,8 @@ const Tracker = () => {
                 </div>
               </div>
 
-              <div className="col-span-12 md:col-span-9 xl:col-span-10">
+              {/* Updated column width for tracker table section */}
+              <div className="col-span-12 md:col-span-8 xl:col-span-9">
                 <div className="bg-white rounded-lg border shadow-sm">
                   <div className="overflow-x-auto">
                     <Table>
