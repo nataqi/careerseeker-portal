@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
@@ -6,10 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { BriefcaseIcon, ArrowLeft, Home, Loader2, Trash2, ChevronLeft, ChevronRight, Edit, Save, X, BookmarkIcon } from "lucide-react";
+import { BriefcaseIcon, ArrowLeft, Home, Loader2, Trash2, ChevronLeft, ChevronRight, Edit, Save, X, BookmarkIcon, Download } from "lucide-react";
 import { useSavedJobs } from "@/hooks/useSavedJobs";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import type { SavedJob } from "@/types/saved-job";
+import { useToast } from "@/hooks/use-toast";
 import {
   Table,
   TableBody,
@@ -60,6 +60,7 @@ const Tracker = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [editingJob, setEditingJob] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<SavedJob>>({});
+  const { toast } = useToast();
 
   useEffect(() => {
     if (!user) {
@@ -145,6 +146,52 @@ const Tracker = () => {
     }
   };
 
+  const handleExportCSV = () => {
+    if (trackedJobs.length === 0) {
+      toast({
+        title: "No jobs to export",
+        description: "Add jobs to your tracker first before exporting.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const headers = ["Job Title", "Employer", "Location", "Status", "Date", "Notes"];
+    const csvRows = [headers];
+
+    trackedJobs.forEach(job => {
+      const row = [
+        job.headline,
+        job.employer_name,
+        job.workplace_city || "Not specified",
+        job.response_status || "Not Applied",
+        job.tracking_date || "",
+        job.notes || ""
+      ];
+      const escapedRow = row.map(field => {
+        const escaped = field.toString().replace(/"/g, '""');
+        return `"${escaped}"`;
+      });
+      csvRows.push(escapedRow);
+    });
+
+    const csvContent = csvRows.map(row => row.join(",")).join("\n");
+    
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `job-applications-${formatDate(new Date()).replace(/\./g, "-")}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast({
+      title: "Export successful",
+      description: `Exported ${trackedJobs.length} job applications to CSV`,
+    });
+  };
+
   const totalPages = Math.ceil(availableJobs.length / JOBS_PER_PAGE);
   const startIndex = (currentPage - 1) * JOBS_PER_PAGE;
   const endIndex = startIndex + JOBS_PER_PAGE;
@@ -175,7 +222,6 @@ const Tracker = () => {
         ) : (
           <DragDropContext onDragEnd={handleDragEnd}>
             <div className="grid grid-cols-12 gap-6 items-start">
-              {/* Updated column width for saved jobs section */}
               <div className="col-span-12 md:col-span-4 xl:col-span-3">
                 <div className="bg-white rounded-lg p-4 shadow-sm">
                   <h2 className="text-xl font-semibold mb-4">Saved Jobs</h2>
@@ -249,9 +295,20 @@ const Tracker = () => {
                 </div>
               </div>
 
-              {/* Updated column width for tracker table section */}
               <div className="col-span-12 md:col-span-8 xl:col-span-9">
                 <div className="bg-white rounded-lg border shadow-sm">
+                  <div className="p-4 border-b flex justify-between items-center">
+                    <h2 className="text-xl font-semibold">Tracked Applications</h2>
+                    <Button 
+                      onClick={handleExportCSV} 
+                      variant="outline" 
+                      size="sm" 
+                      className="bg-white text-primary border-primary hover:bg-primary/5"
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      Export to CSV
+                    </Button>
+                  </div>
                   <div className="overflow-x-auto">
                     <Table>
                       <TableHeader>
