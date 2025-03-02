@@ -83,5 +83,6 @@ vector_port = 54328
 backend = "postgres"
 # backend = "bigquery"
 
+# Functions section should not have enabled as a boolean, it should be a section
 [functions]
-enabled = true
+# Properly formatted functions section
