@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { PdfReader } from "npm:pdfreader";
@@ -131,9 +130,8 @@ async function tailorCVWithOpenAI(cvText: string, jobTitle: string, jobDescripti
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests first
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    console.log('[INFO] Handling CORS preflight request');
     return new Response(null, { headers: corsHeaders });
   }
 
@@ -143,64 +141,77 @@ serve(async (req) => {
     // Check content type
     const contentType = req.headers.get('content-type') || '';
     
-    if (!contentType.includes('application/json')) {
+    // Variables to store our data
+    let jobId: string;
+    let pdfBuffer: ArrayBuffer;
+    
+    // Handle multipart/form-data
+    if (contentType.includes('multipart/form-data')) {
+      try {
+        const formData = await req.formData();
+        console.log("[INFO] Form data parsed successfully");
+        
+        // Get the CV file
+        const cvFile = formData.get('cv');
+        if (!cvFile || !(cvFile instanceof File)) {
+          return new Response(
+            JSON.stringify({ error: 'CV file is required' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        
+        // Get the job ID
+        jobId = formData.get('jobId') as string;
+        if (!jobId) {
+          return new Response(
+            JSON.stringify({ error: 'Job ID is required' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        
+        // Convert file to ArrayBuffer
+        pdfBuffer = await cvFile.arrayBuffer();
+        console.log(`[INFO] Successfully processed form data with job ID: ${jobId}`);
+      } catch (error) {
+        console.error(`[ERROR] Failed to parse form data: ${error.message}`);
+        return new Response(
+          JSON.stringify({ error: `Failed to parse form data: ${error.message}` }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    } 
+    // Handle JSON data (for backward compatibility)
+    else if (contentType.includes('application/json')) {
+      try {
+        const { jobId: jsonJobId, fileBase64 } = await req.json();
+        
+        if (!fileBase64 || !jsonJobId) {
+          return new Response(
+            JSON.stringify({ error: 'CV file (base64) and job ID are required' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        
+        jobId = jsonJobId;
+        
+        // Decode base64 to get PDF buffer
+        const base64Data = fileBase64.split(',')[1] || fileBase64;
+        pdfBuffer = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0)).buffer;
+      } catch (error) {
+        console.error(`[ERROR] Failed to parse JSON data: ${error.message}`);
+        return new Response(
+          JSON.stringify({ error: `Failed to parse JSON data: ${error.message}` }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    } else {
       console.error(`[ERROR] Invalid content type: ${contentType}`);
       return new Response(
         JSON.stringify({ 
-          error: 'Invalid content type. Expected application/json',
+          error: 'Invalid content type. Expected multipart/form-data or application/json',
           receivedContentType: contentType
         }),
-        { 
-          status: 400, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      );
-    }
-    
-    // Parse JSON body
-    let body;
-    try {
-      body = await req.json();
-      console.log(`[INFO] Successfully parsed request body`);
-    } catch (error) {
-      console.error(`[ERROR] Failed to parse JSON body: ${error.message}`);
-      return new Response(
-        JSON.stringify({ error: `Failed to parse JSON body: ${error.message}` }),
-        { 
-          status: 400, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      );
-    }
-    
-    const { jobId, fileBase64 } = body;
-    
-    if (!fileBase64 || !jobId) {
-      console.error(`[ERROR] Missing required fields: ${!fileBase64 ? 'fileBase64' : ''} ${!jobId ? 'jobId' : ''}`);
-      return new Response(
-        JSON.stringify({ error: 'CV file (base64) and job ID are required' }),
-        { 
-          status: 400, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      );
-    }
-
-    // Decode base64 to get PDF buffer
-    console.log(`[INFO] Processing CV for job ID: ${jobId}`);
-    let pdfBuffer;
-    try {
-      const base64Data = fileBase64.split(',')[1] || fileBase64; // Handle with or without data URL prefix
-      pdfBuffer = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0)).buffer;
-      console.log(`[INFO] Successfully decoded base64 PDF data`);
-    } catch (error) {
-      console.error(`[ERROR] Failed to decode base64 data: ${error.message}`);
-      return new Response(
-        JSON.stringify({ error: `Failed to decode base64 data: ${error.message}` }),
-        { 
-          status: 400, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
     
@@ -210,10 +221,7 @@ serve(async (req) => {
       console.error(`[ERROR] Job with ID ${jobId} not found`);
       return new Response(
         JSON.stringify({ error: 'Failed to get job description' }),
-        { 
-          status: 404, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -226,10 +234,7 @@ serve(async (req) => {
         console.error(`[ERROR] Empty text extracted from PDF`);
         return new Response(
           JSON.stringify({ error: 'Failed to extract text from PDF or PDF is empty' }),
-          { 
-            status: 400, 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-          }
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
       console.log(`[INFO] Successfully extracted ${cvText.length} characters from PDF`);
@@ -237,10 +242,7 @@ serve(async (req) => {
       console.error(`[ERROR] PDF text extraction failed: ${error.message}`);
       return new Response(
         JSON.stringify({ error: `PDF text extraction failed: ${error.message}` }),
-        { 
-          status: 400, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -258,10 +260,7 @@ serve(async (req) => {
       console.error(`[ERROR] OpenAI processing failed: ${error.message}`);
       return new Response(
         JSON.stringify({ error: `OpenAI processing failed: ${error.message}` }),
-        { 
-          status: 500, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
