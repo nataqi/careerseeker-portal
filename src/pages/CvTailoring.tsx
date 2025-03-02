@@ -1,14 +1,14 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { BriefcaseIcon, ArrowLeft, Home, Loader2, ChevronLeft, ChevronRight, Upload, Clipboard, Star } from "lucide-react";
+import { BriefcaseIcon, Loader2, ChevronLeft, ChevronRight, Upload, Clipboard } from "lucide-react";
 import { useSavedJobs } from "@/hooks/useSavedJobs";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { NavBar } from "@/components/NavBar";
 
 const AF_BASE_URL = "https://arbetsformedlingen.se/platsbanken/annonser";
 const JOBS_PER_PAGE = 5;
@@ -68,12 +68,10 @@ const CvTailoring = () => {
     setTailoringResult("");
 
     try {
-      // Create FormData and append the file directly (like in Search.tsx)
       const formData = new FormData();
       formData.append('cv', selectedFile);
       formData.append('jobId', jobId);
       
-      // Call the Supabase Edge Function with FormData
       const { data, error } = await supabase.functions.invoke('cv-tailoring', {
         body: formData,
         // Don't set Content-Type header - let the browser handle it
@@ -88,7 +86,6 @@ const CvTailoring = () => {
         throw new Error("Invalid response from CV tailoring service");
       }
 
-      // Set the tailoring result
       setTailoringResult(data.result);
     } catch (error) {
       console.error("Error tailoring CV:", error);
@@ -113,49 +110,22 @@ const CvTailoring = () => {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-secondary p-4 md:p-8">
-      <div className="container mx-auto max-w-6xl">
-        {/* Enhanced Hero section with gradient background */}
-        <div className="rounded-lg p-8 mb-6 shadow-sm bg-gradient-to-r from-[#243949] to-[#517fa4] text-white">
-          <div className="flex justify-between items-center mb-4">
-            <div className="flex items-center gap-4">
-              <Button
-                variant="ghost"
-                onClick={() => navigate(-1)}
-                className="text-white hover:text-white/90 hover:bg-white/10"
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back
-              </Button>
-              <Button
-                variant="ghost"
-                onClick={() => navigate("/search")}
-                className="text-white hover:text-white/90 hover:bg-white/10"
-              >
-                <Home className="w-4 h-4 mr-2" />
-                Search
-              </Button>
-              <Button
-                variant="ghost"
-                onClick={() => navigate("/saved-jobs")}
-                className="text-white hover:text-white/90 hover:bg-white/10"
-              >
-                <Star className="w-4 h-4 mr-2" />
-                Saved Jobs
-              </Button>
-            </div>
-            <h1 className="text-2xl font-semibold">CV Tailoring</h1>
-          </div>
-          <p className="text-white/90 max-w-3xl">
+    <div className="min-h-screen bg-secondary">
+      <NavBar />
+      
+      <div className="bg-white border-b">
+        <div className="max-w-[1200px] mx-auto px-4 py-12 text-center">
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">CV Tailoring</h1>
+          <p className="text-gray-600 max-w-2xl mx-auto">
             Upload your CV and select a job to get AI-powered tailoring suggestions
             that help match your CV to the job requirements.
           </p>
         </div>
+      </div>
 
+      <div className="max-w-[1200px] mx-auto px-4 py-8">
         <div className="flex flex-col lg:flex-row gap-6">
-          {/* Left Column */}
           <div className="w-full lg:w-1/2 space-y-6">
-            {/* Upload CV Section - Moved above Select Job */}
             <div className="bg-white rounded-lg p-4 shadow-sm">
               <h2 className="text-xl font-semibold mb-3">Upload Your CV</h2>
               <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
@@ -189,7 +159,6 @@ const CvTailoring = () => {
               </div>
             </div>
 
-            {/* Saved Jobs Section - Moved below Upload CV */}
             <div className="bg-white rounded-lg p-4 shadow-sm">
               <h2 className="text-xl font-semibold mb-3">Select a Job</h2>
               <div className="space-y-3">
@@ -277,7 +246,6 @@ const CvTailoring = () => {
             </div>
           </div>
 
-          {/* CV Tailoring Results Section - Kept on the right side */}
           <div className="w-full lg:w-1/2">
             <div className="bg-white rounded-lg p-4 shadow-sm h-full">
               <div className="flex justify-between items-center mb-3">

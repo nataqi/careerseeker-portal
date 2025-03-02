@@ -1,9 +1,8 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { Search as SearchIcon, Upload, BriefcaseIcon, LogOut, Loader2, Info, Star, BookmarkIcon, Filter, ChevronDown, ChevronUp } from "lucide-react";
+import { Search as SearchIcon, Upload, BriefcaseIcon, Loader2, Info, Star, Filter, ChevronDown, ChevronUp } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/lib/auth";
 import { useNavigate } from "react-router-dom";
@@ -12,6 +11,7 @@ import type { JobListing } from "@/types/job";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useSavedJobs } from "@/hooks/useSavedJobs";
 import { supabase } from "@/integrations/supabase/client";
+import { NavBar } from "@/components/NavBar";
 import {
   Select,
   SelectContent,
@@ -283,37 +283,19 @@ const Search = () => {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-secondary p-4 md:p-8">
-      <div className="container mx-auto max-w-6xl">
-        <div className="flex justify-between mb-4">
-          <div className="flex gap-2">
-            <Button
-              variant="ghost"
-              onClick={() => navigate("/saved-jobs")}
-              className="text-gray-600 hover:text-gray-900"
-            >
-              <BookmarkIcon className="w-4 h-4 mr-2" />
-              Saved Jobs
-            </Button>
-            <Button
-              variant="ghost"
-              onClick={() => navigate("/tracker")}
-              className="text-gray-600 hover:text-gray-900"
-            >
-              <BriefcaseIcon className="w-4 h-4 mr-2" />
-              Jobs Tracker
-            </Button>
-          </div>
-          <Button
-            variant="ghost"
-            onClick={signOut}
-            className="text-gray-600 hover:text-gray-900"
-          >
-            <LogOut className="w-4 h-4 mr-2" />
-            Sign Out
-          </Button>
+    <div className="min-h-screen bg-secondary">
+      <NavBar />
+      
+      <div className="bg-white border-b">
+        <div className="max-w-[1200px] mx-auto px-4 py-12 text-center">
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">Search Jobs</h1>
+          <p className="text-gray-600 max-w-2xl mx-auto">
+            Find the perfect job opportunity by searching through thousands of positions
+          </p>
         </div>
+      </div>
 
+      <div className="max-w-[1200px] mx-auto px-4 py-8">
         <div className="space-y-4">
           {/* Search Section */}
           <div className="bg-white p-6 rounded-lg shadow-sm">
@@ -388,7 +370,7 @@ const Search = () => {
             </div>
           </div>
 
-          {/* CV Upload Section - Made Smaller */}
+          {/* CV Upload Section */}
           <div className="bg-white p-4 rounded-lg shadow-sm">
             <div className="flex items-center gap-4">
               <h2 className="text-sm font-semibold text-gray-900 whitespace-nowrap">Upload Your CV</h2>

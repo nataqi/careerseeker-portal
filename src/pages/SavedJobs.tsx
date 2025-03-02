@@ -1,10 +1,12 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { BriefcaseIcon, ArrowLeft, Home, Loader2, Star, ChevronLeft, ChevronRight } from "lucide-react";
+import { BriefcaseIcon, Loader2, Star, ChevronLeft, ChevronRight } from "lucide-react";
 import { useSavedJobs } from "@/hooks/useSavedJobs";
+import { NavBar } from "@/components/NavBar";
 
 const AF_BASE_URL = "https://arbetsformedlingen.se/platsbanken/annonser";
 const JOBS_PER_PAGE = 10;
@@ -40,38 +42,19 @@ const SavedJobs = () => {
   };
 
   return (
-    <div className="min-h-screen bg-secondary p-4 md:p-8">
-      <div className="container mx-auto max-w-6xl">
-        <div className="flex justify-between items-center mb-6">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              onClick={() => navigate(-1)}
-              className="text-gray-600 hover:text-gray-900"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back
-            </Button>
-            <Button
-              variant="ghost"
-              onClick={() => navigate("/search")}
-              className="text-gray-600 hover:text-gray-900"
-            >
-              <Home className="w-4 h-4 mr-2" />
-              Search
-            </Button>
-            <Button
-              variant="ghost"
-              onClick={() => navigate("/tracker")}
-              className="text-gray-600 hover:text-gray-900"
-            >
-              <BriefcaseIcon className="w-4 h-4 mr-2" />
-              Jobs Tracker
-            </Button>
-          </div>
-          <h1 className="text-2xl font-semibold text-gray-900">Saved Jobs</h1>
+    <div className="min-h-screen bg-secondary">
+      <NavBar />
+      
+      <div className="bg-white border-b">
+        <div className="max-w-[1200px] mx-auto px-4 py-12 text-center">
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">Saved Jobs</h1>
+          <p className="text-gray-600 max-w-2xl mx-auto">
+            View and manage all the jobs you've saved for later application
+          </p>
         </div>
+      </div>
 
+      <div className="max-w-[1200px] mx-auto px-4 py-8">
         <div className="space-y-4">
           {isLoading ? (
             <div className="flex items-center justify-center py-8">
