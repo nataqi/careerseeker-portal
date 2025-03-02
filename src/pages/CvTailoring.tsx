@@ -53,6 +53,15 @@ const CvTailoring = () => {
     }
   };
 
+  const convertFileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = (error) => reject(error);
+      reader.readAsDataURL(file);
+    });
+  };
+
   const handleTailorCV = async (jobId: string) => {
     if (!selectedFile) {
       toast({
@@ -68,17 +77,12 @@ const CvTailoring = () => {
     setTailoringResult("");
 
     try {
-      // Create a FormData object to send the file and job ID
-      const formData = new FormData();
-      formData.append('file', selectedFile);
-      formData.append('jobId', jobId);
-
-      // Call the Supabase Edge Function
+      // Convert file to base64
+      const fileBase64 = await convertFileToBase64(selectedFile);
+      
+      // Call the Supabase Edge Function with JSON payload
       const { data, error } = await supabase.functions.invoke('cv-tailoring', {
-        body: formData,
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+        body: { jobId, fileBase64 },
       });
 
       if (error) {

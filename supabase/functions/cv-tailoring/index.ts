@@ -144,68 +144,69 @@ serve(async (req) => {
       );
     }
 
-    // Parse the FormData
-    const formData = await req.formData();
-    const pdfFile = formData.get('file') as File;
-    const jobId = formData.get('jobId') as string;
-
-    if (!pdfFile || !jobId) {
-      return new Response(
-        JSON.stringify({ error: 'CV file and job ID are required' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Check file type
-    if (!pdfFile.type.includes('pdf')) {
-      return new Response(
-        JSON.stringify({ error: 'Only PDF files are accepted' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    console.log(`[INFO] Processing CV for job ID: ${jobId}`);
+    // For direct API calls (not using FormData)
+    // This approach allows us to receive the job ID and file in a more reliable way
+    const contentType = req.headers.get('content-type') || '';
     
-    // Get job description
-    const jobInfo = await getJobDescription(jobId);
-    if (!jobInfo) {
-      return new Response(
-        JSON.stringify({ error: 'Failed to get job description' }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Convert file to ArrayBuffer
-    const pdfBuffer = await pdfFile.arrayBuffer();
-    
-    // Extract text from PDF
-    console.log(`[INFO] Extracting text from PDF`);
-    const cvText = await extractTextFromPDF(pdfBuffer);
-    
-    if (!cvText || cvText.trim().length === 0) {
-      return new Response(
-        JSON.stringify({ error: 'Failed to extract text from PDF or PDF is empty' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Process with OpenAI
-    console.log(`[INFO] Processing with OpenAI`);
-    const tailoredSuggestions = await tailorCVWithOpenAI(
-      cvText,
-      jobInfo.headline,
-      jobInfo.description
-    );
-
-    return new Response(
-      JSON.stringify({ 
-        result: tailoredSuggestions,
-        jobTitle: jobInfo.headline
-      }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200 
+    if (contentType.includes('application/json')) {
+      const { jobId, fileBase64 } = await req.json();
+      
+      if (!fileBase64 || !jobId) {
+        return new Response(
+          JSON.stringify({ error: 'CV file (base64) and job ID are required' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
       }
+
+      // Decode base64 to get PDF buffer
+      const base64Data = fileBase64.split(',')[1] || fileBase64; // Handle with or without data URL prefix
+      const pdfBuffer = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0)).buffer;
+      
+      console.log(`[INFO] Processing CV for job ID: ${jobId}`);
+      
+      // Get job description
+      const jobInfo = await getJobDescription(jobId);
+      if (!jobInfo) {
+        return new Response(
+          JSON.stringify({ error: 'Failed to get job description' }),
+          { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Extract text from PDF
+      console.log(`[INFO] Extracting text from PDF`);
+      const cvText = await extractTextFromPDF(pdfBuffer);
+      
+      if (!cvText || cvText.trim().length === 0) {
+        return new Response(
+          JSON.stringify({ error: 'Failed to extract text from PDF or PDF is empty' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Process with OpenAI
+      console.log(`[INFO] Processing with OpenAI`);
+      const tailoredSuggestions = await tailorCVWithOpenAI(
+        cvText,
+        jobInfo.headline,
+        jobInfo.description
+      );
+
+      return new Response(
+        JSON.stringify({ 
+          result: tailoredSuggestions,
+          jobTitle: jobInfo.headline
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200 
+        }
+      );
+    } 
+    
+    return new Response(
+      JSON.stringify({ error: 'Invalid content type. Use application/json' }),
+      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
     console.error('[ERROR] Processing error:', error);
