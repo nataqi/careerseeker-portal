@@ -80,13 +80,21 @@ const CvTailoring = () => {
       // Convert file to base64
       const fileBase64 = await convertFileToBase64(selectedFile);
       
-      // Call the Supabase Edge Function with JSON payload
+      // Call the Supabase Edge Function with JSON payload and explicit Content-Type header
       const { data, error } = await supabase.functions.invoke('cv-tailoring', {
         body: { jobId, fileBase64 },
+        headers: {
+          'Content-Type': 'application/json'
+        }
       });
 
       if (error) {
+        console.error("Supabase function error:", error);
         throw new Error(error.message);
+      }
+
+      if (!data || !data.result) {
+        throw new Error("Invalid response from CV tailoring service");
       }
 
       // Set the tailoring result

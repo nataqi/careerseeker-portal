@@ -131,85 +131,153 @@ async function tailorCVWithOpenAI(cvText: string, jobTitle: string, jobDescripti
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
+  // Handle CORS preflight requests first
   if (req.method === 'OPTIONS') {
+    console.log('[INFO] Handling CORS preflight request');
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    if (!openAIApiKey) {
+    console.log(`[INFO] Received ${req.method} request with content-type: ${req.headers.get('content-type')}`);
+    
+    // Check content type
+    const contentType = req.headers.get('content-type') || '';
+    
+    if (!contentType.includes('application/json')) {
+      console.error(`[ERROR] Invalid content type: ${contentType}`);
       return new Response(
-        JSON.stringify({ error: 'OpenAI API key is not configured' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ 
+          error: 'Invalid content type. Expected application/json',
+          receivedContentType: contentType
+        }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+    
+    // Parse JSON body
+    let body;
+    try {
+      body = await req.json();
+      console.log(`[INFO] Successfully parsed request body`);
+    } catch (error) {
+      console.error(`[ERROR] Failed to parse JSON body: ${error.message}`);
+      return new Response(
+        JSON.stringify({ error: `Failed to parse JSON body: ${error.message}` }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+    
+    const { jobId, fileBase64 } = body;
+    
+    if (!fileBase64 || !jobId) {
+      console.error(`[ERROR] Missing required fields: ${!fileBase64 ? 'fileBase64' : ''} ${!jobId ? 'jobId' : ''}`);
+      return new Response(
+        JSON.stringify({ error: 'CV file (base64) and job ID are required' }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
       );
     }
 
-    // For direct API calls (not using FormData)
-    // This approach allows us to receive the job ID and file in a more reliable way
-    const contentType = req.headers.get('content-type') || '';
-    
-    if (contentType.includes('application/json')) {
-      const { jobId, fileBase64 } = await req.json();
-      
-      if (!fileBase64 || !jobId) {
-        return new Response(
-          JSON.stringify({ error: 'CV file (base64) and job ID are required' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-
-      // Decode base64 to get PDF buffer
+    // Decode base64 to get PDF buffer
+    console.log(`[INFO] Processing CV for job ID: ${jobId}`);
+    let pdfBuffer;
+    try {
       const base64Data = fileBase64.split(',')[1] || fileBase64; // Handle with or without data URL prefix
-      const pdfBuffer = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0)).buffer;
-      
-      console.log(`[INFO] Processing CV for job ID: ${jobId}`);
-      
-      // Get job description
-      const jobInfo = await getJobDescription(jobId);
-      if (!jobInfo) {
-        return new Response(
-          JSON.stringify({ error: 'Failed to get job description' }),
-          { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
+      pdfBuffer = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0)).buffer;
+      console.log(`[INFO] Successfully decoded base64 PDF data`);
+    } catch (error) {
+      console.error(`[ERROR] Failed to decode base64 data: ${error.message}`);
+      return new Response(
+        JSON.stringify({ error: `Failed to decode base64 data: ${error.message}` }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+    
+    // Get job description
+    const jobInfo = await getJobDescription(jobId);
+    if (!jobInfo) {
+      console.error(`[ERROR] Job with ID ${jobId} not found`);
+      return new Response(
+        JSON.stringify({ error: 'Failed to get job description' }),
+        { 
+          status: 404, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
 
-      // Extract text from PDF
-      console.log(`[INFO] Extracting text from PDF`);
-      const cvText = await extractTextFromPDF(pdfBuffer);
-      
+    // Extract text from PDF
+    console.log(`[INFO] Extracting text from PDF`);
+    let cvText;
+    try {
+      cvText = await extractTextFromPDF(pdfBuffer);
       if (!cvText || cvText.trim().length === 0) {
+        console.error(`[ERROR] Empty text extracted from PDF`);
         return new Response(
           JSON.stringify({ error: 'Failed to extract text from PDF or PDF is empty' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { 
+            status: 400, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          }
         );
       }
+      console.log(`[INFO] Successfully extracted ${cvText.length} characters from PDF`);
+    } catch (error) {
+      console.error(`[ERROR] PDF text extraction failed: ${error.message}`);
+      return new Response(
+        JSON.stringify({ error: `PDF text extraction failed: ${error.message}` }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
 
-      // Process with OpenAI
-      console.log(`[INFO] Processing with OpenAI`);
-      const tailoredSuggestions = await tailorCVWithOpenAI(
+    // Process with OpenAI
+    console.log(`[INFO] Processing with OpenAI`);
+    let tailoredSuggestions;
+    try {
+      tailoredSuggestions = await tailorCVWithOpenAI(
         cvText,
         jobInfo.headline,
         jobInfo.description
       );
-
+      console.log(`[INFO] Successfully received suggestions from OpenAI`);
+    } catch (error) {
+      console.error(`[ERROR] OpenAI processing failed: ${error.message}`);
       return new Response(
-        JSON.stringify({ 
-          result: tailoredSuggestions,
-          jobTitle: jobInfo.headline
-        }),
+        JSON.stringify({ error: `OpenAI processing failed: ${error.message}` }),
         { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 200 
+          status: 500, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         }
       );
-    } 
-    
+    }
+
+    console.log(`[INFO] Returning successful response`);
     return new Response(
-      JSON.stringify({ error: 'Invalid content type. Use application/json' }),
-      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      JSON.stringify({ 
+        result: tailoredSuggestions,
+        jobTitle: jobInfo.headline
+      }),
+      { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200 
+      }
     );
   } catch (error) {
-    console.error('[ERROR] Processing error:', error);
+    console.error('[ERROR] Unhandled processing error:', error);
     
     return new Response(
       JSON.stringify({ error: error.message || 'An unexpected error occurred' }),
