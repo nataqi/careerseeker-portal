@@ -83,5 +83,5 @@ vector_port = 54328
 backend = "postgres"
 # backend = "bigquery"
 
-[experimental.functions]
+[functions]
 enabled = true
