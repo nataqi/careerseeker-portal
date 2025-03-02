@@ -156,14 +156,12 @@ const Tracker = () => {
       return;
     }
 
-    const headers = ["Job Title", "URL", "Employer", "Location", "Status", "Date", "Notes"];
+    const headers = ["Job Title", "Employer", "Location", "Status", "Date", "Notes"];
     const csvRows = [headers];
 
     trackedJobs.forEach(job => {
-      const jobUrl = `${AF_BASE_URL}/${job.job_id}`;
       const row = [
         job.headline,
-        jobUrl, // Adding the URL as a separate column for clickable links
         job.employer_name,
         job.workplace_city || "Not specified",
         job.response_status || "Not Applied",
@@ -206,10 +204,10 @@ const Tracker = () => {
       <NavBar />
       
       <div className="bg-white border-b">
-        <div className="max-w-[1200px] mx-auto px-4 py-8">
-          <div className="text-center space-y-3">
-            <h1 className="text-3xl md:text-4xl font-bold text-gray-900">Job Application Tracker</h1>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+        <div className="max-w-[1200px] mx-auto px-4 py-16">
+          <div className="text-center space-y-4">
+            <h1 className="text-4xl md:text-5xl font-bold text-gray-900">Job Application Tracker</h1>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
               Keep track of your job applications and their status
             </p>
           </div>
