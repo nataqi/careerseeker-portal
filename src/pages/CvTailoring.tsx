@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
@@ -114,14 +115,14 @@ const CvTailoring = () => {
   return (
     <div className="min-h-screen bg-secondary p-4 md:p-8">
       <div className="container mx-auto max-w-6xl">
-        {/* Hero section with navigation */}
-        <div className="bg-white rounded-lg p-6 mb-6 shadow-sm">
+        {/* Enhanced Hero section with gradient background */}
+        <div className="rounded-lg p-8 mb-6 shadow-sm bg-gradient-to-r from-[#243949] to-[#517fa4] text-white">
           <div className="flex justify-between items-center mb-4">
             <div className="flex items-center gap-4">
               <Button
                 variant="ghost"
                 onClick={() => navigate(-1)}
-                className="text-gray-600 hover:text-gray-900"
+                className="text-white hover:text-white/90 hover:bg-white/10"
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back
@@ -129,7 +130,7 @@ const CvTailoring = () => {
               <Button
                 variant="ghost"
                 onClick={() => navigate("/search")}
-                className="text-gray-600 hover:text-gray-900"
+                className="text-white hover:text-white/90 hover:bg-white/10"
               >
                 <Home className="w-4 h-4 mr-2" />
                 Search
@@ -137,113 +138,30 @@ const CvTailoring = () => {
               <Button
                 variant="ghost"
                 onClick={() => navigate("/saved-jobs")}
-                className="text-gray-600 hover:text-gray-900"
+                className="text-white hover:text-white/90 hover:bg-white/10"
               >
                 <Star className="w-4 h-4 mr-2" />
                 Saved Jobs
               </Button>
             </div>
-            <h1 className="text-2xl font-semibold text-gray-900">CV Tailoring</h1>
+            <h1 className="text-2xl font-semibold">CV Tailoring</h1>
           </div>
-          <p className="text-gray-600">
+          <p className="text-white/90 max-w-3xl">
             Upload your CV and select a job to get AI-powered tailoring suggestions
             that help match your CV to the job requirements.
           </p>
         </div>
 
         <div className="flex flex-col lg:flex-row gap-6">
+          {/* Left Column */}
           <div className="w-full lg:w-1/2 space-y-6">
-            {/* Saved Jobs Section */}
-            <div className="bg-white rounded-lg p-6 shadow-sm">
-              <h2 className="text-xl font-semibold mb-4">Select a Job</h2>
-              <div className="space-y-4">
-                {isLoading ? (
-                  <div className="flex items-center justify-center py-8">
-                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                  </div>
-                ) : savedJobs.length === 0 ? (
-                  <div className="text-center py-8">
-                    <div className="text-gray-500">No saved jobs yet</div>
-                    <Button className="mt-4" onClick={() => navigate("/search")}>
-                      Search Jobs
-                    </Button>
-                  </div>
-                ) : (
-                  <>
-                    {displayedJobs.map((job) => (
-                      <Card key={job.id} className={`p-6 card-hover bg-white ${job.job_id === selectedJobId ? 'ring-2 ring-primary' : ''}`}>
-                        <div className="flex items-start justify-between">
-                          <div className="space-y-2">
-                            <h3 className="text-xl font-semibold text-gray-900">
-                              <a 
-                                href={`${AF_BASE_URL}/${job.job_id}`} 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className="hover:underline"
-                              >
-                                {job.headline}
-                              </a>
-                            </h3>
-                            <div className="flex items-center gap-2 text-gray-600">
-                              <BriefcaseIcon className="w-4 h-4" />
-                              <span>{job.employer_name}</span>
-                              {job.workplace_city && (
-                                <>
-                                  <span>•</span>
-                                  <span>{job.workplace_city}</span>
-                                </>
-                              )}
-                            </div>
-                          </div>
-                          <Button
-                            onClick={() => handleTailorCV(job.job_id)}
-                            className="bg-primary hover:bg-primary-hover text-white"
-                            disabled={isTailoring}
-                          >
-                            {isTailoring && job.job_id === selectedJobId ? (
-                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                            ) : null}
-                            Tailor!
-                          </Button>
-                        </div>
-                      </Card>
-                    ))}
-                    
-                    {totalPages > 1 && (
-                      <div className="flex justify-center items-center gap-4 mt-6">
-                        <Button
-                          variant="outline"
-                          onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                          disabled={currentPage === 1}
-                        >
-                          <ChevronLeft className="h-4 w-4" />
-                          Previous
-                        </Button>
-                        <span className="text-sm text-gray-600">
-                          Page {currentPage} of {totalPages}
-                        </span>
-                        <Button
-                          variant="outline"
-                          onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                          disabled={currentPage === totalPages}
-                        >
-                          Next
-                          <ChevronRight className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
-            </div>
-
-            {/* CV Upload Section */}
-            <div className="bg-white rounded-lg p-6 shadow-sm">
-              <h2 className="text-xl font-semibold mb-4">Upload Your CV</h2>
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+            {/* Upload CV Section - Moved above Select Job */}
+            <div className="bg-white rounded-lg p-4 shadow-sm">
+              <h2 className="text-xl font-semibold mb-3">Upload Your CV</h2>
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
                 <div className="flex flex-col items-center justify-center gap-2">
-                  <Upload className="w-10 h-10 text-gray-400" />
-                  <p className="text-gray-600">
+                  <Upload className="w-8 h-8 text-gray-400" />
+                  <p className="text-sm text-gray-600">
                     Drag and drop your PDF file here, or click to browse
                   </p>
                   <input
@@ -255,26 +173,114 @@ const CvTailoring = () => {
                   />
                   <Button
                     variant="outline"
+                    size="sm"
                     onClick={() => document.getElementById("cv-upload")?.click()}
-                    className="mt-2"
+                    className="mt-1"
                   >
                     Select PDF
                   </Button>
                 </div>
                 {selectedFile && (
-                  <div className="mt-4 p-3 bg-accent rounded-md">
+                  <div className="mt-3 p-2 bg-accent rounded-md">
                     <p className="text-sm font-medium">Selected file:</p>
                     <p className="text-sm text-gray-700">{selectedFile.name}</p>
                   </div>
                 )}
               </div>
             </div>
+
+            {/* Saved Jobs Section - Moved below Upload CV */}
+            <div className="bg-white rounded-lg p-4 shadow-sm">
+              <h2 className="text-xl font-semibold mb-3">Select a Job</h2>
+              <div className="space-y-3">
+                {isLoading ? (
+                  <div className="flex items-center justify-center py-6">
+                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                  </div>
+                ) : savedJobs.length === 0 ? (
+                  <div className="text-center py-6">
+                    <div className="text-gray-500">No saved jobs yet</div>
+                    <Button className="mt-4" onClick={() => navigate("/search")}>
+                      Search Jobs
+                    </Button>
+                  </div>
+                ) : (
+                  <>
+                    {displayedJobs.map((job) => (
+                      <Card key={job.id} className={`p-4 card-hover bg-white ${job.job_id === selectedJobId ? 'ring-2 ring-primary' : ''}`}>
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="space-y-1 flex-1">
+                            <h3 className="font-semibold text-gray-900 line-clamp-2">
+                              <a 
+                                href={`${AF_BASE_URL}/${job.job_id}`} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="hover:underline"
+                              >
+                                {job.headline}
+                              </a>
+                            </h3>
+                            <div className="flex flex-wrap items-center gap-1 text-sm text-gray-600">
+                              <BriefcaseIcon className="w-3.5 h-3.5 flex-shrink-0" />
+                              <span className="truncate">{job.employer_name}</span>
+                              {job.workplace_city && (
+                                <>
+                                  <span>•</span>
+                                  <span>{job.workplace_city}</span>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                          <Button
+                            onClick={() => handleTailorCV(job.job_id)}
+                            className="bg-primary hover:bg-primary-hover text-white"
+                            size="sm"
+                            disabled={isTailoring}
+                          >
+                            {isTailoring && job.job_id === selectedJobId ? (
+                              <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
+                            ) : null}
+                            Tailor!
+                          </Button>
+                        </div>
+                      </Card>
+                    ))}
+                    
+                    {totalPages > 1 && (
+                      <div className="flex justify-center items-center gap-4 mt-4">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                          disabled={currentPage === 1}
+                        >
+                          <ChevronLeft className="h-3.5 w-3.5" />
+                          Prev
+                        </Button>
+                        <span className="text-sm text-gray-600">
+                          {currentPage} / {totalPages}
+                        </span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                          disabled={currentPage === totalPages}
+                        >
+                          Next
+                          <ChevronRight className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
           </div>
 
-          {/* Tailoring Result Section */}
+          {/* CV Tailoring Results Section - Kept on the right side */}
           <div className="w-full lg:w-1/2">
-            <div className="bg-white rounded-lg p-6 shadow-sm h-full">
-              <div className="flex justify-between items-center mb-4">
+            <div className="bg-white rounded-lg p-4 shadow-sm h-full">
+              <div className="flex justify-between items-center mb-3">
                 <h2 className="text-xl font-semibold">CV Tailoring Results</h2>
                 {tailoringResult && (
                   <Button
@@ -283,7 +289,7 @@ const CvTailoring = () => {
                     onClick={copyToClipboard}
                     className="flex items-center gap-1"
                   >
-                    <Clipboard className="w-4 h-4" />
+                    <Clipboard className="w-3.5 h-3.5" />
                     Copy
                   </Button>
                 )}
@@ -297,14 +303,14 @@ const CvTailoring = () => {
                 <Textarea
                   value={tailoringResult}
                   onChange={(e) => setTailoringResult(e.target.value)}
-                  className="w-full h-[500px] resize-none p-4 bg-white"
+                  className="w-full h-[600px] resize-none p-4 bg-white text-base"
                 />
               ) : (
                 <div className="flex flex-col items-center justify-center h-64 text-center">
                   <p className="text-gray-600 mb-2">
                     Upload your CV and select a job to get tailored recommendations.
                   </p>
-                  <p className="text-gray-500 text-sm">
+                  <p className="text-sm text-gray-500">
                     Our AI will analyze your CV and suggest improvements to match the job requirements.
                   </p>
                 </div>
