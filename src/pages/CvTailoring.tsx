@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { BriefcaseIcon, ArrowLeft, Home, Loader2, ChevronLeft, ChevronRight, Upload, Clipboard, Star } from "lucide-react";
 import { useSavedJobs } from "@/hooks/useSavedJobs";
 import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const AF_BASE_URL = "https://arbetsformedlingen.se/platsbanken/annonser";
 const JOBS_PER_PAGE = 5;
@@ -67,19 +68,33 @@ const CvTailoring = () => {
     setTailoringResult("");
 
     try {
-      // In a next step, we'll implement the actual API call to the OpenAI-powered edge function
-      // For now, show a placeholder result after a short delay
-      setTimeout(() => {
-        setTailoringResult("This is a placeholder for the CV tailoring result. In the next step, we'll implement the actual OpenAI-powered CV tailoring functionality.");
-        setIsTailoring(false);
-      }, 2000);
+      // Create a FormData object to send the file and job ID
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+      formData.append('jobId', jobId);
+
+      // Call the Supabase Edge Function
+      const { data, error } = await supabase.functions.invoke('cv-tailoring', {
+        body: formData,
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      // Set the tailoring result
+      setTailoringResult(data.result);
     } catch (error) {
       console.error("Error tailoring CV:", error);
       toast({
         title: "Error",
-        description: "Failed to tailor your CV",
+        description: error instanceof Error ? error.message : "Failed to tailor your CV",
         variant: "destructive",
       });
+    } finally {
       setIsTailoring(false);
     }
   };
