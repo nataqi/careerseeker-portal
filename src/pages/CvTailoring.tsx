@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
@@ -53,15 +52,6 @@ const CvTailoring = () => {
     }
   };
 
-  const convertFileToBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = (error) => reject(error);
-      reader.readAsDataURL(file);
-    });
-  };
-
   const handleTailorCV = async (jobId: string) => {
     if (!selectedFile) {
       toast({
@@ -77,15 +67,15 @@ const CvTailoring = () => {
     setTailoringResult("");
 
     try {
-      // Convert file to base64
-      const fileBase64 = await convertFileToBase64(selectedFile);
+      // Create FormData and append the file directly (like in Search.tsx)
+      const formData = new FormData();
+      formData.append('cv', selectedFile);
+      formData.append('jobId', jobId);
       
-      // Call the Supabase Edge Function with JSON payload and explicit Content-Type header
+      // Call the Supabase Edge Function with FormData
       const { data, error } = await supabase.functions.invoke('cv-tailoring', {
-        body: { jobId, fileBase64 },
-        headers: {
-          'Content-Type': 'application/json'
-        }
+        body: formData,
+        // Don't set Content-Type header - let the browser handle it
       });
 
       if (error) {
