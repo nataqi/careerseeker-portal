@@ -1,4 +1,3 @@
-
 import { JobSearchResponse } from "@/types/job";
 
 const API_URL = "https://jobsearch.api.jobtechdev.se/search";
