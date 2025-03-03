@@ -2,7 +2,7 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { PdfReader } from "npm:pdfreader";
 import { Buffer } from 'node:buffer';
-import { createSearchQuery } from "@/services/jobService";
+import { createSearchQuery } from "../../../src/services/jobService";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
