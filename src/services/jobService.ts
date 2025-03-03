@@ -1,4 +1,3 @@
-
 import { JobSearchResponse } from "@/types/job";
 
 const API_URL = "https://jobsearch.api.jobtechdev.se/search";
@@ -65,4 +64,14 @@ export const searchJobs = async (
     console.error("Error fetching jobs:", error);
     throw error;
   }
+};
+
+/**
+ * Utility function to create a search query from extracted skills.
+ * @param extractedSkills - A comma-separated string of skills.
+ * @returns A formatted search query string.
+ */
+export const createSearchQuery = (extractedSkills: string): string => {
+  const skillsArray = extractedSkills.split(',').map(skill => skill.trim());
+  return skillsArray.join(' ').substring(0, 255);
 };
