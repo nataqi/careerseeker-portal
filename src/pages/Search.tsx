@@ -196,57 +196,55 @@ const Search = () => {
   const totalPages = Math.ceil(totalJobs / RESULTS_PER_PAGE);
   const renderPaginationItems = () => {
     const items = [];
-    
-    const startPage = Math.max(1, currentPage - 2);
-    const endPage = Math.min(totalPages, startPage + 4);
-    
-    if (startPage > 1) {
-      items.push(
-        <PaginationItem key="1">
-          <PaginationLink onClick={() => handlePageChange(1)}>1</PaginationLink>
-        </PaginationItem>
-      );
-      
-      if (startPage > 2) {
-        items.push(
-          <PaginationItem key="ellipsis1">
-            <PaginationEllipsis />
-          </PaginationItem>
-        );
+    const maxVisiblePages = 5;
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) {
+        items.push(<PaginationItem key={i}>
+            <PaginationLink onClick={() => handlePageChange(i)} isActive={currentPage === i}>
+              {i}
+            </PaginationLink>
+          </PaginationItem>);
       }
-    }
-    
-    for (let i = startPage; i <= endPage; i++) {
-      items.push(
-        <PaginationItem key={i}>
-          <PaginationLink 
-            isActive={currentPage === i}
-            onClick={() => handlePageChange(i)}
-          >
-            {i}
+    } else {
+      // Always show first page
+      items.push(<PaginationItem key={1}>
+          <PaginationLink onClick={() => handlePageChange(1)} isActive={currentPage === 1}>
+            1
           </PaginationLink>
-        </PaginationItem>
-      );
-    }
-    
-    if (endPage < totalPages) {
-      if (endPage < totalPages - 1) {
-        items.push(
-          <PaginationItem key="ellipsis2">
+        </PaginationItem>);
+
+      // Show ellipsis if current page is more than 3
+      if (currentPage > 3) {
+        items.push(<PaginationItem key="ellipsis1">
             <PaginationEllipsis />
-          </PaginationItem>
-        );
+          </PaginationItem>);
       }
-      
-      items.push(
-        <PaginationItem key={totalPages}>
-          <PaginationLink onClick={() => handlePageChange(totalPages)}>
+
+      // Show pages around current page
+      const startPage = Math.max(2, currentPage - 1);
+      const endPage = Math.min(totalPages - 1, currentPage + 1);
+      for (let i = startPage; i <= endPage; i++) {
+        items.push(<PaginationItem key={i}>
+            <PaginationLink onClick={() => handlePageChange(i)} isActive={currentPage === i}>
+              {i}
+            </PaginationLink>
+          </PaginationItem>);
+      }
+
+      // Show ellipsis if current page is less than totalPages - 2
+      if (currentPage < totalPages - 2) {
+        items.push(<PaginationItem key="ellipsis2">
+            <PaginationEllipsis />
+          </PaginationItem>);
+      }
+
+      // Always show last page
+      items.push(<PaginationItem key={totalPages}>
+          <PaginationLink onClick={() => handlePageChange(totalPages)} isActive={currentPage === totalPages}>
             {totalPages}
           </PaginationLink>
-        </PaginationItem>
-      );
+        </PaginationItem>);
     }
-    
     return items;
   };
   if (!user) return null;
