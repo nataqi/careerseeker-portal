@@ -67,6 +67,9 @@ const Search = () => {
     toggleSaveJob,
     isJobSaved
   } = useSavedJobs();
+  const [isUsingCVResults, setIsUsingCVResults] = useState(false);
+  const [cvSearchQuery, setCVSearchQuery] = useState("");
+  const offset = (currentPage - 1) * RESULTS_PER_PAGE;
   useEffect(() => {
     if (!user) {
       navigate("/auth");
@@ -80,63 +83,63 @@ const Search = () => {
   };
   useEffect(() => {
     const fetchJobs = async () => {
-      if (!debouncedSearchQuery.trim()) {
+      const activeQuery = isUsingCVResults ? cvSearchQuery : debouncedSearchQuery;
+      
+      if (!activeQuery.trim()) {
         setJobs([]);
         setTotalJobs(0);
         return;
       }
+      
       setIsLoading(true);
+      
       try {
-        const formattedQuery = formatSearchQuery(debouncedSearchQuery, searchMode);
-        const response = await searchJobs(formattedQuery, searchMode, publishDateFilter, SEARCH_LIMIT, (currentPage - 1) * RESULTS_PER_PAGE);
-        setJobs(response.hits);
-        setTotalJobs(response.total.value);
+        const { hits, total } = await searchJobs(
+          activeQuery,
+          offset,
+          RESULTS_PER_PAGE,
+          publishDateFilter,
+          searchMode
+        );
+        
+        setJobs(hits);
+        setTotalJobs(total.value);
       } catch (error) {
-        console.error("Search error:", error);
+        console.error("Error fetching jobs:", error);
         toast({
           title: "Error",
-          description: "Failed to fetch job listings. Please try again.",
+          description: "Failed to fetch jobs. Please try again.",
           variant: "destructive"
         });
       } finally {
         setIsLoading(false);
       }
     };
+    
     fetchJobs();
-  }, [debouncedSearchQuery, searchMode, publishDateFilter, currentPage, toast]);
-  const handleFileUpload = async (file: File) => {
-    if (!file) return;
-    if (file.type !== "application/pdf") {
-      toast({
-        title: "Invalid file",
-        description: "Please upload a PDF file",
-        variant: "destructive"
-      });
-      return;
-    }
+  }, [debouncedSearchQuery, cvSearchQuery, isUsingCVResults, searchMode, publishDateFilter, currentPage]);
+  const handleProcessCV = async (file: File) => {
     setIsProcessingCV(true);
     const formData = new FormData();
     formData.append('cv', file);
+
     try {
-      const {
-        data: {
-          data: functionData
-        },
-        error: functionError
-      } = await supabase.functions.invoke('process-cv', {
-        body: formData
+      const { data: { data: functionData }, error: functionError } = await supabase.functions.invoke('process-cv', {
+        body: formData,
       });
+
       if (functionError) throw functionError;
-      const {
-        skills,
-        jobs: matchedJobs
-      } = functionData;
-      setExtractedSkills(skills);
-      setJobs(matchedJobs);
-      setTotalJobs(matchedJobs.length);
+      
+      setExtractedSkills(functionData.skills || []);
+      
+      setCVSearchQuery(functionData.skills.join(' '));
+      setIsUsingCVResults(true);
+      
+      setCurrentPage(1);
+      
       toast({
-        title: "CV Processed Successfully",
-        description: `Found ${matchedJobs.length} matching jobs based on your skills!`
+        title: "CV Processed",
+        description: `Found ${functionData.totalJobs} matching jobs based on your CV.`,
       });
     } catch (error) {
       console.error("CV processing error:", error);
@@ -149,13 +152,18 @@ const Search = () => {
       setIsProcessingCV(false);
     }
   };
+  const handleSearchInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+    setIsUsingCVResults(false);
+    setCurrentPage(1);
+  };
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(false);
     const file = e.dataTransfer.files[0];
     if (file) {
-      handleFileUpload(file);
+      handleProcessCV(file);
     }
   };
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
@@ -173,7 +181,7 @@ const Search = () => {
   };
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-    window.scrollTo(0, 0);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
   const totalPages = Math.ceil(totalJobs / RESULTS_PER_PAGE);
   const renderPaginationItems = () => {
@@ -248,7 +256,7 @@ const Search = () => {
               <div className="flex-1 w-full">
                 <div className="relative">
                   <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                  <Input type="text" placeholder="Search jobs by title, company, or keywords..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-10 w-full" />
+                  <Input type="text" placeholder="Search jobs by title, company, or keywords..." value={searchQuery} onChange={handleSearchInput} className="pl-10 w-full" />
                 </div>
               </div>
               <div className="flex gap-2 w-full md:w-auto">
@@ -306,7 +314,7 @@ const Search = () => {
               <div className="flex-1">
                 <input type="file" accept=".pdf" onChange={e => {
                 const file = e.target.files?.[0];
-                if (file) handleFileUpload(file);
+                if (file) handleProcessCV(file);
               }} className="hidden" id="cv-upload" disabled={isProcessingCV} />
                 <div onDrop={handleDrop} onDragOver={handleDragOver} onDragLeave={handleDragLeave} className={`relative border-2 ${isDragging ? 'border-primary bg-primary/10' : 'border-dashed border-gray-300'} rounded-lg p-3 transition-all cursor-pointer hover:border-primary/50`} onClick={() => document.getElementById('cv-upload')?.click()}>
                   {isProcessingCV ? <div className="flex items-center justify-center h-12 gap-2">

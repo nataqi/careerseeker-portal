@@ -6,10 +6,10 @@ type PublishDateFilter = "last-hour" | "today" | "last-7-days" | "last-30-days" 
 
 export const searchJobs = async (
   query: string, 
-  mode: "OR" | "AND", 
-  publishDateFilter: PublishDateFilter = "",
+  offset: number = 0,
   limit: number = 10,
-  offset: number = 0
+  publishDateFilter: PublishDateFilter = "",
+  mode: "OR" | "AND" = "OR"
 ): Promise<JobSearchResponse> => {
   try {
     // Build query parameters
@@ -45,10 +45,12 @@ export const searchJobs = async (
       }
     }
 
+    console.log(`[INFO] Searching jobs with query: "${query}", offset: ${offset}, limit: ${limit}`);
+    
     const response = await fetch(`${API_URL}?${params.toString()}`, {
       headers: {
         'accept': 'application/json',
-        'x-feature-freetext-bool-method': mode === "AND" ? 'and' : 'or',
+        'x-feature-freetext-bool-method': 'or',
         'x-feature-disable-smart-freetext': 'false',
         'x-feature-enable-false-negative': 'true'
       }
@@ -59,7 +61,14 @@ export const searchJobs = async (
     }
 
     const data = await response.json();
-    return data;
+    console.log(`[INFO] Found ${data.total?.value || 0} total jobs, returning ${data.hits?.length || 0} results`);
+    
+    return {
+      hits: data.hits || [],
+      total: {
+        value: data.total?.value || 0
+      }
+    };
   } catch (error) {
     console.error("Error fetching jobs:", error);
     throw error;

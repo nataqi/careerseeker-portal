@@ -162,15 +162,20 @@ serve(async (req) => {
 
     // Search for jobs using the extracted skills
     console.log('Searching for matching jobs...');
-    const jobResponse = await fetch(`https://jobsearch.api.jobtechdev.se/search?q=${encodeURIComponent(searchQuery)}&limit=100`, {
+
+    // Use the same pattern as in jobService.ts
+    const params = new URLSearchParams();
+    params.append('q', searchQuery);
+    params.append('limit', '100'); // Get initial batch of 100 jobs
+
+    const jobResponse = await fetch(`https://jobsearch.api.jobtechdev.se/search?${params.toString()}`, {
       headers: {
         'accept': 'application/json',
-        'x-feature-freetext-bool-method': 'or',
+        'x-feature-freetext-bool-method': 'or', // Always use 'or'
         'x-feature-disable-smart-freetext': 'false',
         'x-feature-enable-false-negative': 'true'
       }
     });
-
 
     if (!jobResponse.ok) {
       const errorText = await jobResponse.text();
