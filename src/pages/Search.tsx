@@ -81,6 +81,12 @@ const Search = () => {
     }
     return query;
   };
+  const handleFilterChange = (value: string) => {
+    const filterValue = value as PublishDateFilter;
+    setPublishDateFilter(filterValue);
+    setCurrentPage(1);
+    console.log(`[INFO] Filter changed to: ${filterValue || 'none'}, isUsingCVResults: ${isUsingCVResults}`);
+  };
   useEffect(() => {
     const fetchJobs = async () => {
       const activeQuery = isUsingCVResults ? cvSearchQuery : debouncedSearchQuery;
@@ -94,16 +100,20 @@ const Search = () => {
       setIsLoading(true);
       
       try {
+        console.log(`[INFO] Fetching jobs with: query=${activeQuery}, page=${currentPage}, filter=${publishDateFilter || 'none'}, isUsingCVResults=${isUsingCVResults}`);
+        
         const { hits, total } = await searchJobs(
           activeQuery,
           offset,
           RESULTS_PER_PAGE,
           publishDateFilter,
-          searchMode
+          "OR"
         );
         
         setJobs(hits);
         setTotalJobs(total.value);
+        
+        console.log(`[INFO] Fetched ${hits.length} jobs, total: ${total.value}`);
       } catch (error) {
         console.error("Error fetching jobs:", error);
         toast({
@@ -117,7 +127,7 @@ const Search = () => {
     };
     
     fetchJobs();
-  }, [debouncedSearchQuery, cvSearchQuery, isUsingCVResults, searchMode, publishDateFilter, currentPage]);
+  }, [debouncedSearchQuery, cvSearchQuery, isUsingCVResults, publishDateFilter, currentPage, offset]);
   const handleProcessCV = async (file: File) => {
     setIsProcessingCV(true);
     const formData = new FormData();
@@ -294,7 +304,7 @@ const Search = () => {
                   <div className="space-y-4">
                     <div>
                       <h3 className="font-medium mb-2">Publishing Date</h3>
-                      <RadioGroup value={publishDateFilter} onValueChange={value => setPublishDateFilter(value as PublishDateFilter)} className="flex flex-wrap gap-4">
+                      <RadioGroup value={publishDateFilter} onValueChange={handleFilterChange} className="flex flex-wrap gap-4">
                         {publishDateOptions.map(option => <div key={option.value} className="flex items-center space-x-2">
                             <RadioGroupItem value={option.value} id={`date-${option.value}`} />
                             <Label htmlFor={`date-${option.value}`}>{option.label}</Label>

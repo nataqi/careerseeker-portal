@@ -19,8 +19,8 @@ export const searchJobs = async (
     params.append('offset', offset.toString());
     
     // Add publish date filter if selected
+    let publishedAfter = '';
     if (publishDateFilter) {
-      let publishedAfter: string;
       const now = new Date();
       
       switch (publishDateFilter) {
@@ -42,10 +42,11 @@ export const searchJobs = async (
       
       if (publishedAfter) {
         params.append('published-after', publishedAfter);
+        console.log(`[INFO] Applied date filter: ${publishDateFilter}, date: ${publishedAfter}`);
       }
     }
 
-    console.log(`[INFO] Searching jobs with query: "${query}", offset: ${offset}, limit: ${limit}`);
+    console.log(`[INFO] Searching jobs with query: "${query}", offset: ${offset}, limit: ${limit}, date filter: ${publishDateFilter || 'none'}`);
     
     const response = await fetch(`${API_URL}?${params.toString()}`, {
       headers: {
