@@ -1,8 +1,8 @@
+
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { PdfReader } from "npm:pdfreader";
 import { Buffer } from 'node:buffer';
-import { createSearchQuery } from "../../../src/services/jobService";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -21,6 +21,7 @@ async function extractTextFromPDF(pdfBuffer: ArrayBuffer): Promise<string> {
           reject(`PDF parsing error: ${err.message}`);
           return;
         }
+        
         
         if (!item) { // End of file
           resolve(textItems.join(' '));
@@ -157,7 +158,8 @@ serve(async (req) => {
     console.log('Skills extracted successfully:', extractedSkills);
 
     // Convert skills to search query
-    const searchQuery = createSearchQuery(extractedSkills);
+    const skillsArray = extractedSkills.split(',').map(skill => skill.trim());
+    const searchQuery = skillsArray.join(' ').substring(0, 255); // Just space-separated
 
     // Search for jobs using the extracted skills
     console.log('Searching for matching jobs...');

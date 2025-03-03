@@ -6,7 +6,7 @@ import { Search as SearchIcon, Upload, BriefcaseIcon, Loader2, Info, Star, Filte
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/lib/auth";
 import { useNavigate } from "react-router-dom";
-import { searchJobs, createSearchQuery } from "@/services/jobService";
+import { searchJobs } from "@/services/jobService";
 import type { JobListing } from "@/types/job";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useSavedJobs } from "@/hooks/useSavedJobs";
@@ -228,10 +228,6 @@ const Search = () => {
         </PaginationItem>);
     }
     return items;
-  };
-  const handleSearch = () => {
-    const searchQuery = createSearchQuery(extractedSkills);
-    // Use searchQuery in your API call or logic
   };
   if (!user) return null;
   return <div className="min-h-screen bg-secondary">
