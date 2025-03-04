@@ -51,7 +51,7 @@ export const searchJobs = async (
     const response = await fetch(`${API_URL}?${params.toString()}`, {
       headers: {
         'accept': 'application/json',
-        'x-feature-freetext-bool-method': 'or',
+        'x-feature-freetext-bool-method': 'and',
         'x-feature-disable-smart-freetext': 'false',
         'x-feature-enable-false-negative': 'true'
       }
