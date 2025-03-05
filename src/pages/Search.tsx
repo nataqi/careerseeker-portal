@@ -95,6 +95,7 @@ const Search = () => {
   };
   const handleFilterChange = (value: string) => {
     const filterValue = value as PublishDateFilter;
+    console.log(`[DEBUG] Changing filter from ${publishDateFilter} to ${filterValue}`);
     setPublishDateFilter(filterValue);
     setCurrentPage(1);
     console.log(`[INFO] Filter changed to: ${filterValue || 'none'}, isUsingCVResults: ${isUsingCVResults}`);
@@ -120,7 +121,7 @@ const Search = () => {
       setIsLoading(true);
       
       try {
-        console.log(`[INFO] Fetching jobs with: query=${activeQuery}, page=${currentPage}, dateFilter=${publishDateFilter || 'none'}, workTimeFilter=${JSON.stringify(workTimeFilter)}`);
+        console.log(`[DEBUG] Before API call, publishDateFilter: ${publishDateFilter}`);
         
         const { hits, total } = await searchJobs(
           activeQuery,
@@ -328,6 +329,7 @@ const Search = () => {
                     {/* Publishing Date Filter */}
                     <div>
                       <h3 className="font-medium mb-2">Publishing Date</h3>
+                      <div className="text-xs text-gray-500 mb-2">Current filter: {publishDateFilter || 'none'}</div>
                       <RadioGroup value={publishDateFilter} onValueChange={handleFilterChange} className="flex flex-wrap gap-4">
                         {publishDateOptions.map(option => (
                           <div key={option.value} className="flex items-center space-x-2">
