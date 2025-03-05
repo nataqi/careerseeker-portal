@@ -250,7 +250,7 @@ const Search = () => {
         </div>
       </div>
 
-      <div className="max-w-[1200px] mx-auto px-4 py-8">
+      <div className="max-w-[1200px] mx-auto px-4 py-8 bg-zinc-50">
         <div className="space-y-4">
           {/* Search Section */}
           <div className="bg-white p-6 rounded-lg shadow-sm">
