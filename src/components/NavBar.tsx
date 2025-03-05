@@ -18,20 +18,20 @@ export const NavBar = () => {
             <SearchIcon className="w-4 h-4 mr-1 sm:mr-2" />
             <span className="hidden sm:inline">Search</span>
           </Button>
-          <Button variant="ghost" size="sm" className="text-gray-600 hover:text-gray-900" onClick={() => navigate("/saved-jobs")}>
+          <Button variant="ghost" size="sm" onClick={() => navigate("/saved-jobs")} className="text-gray-200">
             <BookmarkIcon className="w-4 h-4 mr-1 sm:mr-2" />
             <span className="hidden sm:inline">Saved Jobs</span>
           </Button>
-          <Button variant="ghost" size="sm" className="text-gray-600 hover:text-gray-900" onClick={() => navigate("/tracker")}>
+          <Button variant="ghost" size="sm" onClick={() => navigate("/tracker")} className="text-gray-200">
             <BriefcaseIcon className="w-4 h-4 mr-1 sm:mr-2" />
             <span className="hidden sm:inline">Job Tracker</span>
           </Button>
-          <Button variant="ghost" size="sm" className="text-gray-600 hover:text-gray-900" onClick={() => navigate("/cv-tailoring")}>
+          <Button variant="ghost" size="sm" onClick={() => navigate("/cv-tailoring")} className="text-gray-200">
             <FileEdit className="w-4 h-4 mr-1 sm:mr-2" />
             <span className="hidden sm:inline">CV Tailoring</span>
           </Button>
         </div>
-        <Button variant="ghost" size="sm" className="text-gray-600 hover:text-gray-900" onClick={handleSignOut}>
+        <Button variant="ghost" size="sm" onClick={handleSignOut} className="text-gray-200">
           <LogOut className="w-4 h-4 mr-1 sm:mr-2" />
           <span className="hidden sm:inline">Logout</span>
         </Button>
