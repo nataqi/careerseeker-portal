@@ -90,29 +90,20 @@ const Search = () => {
   useEffect(() => {
     const fetchJobs = async () => {
       const activeQuery = isUsingCVResults ? cvSearchQuery : debouncedSearchQuery;
-      
       if (!activeQuery.trim()) {
         setJobs([]);
         setTotalJobs(0);
         return;
       }
-      
       setIsLoading(true);
-      
       try {
         console.log(`[INFO] Fetching jobs with: query=${activeQuery}, page=${currentPage}, filter=${publishDateFilter || 'none'}, isUsingCVResults=${isUsingCVResults}`);
-        
-        const { hits, total } = await searchJobs(
-          activeQuery,
-          offset,
-          RESULTS_PER_PAGE,
-          publishDateFilter,
-          "OR"
-        );
-        
+        const {
+          hits,
+          total
+        } = await searchJobs(activeQuery, offset, RESULTS_PER_PAGE, publishDateFilter, "OR");
         setJobs(hits);
         setTotalJobs(total.value);
-        
         console.log(`[INFO] Fetched ${hits.length} jobs, total: ${total.value}`);
       } catch (error) {
         console.error("Error fetching jobs:", error);
@@ -125,31 +116,29 @@ const Search = () => {
         setIsLoading(false);
       }
     };
-    
     fetchJobs();
   }, [debouncedSearchQuery, cvSearchQuery, isUsingCVResults, publishDateFilter, currentPage, offset]);
   const handleProcessCV = async (file: File) => {
     setIsProcessingCV(true);
     const formData = new FormData();
     formData.append('cv', file);
-
     try {
-      const { data: { data: functionData }, error: functionError } = await supabase.functions.invoke('process-cv', {
-        body: formData,
+      const {
+        data: {
+          data: functionData
+        },
+        error: functionError
+      } = await supabase.functions.invoke('process-cv', {
+        body: formData
       });
-
       if (functionError) throw functionError;
-      
       setExtractedSkills(functionData.skills || []);
-      
       setCVSearchQuery(functionData.skills.join(' '));
       setIsUsingCVResults(true);
-      
       setCurrentPage(1);
-      
       toast({
         title: "CV Processed",
-        description: `Found ${functionData.totalJobs} matching jobs based on your CV.`,
+        description: `Found ${functionData.totalJobs} matching jobs based on your CV.`
       });
     } catch (error) {
       console.error("CV processing error:", error);
@@ -191,7 +180,10 @@ const Search = () => {
   };
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
   };
   const totalPages = Math.ceil(totalJobs / RESULTS_PER_PAGE);
   const renderPaginationItems = () => {
@@ -252,7 +244,7 @@ const Search = () => {
       <NavBar />
       
       <div className="bg-white border-b">
-        <div className="max-w-[1200px] mx-auto px-4 py-12 text-center">
+        <div className="max-w-[1200px] mx-auto px-4 py-12 text-center bg-[#2c7b8b]/[0.24]">
           <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2 mx-0">Search Jobs</h1>
           <p className="text-gray-600 max-w-2xl mx-auto">Find the perfect job opportunity by searching through thousands of positions posted on Arbetsförmedlingen</p>
         </div>
