@@ -20,6 +20,10 @@ import { Label } from "@/components/ui/label";
 const AF_BASE_URL = "https://arbetsformedlingen.se/platsbanken/annonser";
 type SearchMode = "OR" | "AND";
 type PublishDateFilter = "last-hour" | "today" | "last-7-days" | "last-30-days" | "";
+type WorkTimeFilter = {
+  min?: number;
+  max?: number;
+};
 const searchModeHelp = {
   OR: "Find jobs containing any of the words (e.g., 'developer designer')",
   AND: "Find jobs containing all words (e.g., 'frontend react')"
@@ -42,6 +46,13 @@ const publishDateOptions = [{
 }];
 const RESULTS_PER_PAGE = 10;
 const SEARCH_LIMIT = 100;
+const workTimeOptions = [
+  { id: 'all', label: 'All Jobs', min: undefined, max: undefined },
+  { id: 'full-time', label: 'Full Time (100%)', min: 100, max: 100 },
+  { id: 'part-time', label: 'Part Time (< 100%)', min: 1, max: 99 },
+  { id: 'high-part-time', label: 'High Part Time (50-99%)', min: 50, max: 99 },
+  { id: 'low-part-time', label: 'Low Part Time (< 50%)', min: 1, max: 49 }
+];
 const Search = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchMode, setSearchMode] = useState<SearchMode>("OR");
@@ -70,6 +81,7 @@ const Search = () => {
   const [isUsingCVResults, setIsUsingCVResults] = useState(false);
   const [cvSearchQuery, setCVSearchQuery] = useState("");
   const offset = (currentPage - 1) * RESULTS_PER_PAGE;
+  const [workTimeFilter, setWorkTimeFilter] = useState<WorkTimeFilter>({});
   useEffect(() => {
     if (!user) {
       navigate("/auth");
@@ -87,23 +99,41 @@ const Search = () => {
     setCurrentPage(1);
     console.log(`[INFO] Filter changed to: ${filterValue || 'none'}, isUsingCVResults: ${isUsingCVResults}`);
   };
+  const handleWorkTimeFilterChange = (optionId: string) => {
+    const option = workTimeOptions.find(opt => opt.id === optionId);
+    if (option) {
+      setWorkTimeFilter({ min: option.min, max: option.max });
+      setCurrentPage(1); // Reset to page 1 when changing filter
+      console.log(`[INFO] Work time filter changed to: ${option.label}`);
+    }
+  };
   useEffect(() => {
     const fetchJobs = async () => {
       const activeQuery = isUsingCVResults ? cvSearchQuery : debouncedSearchQuery;
+      
       if (!activeQuery.trim()) {
         setJobs([]);
         setTotalJobs(0);
         return;
       }
+      
       setIsLoading(true);
+      
       try {
-        console.log(`[INFO] Fetching jobs with: query=${activeQuery}, page=${currentPage}, filter=${publishDateFilter || 'none'}, isUsingCVResults=${isUsingCVResults}`);
-        const {
-          hits,
-          total
-        } = await searchJobs(activeQuery, offset, RESULTS_PER_PAGE, publishDateFilter, "OR");
+        console.log(`[INFO] Fetching jobs with: query=${activeQuery}, page=${currentPage}, dateFilter=${publishDateFilter || 'none'}, workTimeFilter=${JSON.stringify(workTimeFilter)}`);
+        
+        const { hits, total } = await searchJobs(
+          activeQuery,
+          offset,
+          RESULTS_PER_PAGE,
+          publishDateFilter,
+          workTimeFilter,
+          "OR"
+        );
+        
         setJobs(hits);
         setTotalJobs(total.value);
+        
         console.log(`[INFO] Fetched ${hits.length} jobs, total: ${total.value}`);
       } catch (error) {
         console.error("Error fetching jobs:", error);
@@ -116,8 +146,9 @@ const Search = () => {
         setIsLoading(false);
       }
     };
+    
     fetchJobs();
-  }, [debouncedSearchQuery, cvSearchQuery, isUsingCVResults, publishDateFilter, currentPage, offset]);
+  }, [debouncedSearchQuery, cvSearchQuery, isUsingCVResults, publishDateFilter, workTimeFilter, currentPage, offset]);
   const handleProcessCV = async (file: File) => {
     setIsProcessingCV(true);
     const formData = new FormData();
@@ -293,14 +324,36 @@ const Search = () => {
                   </Button>
                 </CollapsibleTrigger>
                 <CollapsibleContent className="mt-4 p-4 border rounded-md">
-                  <div className="space-y-4">
+                  <div className="space-y-6">
+                    {/* Publishing Date Filter */}
                     <div>
                       <h3 className="font-medium mb-2">Publishing Date</h3>
                       <RadioGroup value={publishDateFilter} onValueChange={handleFilterChange} className="flex flex-wrap gap-4">
-                        {publishDateOptions.map(option => <div key={option.value} className="flex items-center space-x-2">
+                        {publishDateOptions.map(option => (
+                          <div key={option.value} className="flex items-center space-x-2">
                             <RadioGroupItem value={option.value} id={`date-${option.value}`} />
                             <Label htmlFor={`date-${option.value}`}>{option.label}</Label>
-                          </div>)}
+                          </div>
+                        ))}
+                      </RadioGroup>
+                    </div>
+                    
+                    {/* Work Time Filter */}
+                    <div>
+                      <h3 className="font-medium mb-2">Work Time</h3>
+                      <RadioGroup 
+                        value={workTimeOptions.find(opt => 
+                          opt.min === workTimeFilter.min && opt.max === workTimeFilter.max
+                        )?.id || 'all'} 
+                        onValueChange={handleWorkTimeFilterChange} 
+                        className="flex flex-wrap gap-4"
+                      >
+                        {workTimeOptions.map(option => (
+                          <div key={option.id} className="flex items-center space-x-2">
+                            <RadioGroupItem value={option.id} id={`worktime-${option.id}`} />
+                            <Label htmlFor={`worktime-${option.id}`}>{option.label}</Label>
+                          </div>
+                        ))}
                       </RadioGroup>
                     </div>
                   </div>
