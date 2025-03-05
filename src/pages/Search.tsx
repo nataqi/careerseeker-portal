@@ -244,9 +244,9 @@ const Search = () => {
       <NavBar />
       
       <div className="bg-white border-b">
-        <div className="max-w-[1200px] mx-auto px-4 py-12 text-center bg-[#2c7b8b]/[0.24]">
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2 mx-0">Search Jobs</h1>
-          <p className="text-gray-600 max-w-2xl mx-auto">Find the perfect job opportunity by searching through thousands of positions posted on Arbetsförmedlingen</p>
+        <div className="max-w-[1200px] mx-auto px-4 py-12 text-center bg-yellow-50">
+          <h1 className="text-3xl font-bold mb-2 mx-0 text-slate-900 md:text-4xl">Search Jobs</h1>
+          <p className="max-w-2xl mx-auto text-slate-900">Find the perfect job opportunity by searching through thousands of positions posted on Arbetsförmedlingen</p>
         </div>
       </div>
 
@@ -271,7 +271,7 @@ const Search = () => {
                     <SelectItem value="AND">All words (AND)</SelectItem>
                   </SelectContent>
                 </Select>
-                <Button className="bg-primary hover:bg-primary-hover text-white" disabled={isLoading}>
+                <Button disabled={isLoading} className="text-slate-900 rounded-md bg-zinc-400 hover:bg-zinc-300">
                   {isLoading ? <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                       Searching...
