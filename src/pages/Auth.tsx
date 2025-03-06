@@ -1,12 +1,11 @@
 
-import { useState, useEffect } from "react";
-import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
+import { useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
 
 const Auth = () => {
   const [email, setEmail] = useState("");
@@ -20,36 +19,9 @@ const Auth = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
-  const [searchParams] = useSearchParams();
 
   // Check if we're in password reset mode
   const isResetPassword = location.pathname === "/auth/reset-password";
-
-  // Check for password recovery token in the URL
-  useEffect(() => {
-    const checkRecoveryToken = async () => {
-      if (isResetPassword) {
-        // Try to get the session, which might have the recovery token
-        const { data, error } = await supabase.auth.getSession();
-        
-        // Log information for debugging
-        console.log("Current URL:", window.location.href);
-        console.log("Session data:", data);
-        console.log("Session error:", error);
-        
-        if (error) {
-          toast({
-            variant: "destructive",
-            title: "Error",
-            description: "Password reset token is invalid or has expired. Please try again."
-          });
-          navigate("/auth");
-        }
-      }
-    };
-    
-    checkRecoveryToken();
-  }, [isResetPassword, navigate, toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,41 +32,30 @@ const Auth = () => {
         if (password !== confirmPassword) {
           throw new Error("Passwords do not match");
         }
-        
-        console.log("Attempting to update password");
         await updatePassword(password);
-        
         toast({
           title: "Success",
           description: "Your password has been updated successfully",
         });
         setIsNewPasswordSet(true);
       } else if (isReset) {
-        console.log("Attempting to send reset password email to:", email);
         await resetPassword(email);
-        
         toast({
           title: "Success",
           description: "Password reset instructions have been sent to your email",
         });
         setIsReset(false);
       } else if (isSignUp) {
-        console.log("Attempting to sign up with email:", email);
-        const response = await signUp(email, password);
-        console.log("Signup response:", response);
-        
+        await signUp(email, password);
         toast({
           title: "Success",
           description: "Please check your email to verify your account",
         });
       } else {
-        console.log("Attempting to sign in with email:", email);
         await signIn(email, password);
         navigate("/search");
       }
     } catch (error: any) {
-      console.error("Auth error:", error);
-      
       toast({
         title: "Error",
         description: error.message || "Something went wrong",
@@ -106,8 +67,8 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#f9f9f9] flex items-center justify-center p-4">
-      <Card className="w-full max-w-md p-6 space-y-6 bg-white shadow-sm border-[#FFF9C4]/50">
+    <div className="min-h-screen bg-secondary flex items-center justify-center p-4">
+      <Card className="w-full max-w-md p-6 space-y-6 bg-white">
         <div className="text-center space-y-2">
           <h1 className="text-2xl font-bold">
             {isResetPassword
@@ -138,7 +99,6 @@ const Auth = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="border-[#FFF9C4]"
               />
             </div>
           )}
@@ -151,7 +111,6 @@ const Auth = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="border-[#FFF9C4]"
               />
             </div>
           )}
@@ -164,12 +123,11 @@ const Auth = () => {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
-                className="border-[#FFF9C4]"
               />
             </div>
           )}
 
-          <Button type="submit" className="w-full bg-[#F8BBD0] hover:bg-[#F8BBD0]/90 text-gray-800" disabled={isLoading || isNewPasswordSet}>
+          <Button type="submit" className="w-full" disabled={isLoading || isNewPasswordSet}>
             {isLoading
               ? "Loading..."
               : isResetPassword
@@ -187,7 +145,7 @@ const Auth = () => {
             <p className="text-green-600">Password updated successfully!</p>
             <Button 
               variant="default" 
-              className="w-full bg-[#F8BBD0] hover:bg-[#F8BBD0]/90 text-gray-800"
+              className="w-full"
               onClick={() => navigate("/auth")}
             >
               Go to Login
