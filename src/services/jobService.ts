@@ -1,14 +1,17 @@
+
 import { JobSearchResponse } from "@/types/job";
 
 const API_URL = "https://jobsearch.api.jobtechdev.se/search";
 
 type PublishDateFilter = "last-hour" | "today" | "last-7-days" | "last-30-days" | "";
+type WorkTimeTypeFilter = "full-time" | "part-time" | "";
 
 export const searchJobs = async (
   query: string, 
   offset: number = 0,
   limit: number = 10,
   publishDateFilter: PublishDateFilter = "",
+  workTimeTypeFilter: WorkTimeTypeFilter = "",
   mode: "OR" | "AND" = "OR"
 ): Promise<JobSearchResponse> => {
   try {
@@ -46,7 +49,18 @@ export const searchJobs = async (
       }
     }
 
-    console.log(`[INFO] Searching jobs with query: "${query}", offset: ${offset}, limit: ${limit}, date filter: ${publishDateFilter || 'none'}`);
+    // Add work time type filter if selected
+    if (workTimeTypeFilter) {
+      if (workTimeTypeFilter === 'full-time') {
+        params.append('parttime.max', '0');
+        console.log(`[INFO] Applied work time filter: Full-time (parttime.max=0)`);
+      } else if (workTimeTypeFilter === 'part-time') {
+        params.append('parttime.min', '1');
+        console.log(`[INFO] Applied work time filter: Part-time (parttime.min=1)`);
+      }
+    }
+
+    console.log(`[INFO] Searching jobs with query: "${query}", offset: ${offset}, limit: ${limit}, date filter: ${publishDateFilter || 'none'}, work time filter: ${workTimeTypeFilter || 'none'}`);
     
     const response = await fetch(`${API_URL}?${params.toString()}`, {
       headers: {
