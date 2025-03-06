@@ -52,11 +52,13 @@ export const searchJobs = async (
     // Add work time type filter if selected
     if (workTimeTypeFilter) {
       if (workTimeTypeFilter === 'full-time') {
+        params.append('parttime.min', '0');
         params.append('parttime.max', '0');
-        console.log(`[INFO] Applied work time filter: Full-time (parttime.max=0)`);
+        console.log(`[INFO] Applied work time filter: Full-time (parttime.min=0, parttime.max=0)`);
       } else if (workTimeTypeFilter === 'part-time') {
         params.append('parttime.min', '1');
-        console.log(`[INFO] Applied work time filter: Part-time (parttime.min=1)`);
+        params.append('parttime.max', '100');
+        console.log(`[INFO] Applied work time filter: Part-time (parttime.min=1, parttime.max=100)`);
       }
     }
 
