@@ -1,4 +1,3 @@
-
 import { JobSearchResponse } from "@/types/job";
 
 const API_URL = "https://jobsearch.api.jobtechdev.se/search";
@@ -69,8 +68,8 @@ export const searchJobs = async (
         params.append('parttime.max', '100');
         console.log(`[INFO] Applied work time filter: Full-time (parttime.min=100, parttime.max=100)`);
       } else if (workTimeTypeFilter === 'part-time') {
-        //params.append('parttime.min', '1');
-        params.append('parttime.max', '99');
+        params.append('parttime.min', '1');
+        params.append('parttime.max', '50');
         console.log(`[INFO] Applied work time filter: Part-time (parttime.min=1, parttime.max=99)`);
       }
     }
