@@ -17,14 +17,19 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+
 const AF_BASE_URL = "https://arbetsformedlingen.se/platsbanken/annonser";
+
 type SearchMode = "OR" | "AND";
+
 const searchModeHelp = {
   OR: "Find jobs containing any of the words (e.g., 'developer designer')",
   AND: "Find jobs containing all words (e.g., 'frontend react')"
 };
+
 const RESULTS_PER_PAGE = 10;
 const SEARCH_LIMIT = 100;
+
 const Search = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchMode, setSearchMode] = useState<SearchMode>("OR");
@@ -54,30 +59,36 @@ const Search = () => {
   const [cvSearchQuery, setCVSearchQuery] = useState("");
   const offset = (currentPage - 1) * RESULTS_PER_PAGE;
   const [workTimeTypeFilter, setWorkTimeTypeFilter] = useState<WorkTimeTypeFilter>("");
+
   useEffect(() => {
     if (!user) {
       navigate("/auth");
     }
   }, [user, navigate]);
+
   const formatSearchQuery = (query: string, mode: SearchMode): string => {
     if (mode === "AND") {
       return query.split(" ").filter(Boolean).map(term => `+${term}`).join(" ");
     }
     return query;
   };
+
   const handlePublishDateFilterChange = (value: string) => {
     setPublishDateFilter(value as PublishDateFilter);
-    setCurrentPage(1); // Reset to page 1 when changing filter
+    setCurrentPage(1);
   };
+
   const handleWorkTimeFilterChange = (value: string) => {
     setWorkTimeTypeFilter(value as WorkTimeTypeFilter);
-    setCurrentPage(1); // Reset to page 1 when changing filter
+    setCurrentPage(1);
   };
+
   const clearAllFilters = () => {
     setPublishDateFilter("");
     setWorkTimeTypeFilter("");
     setCurrentPage(1);
   };
+
   useEffect(() => {
     const fetchJobs = async () => {
       const activeQuery = isUsingCVResults ? cvSearchQuery : debouncedSearchQuery;
@@ -116,6 +127,7 @@ const Search = () => {
     
     fetchJobs();
   }, [debouncedSearchQuery, cvSearchQuery, isUsingCVResults, publishDateFilter, workTimeTypeFilter, currentPage, offset]);
+
   const handleProcessCV = async (file: File) => {
     setIsProcessingCV(true);
     const formData = new FormData();
@@ -149,11 +161,13 @@ const Search = () => {
       setIsProcessingCV(false);
     }
   };
+
   const handleSearchInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
     setIsUsingCVResults(false);
     setCurrentPage(1);
   };
+
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
@@ -163,19 +177,23 @@ const Search = () => {
       handleProcessCV(file);
     }
   };
+
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(true);
   };
+
   const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(false);
   };
+
   const handleFiltersToggle = () => {
     setIsFiltersOpen(!isFiltersOpen);
   };
+
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
     window.scrollTo({
@@ -183,7 +201,9 @@ const Search = () => {
       behavior: 'smooth'
     });
   };
+
   const totalPages = Math.ceil(totalJobs / RESULTS_PER_PAGE);
+
   const renderPaginationItems = () => {
     const items = [];
     const maxVisiblePages = 5;
@@ -196,21 +216,18 @@ const Search = () => {
           </PaginationItem>);
       }
     } else {
-      // Always show first page
       items.push(<PaginationItem key={1}>
           <PaginationLink onClick={() => handlePageChange(1)} isActive={currentPage === 1}>
             1
           </PaginationLink>
         </PaginationItem>);
 
-      // Show ellipsis if current page is more than 3
       if (currentPage > 3) {
         items.push(<PaginationItem key="ellipsis1">
             <PaginationEllipsis />
           </PaginationItem>);
       }
 
-      // Show pages around current page
       const startPage = Math.max(2, currentPage - 1);
       const endPage = Math.min(totalPages - 1, currentPage + 1);
       for (let i = startPage; i <= endPage; i++) {
@@ -221,14 +238,12 @@ const Search = () => {
           </PaginationItem>);
       }
 
-      // Show ellipsis if current page is less than totalPages - 2
       if (currentPage < totalPages - 2) {
         items.push(<PaginationItem key="ellipsis2">
             <PaginationEllipsis />
           </PaginationItem>);
       }
 
-      // Always show last page
       items.push(<PaginationItem key={totalPages}>
           <PaginationLink onClick={() => handlePageChange(totalPages)} isActive={currentPage === totalPages}>
             {totalPages}
@@ -237,7 +252,9 @@ const Search = () => {
     }
     return items;
   };
+
   if (!user) return null;
+
   return <div className="min-h-screen bg-secondary">
       <NavBar />
       
@@ -250,7 +267,6 @@ const Search = () => {
 
       <div className="max-w-[1200px] mx-auto px-4 py-8 bg-zinc-50">
         <div className="space-y-4">
-          {/* Search Section */}
           <div className="bg-white p-6 rounded-lg shadow-sm">
             <div className="flex flex-col md:flex-row gap-4 items-center">
               <div className="flex-1 w-full">
@@ -292,7 +308,6 @@ const Search = () => {
                 </CollapsibleTrigger>
                 <CollapsibleContent className="mt-4 p-4 border rounded-md">
                   <div className="space-y-6">
-                    {/* Publishing Date Filter */}
                     <div>
                       <h3 className="font-medium mb-2">Publishing Date</h3>
                       <RadioGroup value={publishDateFilter} onValueChange={handlePublishDateFilterChange} className="flex flex-wrap gap-4">
@@ -305,7 +320,6 @@ const Search = () => {
                       </RadioGroup>
                     </div>
                     
-                    {/* Work Time Filter */}
                     <div>
                       <h3 className="font-medium mb-2">Work Time</h3>
                       <RadioGroup value={workTimeTypeFilter} onValueChange={handleWorkTimeFilterChange} className="flex flex-wrap gap-4">
@@ -318,7 +332,6 @@ const Search = () => {
                       </RadioGroup>
                     </div>
                     
-                    {/* Clear Filters Button */}
                     {(publishDateFilter || workTimeTypeFilter) && (
                       <div className="flex justify-end">
                         <Button 
@@ -337,7 +350,6 @@ const Search = () => {
             </div>
           </div>
 
-          {/* CV Upload Section */}
           <div className="bg-white p-4 rounded-lg shadow-sm">
             <div className="flex items-center gap-4">
               <h2 className="text-sm font-semibold text-gray-900 whitespace-nowrap">Upload Your CV</h2>
@@ -361,22 +373,10 @@ const Search = () => {
             </div>
           </div>
 
-          {/* Skills Section */}
-          {/* {extractedSkills.length > 0 && <div className="bg-white p-4 rounded-lg shadow-sm">
-              <h3 className="text-sm font-medium text-gray-700 mb-2">Skills Extracted from CV:</h3>
-              <div className="flex flex-wrap gap-2">
-                {extractedSkills.map((skill, index) => <span key={index} className="inline-block bg-accent text-primary text-sm px-3 py-1 rounded-full">
-                    {skill}
-                  </span>)}
-              </div>
-            </div>} */}
-
-          {/* Jobs Count */}
           {totalJobs > 0 && <div className="text-sm text-gray-600">
               Found {totalJobs} jobs matching your criteria
             </div>}
 
-          {/* Jobs Section */}
           <div className="grid gap-4">
             {isLoading ? <div className="flex items-center justify-center py-8">
                 <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -415,7 +415,6 @@ const Search = () => {
                 </Card>)}
           </div>
 
-          {/* Pagination */}
           {totalPages > 1 && <Pagination className="my-8">
               <PaginationContent>
                 <PaginationItem>
@@ -433,4 +432,6 @@ const Search = () => {
       </div>
     </div>;
 };
+
 export default Search;
+

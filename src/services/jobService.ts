@@ -1,10 +1,22 @@
-
 import { JobSearchResponse } from "@/types/job";
 
 const API_URL = "https://jobsearch.api.jobtechdev.se/search";
 
 type PublishDateFilter = "last-hour" | "today" | "last-7-days" | "last-30-days" | "";
 type WorkTimeTypeFilter = "full-time" | "part-time" | "";
+
+export const publishDateFilterOptions = [
+  { value: "", label: "All jobs" },
+  { value: "today", label: "Today" },
+  { value: "last-7-days", label: "Last 7 days" },
+  { value: "last-30-days", label: "Last 30 days" }
+];
+
+export const workTimeFilterOptions = [
+  { value: "", label: "All jobs" },
+  { value: "full-time", label: "Full-time (100%)" },
+  { value: "part-time", label: "Part-time (< 100%)" }
+];
 
 export const searchJobs = async (
   query: string, 
@@ -54,11 +66,11 @@ export const searchJobs = async (
       if (workTimeTypeFilter === 'full-time') {
         params.append('parttime.min', '100');
         params.append('parttime.max', '100');
-        console.log(`[INFO] Applied work time filter: Full-time (parttime.min=0, parttime.max=0)`);
+        console.log(`[INFO] Applied work time filter: Full-time (parttime.min=100, parttime.max=100)`);
       } else if (workTimeTypeFilter === 'part-time') {
         params.append('parttime.min', '1');
         params.append('parttime.max', '99');
-        console.log(`[INFO] Applied work time filter: Part-time (parttime.min=1, parttime.max=100)`);
+        console.log(`[INFO] Applied work time filter: Part-time (parttime.min=1, parttime.max=99)`);
       }
     }
 
