@@ -6,7 +6,7 @@ import { Search as SearchIcon, Upload, BriefcaseIcon, Loader2, Info, Star, Filte
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/lib/auth";
 import { useNavigate } from "react-router-dom";
-import { searchJobs } from "@/services/jobService";
+import { searchJobs, PublishDateFilter, WorkTimeTypeFilter, publishDateFilterOptions, workTimeFilterOptions } from "@/services/jobService";
 import type { JobListing } from "@/types/job";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useSavedJobs } from "@/hooks/useSavedJobs";
@@ -19,40 +19,12 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 const AF_BASE_URL = "https://arbetsformedlingen.se/platsbanken/annonser";
 type SearchMode = "OR" | "AND";
-type PublishDateFilter = "last-hour" | "today" | "last-7-days" | "last-30-days" | "";
-type WorkTimeFilter = {
-  min?: number;
-  max?: number;
-};
 const searchModeHelp = {
   OR: "Find jobs containing any of the words (e.g., 'developer designer')",
   AND: "Find jobs containing all words (e.g., 'frontend react')"
 };
-const publishDateOptions = [{
-  value: "",
-  label: "Any time"
-}, {
-  value: "last-hour",
-  label: "Last hour"
-}, {
-  value: "today",
-  label: "Today"
-}, {
-  value: "last-7-days",
-  label: "Last 7 days"
-}, {
-  value: "last-30-days",
-  label: "Last 30 days"
-}];
 const RESULTS_PER_PAGE = 10;
 const SEARCH_LIMIT = 100;
-const workTimeOptions = [
-  { id: 'all', label: 'All Jobs', min: undefined, max: undefined },
-  { id: 'full-time', label: 'Full Time (100%)', min: 100, max: 100 },
-  { id: 'part-time', label: 'Part Time (< 100%)', min: 1, max: 99 },
-  { id: 'high-part-time', label: 'High Part Time (50-99%)', min: 50, max: 99 },
-  { id: 'low-part-time', label: 'Low Part Time (< 50%)', min: 1, max: 49 }
-];
 const Search = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchMode, setSearchMode] = useState<SearchMode>("OR");
@@ -81,7 +53,7 @@ const Search = () => {
   const [isUsingCVResults, setIsUsingCVResults] = useState(false);
   const [cvSearchQuery, setCVSearchQuery] = useState("");
   const offset = (currentPage - 1) * RESULTS_PER_PAGE;
-  const [workTimeFilter, setWorkTimeFilter] = useState<WorkTimeFilter>({});
+  const [workTimeTypeFilter, setWorkTimeTypeFilter] = useState<WorkTimeTypeFilter>("");
   useEffect(() => {
     if (!user) {
       navigate("/auth");
@@ -93,20 +65,18 @@ const Search = () => {
     }
     return query;
   };
-  const handleFilterChange = (value: string) => {
-    const filterValue = value as PublishDateFilter;
-    console.log(`[DEBUG] Changing filter from ${publishDateFilter} to ${filterValue}`);
-    setPublishDateFilter(filterValue);
-    setCurrentPage(1);
-    console.log(`[INFO] Filter changed to: ${filterValue || 'none'}, isUsingCVResults: ${isUsingCVResults}`);
+  const handlePublishDateFilterChange = (value: string) => {
+    setPublishDateFilter(value as PublishDateFilter);
+    setCurrentPage(1); // Reset to page 1 when changing filter
   };
-  const handleWorkTimeFilterChange = (optionId: string) => {
-    const option = workTimeOptions.find(opt => opt.id === optionId);
-    if (option) {
-      setWorkTimeFilter({ min: option.min, max: option.max });
-      setCurrentPage(1); // Reset to page 1 when changing filter
-      console.log(`[INFO] Work time filter changed to: ${option.label}`);
-    }
+  const handleWorkTimeFilterChange = (value: string) => {
+    setWorkTimeTypeFilter(value as WorkTimeTypeFilter);
+    setCurrentPage(1); // Reset to page 1 when changing filter
+  };
+  const clearAllFilters = () => {
+    setPublishDateFilter("");
+    setWorkTimeTypeFilter("");
+    setCurrentPage(1);
   };
   useEffect(() => {
     const fetchJobs = async () => {
@@ -121,21 +91,17 @@ const Search = () => {
       setIsLoading(true);
       
       try {
-        console.log(`[INFO] Fetching jobs with: query=${activeQuery}, page=${currentPage}, dateFilter=${publishDateFilter || 'none'}, workTimeFilter=${JSON.stringify(workTimeFilter)}`);
-        
         const { hits, total } = await searchJobs(
           activeQuery,
           offset,
           RESULTS_PER_PAGE,
           publishDateFilter,
-          workTimeFilter,
+          workTimeTypeFilter,
           "OR"
         );
         
         setJobs(hits);
         setTotalJobs(total.value);
-        
-        console.log(`[INFO] Fetched ${hits.length} jobs, total: ${total.value}`);
       } catch (error) {
         console.error("Error fetching jobs:", error);
         toast({
@@ -149,7 +115,7 @@ const Search = () => {
     };
     
     fetchJobs();
-  }, [debouncedSearchQuery, cvSearchQuery, isUsingCVResults, publishDateFilter, workTimeFilter, currentPage, offset]);
+  }, [debouncedSearchQuery, cvSearchQuery, isUsingCVResults, publishDateFilter, workTimeTypeFilter, currentPage, offset]);
   const handleProcessCV = async (file: File) => {
     setIsProcessingCV(true);
     const formData = new FormData();
@@ -329,9 +295,8 @@ const Search = () => {
                     {/* Publishing Date Filter */}
                     <div>
                       <h3 className="font-medium mb-2">Publishing Date</h3>
-                      <div className="text-xs text-gray-500 mb-2">Current filter: {publishDateFilter || 'none'}</div>
-                      <RadioGroup value={publishDateFilter} onValueChange={handleFilterChange} className="flex flex-wrap gap-4">
-                        {publishDateOptions.map(option => (
+                      <RadioGroup value={publishDateFilter} onValueChange={handlePublishDateFilterChange} className="flex flex-wrap gap-4">
+                        {publishDateFilterOptions.map(option => (
                           <div key={option.value} className="flex items-center space-x-2">
                             <RadioGroupItem value={option.value} id={`date-${option.value}`} />
                             <Label htmlFor={`date-${option.value}`}>{option.label}</Label>
@@ -343,21 +308,29 @@ const Search = () => {
                     {/* Work Time Filter */}
                     <div>
                       <h3 className="font-medium mb-2">Work Time</h3>
-                      <RadioGroup 
-                        value={workTimeOptions.find(opt => 
-                          opt.min === workTimeFilter.min && opt.max === workTimeFilter.max
-                        )?.id || 'all'} 
-                        onValueChange={handleWorkTimeFilterChange} 
-                        className="flex flex-wrap gap-4"
-                      >
-                        {workTimeOptions.map(option => (
-                          <div key={option.id} className="flex items-center space-x-2">
-                            <RadioGroupItem value={option.id} id={`worktime-${option.id}`} />
-                            <Label htmlFor={`worktime-${option.id}`}>{option.label}</Label>
+                      <RadioGroup value={workTimeTypeFilter} onValueChange={handleWorkTimeFilterChange} className="flex flex-wrap gap-4">
+                        {workTimeFilterOptions.map(option => (
+                          <div key={option.value} className="flex items-center space-x-2">
+                            <RadioGroupItem value={option.value} id={`worktime-${option.value}`} />
+                            <Label htmlFor={`worktime-${option.value}`}>{option.label}</Label>
                           </div>
                         ))}
                       </RadioGroup>
                     </div>
+                    
+                    {/* Clear Filters Button */}
+                    {(publishDateFilter || workTimeTypeFilter) && (
+                      <div className="flex justify-end">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={clearAllFilters}
+                          className="text-gray-500 hover:text-gray-700"
+                        >
+                          Clear all filters
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </CollapsibleContent>
               </Collapsible>
