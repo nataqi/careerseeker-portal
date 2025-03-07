@@ -1,9 +1,10 @@
+
 import { JobSearchResponse } from "@/types/job";
 
 const API_URL = "https://jobsearch.api.jobtechdev.se/search";
 
-type PublishDateFilter = "last-hour" | "today" | "last-7-days" | "last-30-days" | "";
-type WorkTimeTypeFilter = "full-time" | "part-time" | "";
+export type PublishDateFilter = "last-hour" | "today" | "last-7-days" | "last-30-days" | "";
+export type WorkTimeTypeFilter = "full-time" | "part-time" | "";
 
 export const publishDateFilterOptions = [
   { value: "", label: "All jobs" },
