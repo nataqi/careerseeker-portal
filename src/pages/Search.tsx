@@ -17,17 +17,17 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-
 const AF_BASE_URL = "https://arbetsformedlingen.se/platsbanken/annonser";
 type SearchMode = "OR" | "AND";
 type PublishDateFilter = "last-hour" | "today" | "last-7-days" | "last-30-days" | "";
-type WorkTimeTypeFilter = "full-time" | "part-time" | "";
-
+type WorkTimeFilter = {
+  min?: number;
+  max?: number;
+};
 const searchModeHelp = {
   OR: "Find jobs containing any of the words (e.g., 'developer designer')",
   AND: "Find jobs containing all words (e.g., 'frontend react')"
 };
-
 const publishDateOptions = [{
   value: "",
   label: "Any time"
@@ -44,26 +44,19 @@ const publishDateOptions = [{
   value: "last-30-days",
   label: "Last 30 days"
 }];
-
-const workTimeTypeOptions = [{
-  value: "",
-  label: "All jobs"
-}, {
-  value: "full-time",
-  label: "Full-time only"
-}, {
-  value: "part-time",
-  label: "Part-time only"
-}];
-
 const RESULTS_PER_PAGE = 10;
 const SEARCH_LIMIT = 100;
-
+const workTimeOptions = [
+  { id: 'all', label: 'All Jobs', min: undefined, max: undefined },
+  { id: 'full-time', label: 'Full Time (100%)', min: 100, max: 100 },
+  { id: 'part-time', label: 'Part Time (< 100%)', min: 1, max: 99 },
+  { id: 'high-part-time', label: 'High Part Time (50-99%)', min: 50, max: 99 },
+  { id: 'low-part-time', label: 'Low Part Time (< 50%)', min: 1, max: 49 }
+];
 const Search = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchMode, setSearchMode] = useState<SearchMode>("OR");
   const [publishDateFilter, setPublishDateFilter] = useState<PublishDateFilter>("");
-  const [workTimeTypeFilter, setWorkTimeTypeFilter] = useState<WorkTimeTypeFilter>("");
   const [isLoading, setIsLoading] = useState(false);
   const [jobs, setJobs] = useState<JobListing[]>([]);
   const [isProcessingCV, setIsProcessingCV] = useState(false);
@@ -72,7 +65,6 @@ const Search = () => {
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalJobs, setTotalJobs] = useState(0);
-  
   const {
     toast
   } = useToast();
@@ -88,60 +80,61 @@ const Search = () => {
   } = useSavedJobs();
   const [isUsingCVResults, setIsUsingCVResults] = useState(false);
   const [cvSearchQuery, setCVSearchQuery] = useState("");
-
   const offset = (currentPage - 1) * RESULTS_PER_PAGE;
-
+  const [workTimeFilter, setWorkTimeFilter] = useState<WorkTimeFilter>({});
   useEffect(() => {
     if (!user) {
       navigate("/auth");
     }
   }, [user, navigate]);
-
   const formatSearchQuery = (query: string, mode: SearchMode): string => {
     if (mode === "AND") {
       return query.split(" ").filter(Boolean).map(term => `+${term}`).join(" ");
     }
     return query;
   };
-
   const handleFilterChange = (value: string) => {
     const filterValue = value as PublishDateFilter;
+    console.log(`[DEBUG] Changing filter from ${publishDateFilter} to ${filterValue}`);
     setPublishDateFilter(filterValue);
     setCurrentPage(1);
     console.log(`[INFO] Filter changed to: ${filterValue || 'none'}, isUsingCVResults: ${isUsingCVResults}`);
   };
-
-  const handleWorkTimeFilterChange = (value: string) => {
-    const filterValue = value as WorkTimeTypeFilter;
-    setWorkTimeTypeFilter(filterValue);
-    setCurrentPage(1);
-    console.log(`[INFO] Work time filter changed to: ${filterValue || 'none'}`);
+  const handleWorkTimeFilterChange = (optionId: string) => {
+    const option = workTimeOptions.find(opt => opt.id === optionId);
+    if (option) {
+      setWorkTimeFilter({ min: option.min, max: option.max });
+      setCurrentPage(1); // Reset to page 1 when changing filter
+      console.log(`[INFO] Work time filter changed to: ${option.label}`);
+    }
   };
-
   useEffect(() => {
     const fetchJobs = async () => {
       const activeQuery = isUsingCVResults ? cvSearchQuery : debouncedSearchQuery;
+      
       if (!activeQuery.trim()) {
         setJobs([]);
         setTotalJobs(0);
         return;
       }
+      
       setIsLoading(true);
+      
       try {
-        console.log(`[INFO] Fetching jobs with: query=${activeQuery}, page=${currentPage}, filter=${publishDateFilter || 'none'}, workTimeFilter=${workTimeTypeFilter || 'none'}, isUsingCVResults=${isUsingCVResults}`);
-        const {
-          hits,
-          total
-        } = await searchJobs(
-          activeQuery, 
-          offset, 
-          RESULTS_PER_PAGE, 
-          publishDateFilter, 
-          workTimeTypeFilter, 
+        console.log(`[INFO] Fetching jobs with: query=${activeQuery}, page=${currentPage}, dateFilter=${publishDateFilter || 'none'}, workTimeFilter=${JSON.stringify(workTimeFilter)}`);
+        
+        const { hits, total } = await searchJobs(
+          activeQuery,
+          offset,
+          RESULTS_PER_PAGE,
+          publishDateFilter,
+          workTimeFilter,
           "OR"
         );
+        
         setJobs(hits);
         setTotalJobs(total.value);
+        
         console.log(`[INFO] Fetched ${hits.length} jobs, total: ${total.value}`);
       } catch (error) {
         console.error("Error fetching jobs:", error);
@@ -154,9 +147,9 @@ const Search = () => {
         setIsLoading(false);
       }
     };
+    
     fetchJobs();
-  }, [debouncedSearchQuery, cvSearchQuery, isUsingCVResults, publishDateFilter, workTimeTypeFilter, currentPage, offset]);
-
+  }, [debouncedSearchQuery, cvSearchQuery, isUsingCVResults, publishDateFilter, workTimeFilter, currentPage, offset]);
   const handleProcessCV = async (file: File) => {
     setIsProcessingCV(true);
     const formData = new FormData();
@@ -190,13 +183,11 @@ const Search = () => {
       setIsProcessingCV(false);
     }
   };
-
   const handleSearchInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
     setIsUsingCVResults(false);
     setCurrentPage(1);
   };
-
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
@@ -206,23 +197,19 @@ const Search = () => {
       handleProcessCV(file);
     }
   };
-
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(true);
   };
-
   const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(false);
   };
-
   const handleFiltersToggle = () => {
     setIsFiltersOpen(!isFiltersOpen);
   };
-
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
     window.scrollTo({
@@ -230,9 +217,7 @@ const Search = () => {
       behavior: 'smooth'
     });
   };
-
   const totalPages = Math.ceil(totalJobs / RESULTS_PER_PAGE);
-
   const renderPaginationItems = () => {
     const items = [];
     const maxVisiblePages = 5;
@@ -245,18 +230,21 @@ const Search = () => {
           </PaginationItem>);
       }
     } else {
+      // Always show first page
       items.push(<PaginationItem key={1}>
           <PaginationLink onClick={() => handlePageChange(1)} isActive={currentPage === 1}>
             1
           </PaginationLink>
         </PaginationItem>);
 
+      // Show ellipsis if current page is more than 3
       if (currentPage > 3) {
         items.push(<PaginationItem key="ellipsis1">
             <PaginationEllipsis />
           </PaginationItem>);
       }
 
+      // Show pages around current page
       const startPage = Math.max(2, currentPage - 1);
       const endPage = Math.min(totalPages - 1, currentPage + 1);
       for (let i = startPage; i <= endPage; i++) {
@@ -267,12 +255,14 @@ const Search = () => {
           </PaginationItem>);
       }
 
+      // Show ellipsis if current page is less than totalPages - 2
       if (currentPage < totalPages - 2) {
         items.push(<PaginationItem key="ellipsis2">
             <PaginationEllipsis />
           </PaginationItem>);
       }
 
+      // Always show last page
       items.push(<PaginationItem key={totalPages}>
           <PaginationLink onClick={() => handlePageChange(totalPages)} isActive={currentPage === totalPages}>
             {totalPages}
@@ -281,9 +271,7 @@ const Search = () => {
     }
     return items;
   };
-
   if (!user) return null;
-
   return <div className="min-h-screen bg-secondary">
       <NavBar />
       
@@ -296,6 +284,7 @@ const Search = () => {
 
       <div className="max-w-[1200px] mx-auto px-4 py-8 bg-zinc-50">
         <div className="space-y-4">
+          {/* Search Section */}
           <div className="bg-white p-6 rounded-lg shadow-sm">
             <div className="flex flex-col md:flex-row gap-4 items-center">
               <div className="flex-1 w-full">
@@ -336,24 +325,37 @@ const Search = () => {
                   </Button>
                 </CollapsibleTrigger>
                 <CollapsibleContent className="mt-4 p-4 border rounded-md">
-                  <div className="space-y-4">
+                  <div className="space-y-6">
+                    {/* Publishing Date Filter */}
                     <div>
                       <h3 className="font-medium mb-2">Publishing Date</h3>
+                      <div className="text-xs text-gray-500 mb-2">Current filter: {publishDateFilter || 'none'}</div>
                       <RadioGroup value={publishDateFilter} onValueChange={handleFilterChange} className="flex flex-wrap gap-4">
-                        {publishDateOptions.map(option => <div key={option.value} className="flex items-center space-x-2">
+                        {publishDateOptions.map(option => (
+                          <div key={option.value} className="flex items-center space-x-2">
                             <RadioGroupItem value={option.value} id={`date-${option.value}`} />
                             <Label htmlFor={`date-${option.value}`}>{option.label}</Label>
-                          </div>)}
+                          </div>
+                        ))}
                       </RadioGroup>
                     </div>
                     
-                    <div className="mt-4 pt-4 border-t">
+                    {/* Work Time Filter */}
+                    <div>
                       <h3 className="font-medium mb-2">Work Time</h3>
-                      <RadioGroup value={workTimeTypeFilter} onValueChange={handleWorkTimeFilterChange} className="flex flex-wrap gap-4">
-                        {workTimeTypeOptions.map(option => <div key={option.value} className="flex items-center space-x-2">
-                            <RadioGroupItem value={option.value} id={`worktime-${option.value}`} />
-                            <Label htmlFor={`worktime-${option.value}`}>{option.label}</Label>
-                          </div>)}
+                      <RadioGroup 
+                        value={workTimeOptions.find(opt => 
+                          opt.min === workTimeFilter.min && opt.max === workTimeFilter.max
+                        )?.id || 'all'} 
+                        onValueChange={handleWorkTimeFilterChange} 
+                        className="flex flex-wrap gap-4"
+                      >
+                        {workTimeOptions.map(option => (
+                          <div key={option.id} className="flex items-center space-x-2">
+                            <RadioGroupItem value={option.id} id={`worktime-${option.id}`} />
+                            <Label htmlFor={`worktime-${option.id}`}>{option.label}</Label>
+                          </div>
+                        ))}
                       </RadioGroup>
                     </div>
                   </div>
@@ -362,6 +364,7 @@ const Search = () => {
             </div>
           </div>
 
+          {/* CV Upload Section */}
           <div className="bg-white p-4 rounded-lg shadow-sm">
             <div className="flex items-center gap-4">
               <h2 className="text-sm font-semibold text-gray-900 whitespace-nowrap">Upload Your CV</h2>
@@ -385,10 +388,22 @@ const Search = () => {
             </div>
           </div>
 
-          <div className="text-sm text-gray-600">
-              Found {totalJobs} jobs matching your criteria
-            </div>
+          {/* Skills Section */}
+          {/* {extractedSkills.length > 0 && <div className="bg-white p-4 rounded-lg shadow-sm">
+              <h3 className="text-sm font-medium text-gray-700 mb-2">Skills Extracted from CV:</h3>
+              <div className="flex flex-wrap gap-2">
+                {extractedSkills.map((skill, index) => <span key={index} className="inline-block bg-accent text-primary text-sm px-3 py-1 rounded-full">
+                    {skill}
+                  </span>)}
+              </div>
+            </div>} */}
 
+          {/* Jobs Count */}
+          {totalJobs > 0 && <div className="text-sm text-gray-600">
+              Found {totalJobs} jobs matching your criteria
+            </div>}
+
+          {/* Jobs Section */}
           <div className="grid gap-4">
             {isLoading ? <div className="flex items-center justify-center py-8">
                 <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -427,6 +442,7 @@ const Search = () => {
                 </Card>)}
           </div>
 
+          {/* Pagination */}
           {totalPages > 1 && <Pagination className="my-8">
               <PaginationContent>
                 <PaginationItem>
@@ -444,5 +460,4 @@ const Search = () => {
       </div>
     </div>;
 };
-
 export default Search;
