@@ -1,4 +1,3 @@
-
 import { JobSearchResponse } from "@/types/job";
 
 const API_URL = "https://jobsearch.api.jobtechdev.se/search";
@@ -19,6 +18,54 @@ export const workTimeFilterOptions = [
   { value: "part-time", label: "Part-time (< 100%)" }
 ];
 
+const applyPublishDateFilter = (params: URLSearchParams, filter: PublishDateFilter): void => {
+  if (!filter) return;
+  
+  console.log(`[DEBUG] Applying date filter: ${filter}`);
+  
+  const now = new Date();
+  
+  switch (filter) {
+    case 'last-hour':
+      params.append('published-after', new Date(now.setHours(now.getHours() - 1)).toISOString());
+      console.log(`[INFO] Applied date filter: ${filter}, date: ${new Date(now.setHours(now.getHours() - 1)).toISOString()}`);
+      break;
+    case 'today':
+      params.append('published-after', new Date(now.setHours(0, 0, 0, 0)).toISOString());
+      console.log(`[INFO] Applied date filter: ${filter}, date: ${new Date(now.setHours(0, 0, 0, 0)).toISOString()}`);
+      break;
+    case 'last-7-days':
+      params.append('published-after', new Date(now.setDate(now.getDate() - 7)).toISOString());
+      console.log(`[INFO] Applied date filter: ${filter}, date: ${new Date(now.setDate(now.getDate() - 7)).toISOString()}`);
+      break;
+    case 'last-30-days':
+      params.append('published-after', new Date(now.setDate(now.getDate() - 30)).toISOString());
+      console.log(`[INFO] Applied date filter: ${filter}, date: ${new Date(now.setDate(now.getDate() - 30)).toISOString()}`);
+      break;
+    default:
+      // No date filter applied
+      break;
+  }
+};
+
+const applyWorkTimeFilter = (params: URLSearchParams, filter: WorkTimeTypeFilter): void => {
+  if (!filter) return;
+  
+  console.log(`[DEBUG] Applying work time filter: ${filter}`);
+  
+  if (filter === 'full-time') {
+    // For full-time jobs (100%)
+    params.append('parttime.min', '100');
+    params.append('parttime.max', '100');
+    console.log(`[INFO] Applied full-time filter (parttime.min=100, parttime.max=100)`);
+  } else if (filter === 'part-time') {
+    // For part-time jobs (try without setting min value)
+    // params.append('parttime.min', '1'); // Commenting this out as it might be too restrictive
+    params.append('parttime.max', '99');
+    console.log(`[INFO] Applied part-time filter (parttime.max=99)`);
+  }
+};
+
 export const searchJobs = async (
   query: string, 
   offset: number = 0,
@@ -34,64 +81,31 @@ export const searchJobs = async (
     params.append('limit', limit.toString());
     params.append('offset', offset.toString());
     
-    // Add publish date filter if selected
-    let publishedAfter = '';
-    if (publishDateFilter) {
-      const now = new Date();
-      
-      switch (publishDateFilter) {
-        case 'last-hour':
-          publishedAfter = new Date(now.setHours(now.getHours() - 1)).toISOString();
-          break;
-        case 'today':
-          publishedAfter = new Date(now.setHours(0, 0, 0, 0)).toISOString();
-          break;
-        case 'last-7-days':
-          publishedAfter = new Date(now.setDate(now.getDate() - 7)).toISOString();
-          break;
-        case 'last-30-days':
-          publishedAfter = new Date(now.setDate(now.getDate() - 30)).toISOString();
-          break;
-        default:
-          publishedAfter = '';
-      }
-      
-      if (publishedAfter) {
-        params.append('published-after', publishedAfter);
-        console.log(`[INFO] Applied date filter: ${publishDateFilter}, date: ${publishedAfter}`);
-      }
-    }
+    // Apply filters
+    applyPublishDateFilter(params, publishDateFilter);
+    applyWorkTimeFilter(params, workTimeTypeFilter);
 
-    // Add work time type filter if selected
-    if (workTimeTypeFilter) {
-      if (workTimeTypeFilter === 'full-time') {
-        params.append('parttime.min', '100');
-        params.append('parttime.max', '100');
-        console.log(`[INFO] Applied work time filter: Full-time (parttime.min=100, parttime.max=100)`);
-      } else if (workTimeTypeFilter === 'part-time') {
-        //params.append('parttime.min', '1');
-        params.append('parttime.max', '99');
-        console.log(`[INFO] Applied work time filter: Part-time (parttime.min=1, parttime.max=99)`);
-      }
-    }
-
-    console.log(`[INFO] Searching jobs with query: "${query}", offset: ${offset}, limit: ${limit}, date filter: ${publishDateFilter || 'none'}, work time filter: ${workTimeTypeFilter || 'none'}`);
+    // Log the final URL with all parameters
+    const finalUrl = `${API_URL}?${params.toString()}`;
+    console.log(`[DEBUG] Final API URL: ${finalUrl}`);
     
     const response = await fetch(`${API_URL}?${params.toString()}`, {
       headers: {
         'accept': 'application/json',
-        'x-feature-freetext-bool-method': 'and',
+        'x-feature-freetext-bool-method': 'or',
         'x-feature-disable-smart-freetext': 'false',
         'x-feature-enable-false-negative': 'true'
       }
     });
     
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`[ERROR] API error: ${response.status}, ${errorText}`);
       throw new Error(`API error: ${response.status}`);
     }
 
     const data = await response.json();
-    console.log(`[INFO] Found ${data.total?.value || 0} total jobs, returning ${data.hits?.length || 0} results`);
+    console.log(`[DEBUG] Filter: ${workTimeTypeFilter || 'all'}, Total jobs: ${data.total?.value || 0}`);
     
     return {
       hits: data.hits || [],
