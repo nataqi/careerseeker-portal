@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { ExclamationTriangleIcon, CheckCircleIcon } from "lucide-react";
+import { AlertTriangle, CheckCircleIcon } from "lucide-react";
 
 const AuthVerify = () => {
   const [verifying, setVerifying] = useState(true);
@@ -103,7 +103,7 @@ const AuthVerify = () => {
           ) : error ? (
             <>
               <div className="flex justify-center mb-4">
-                <ExclamationTriangleIcon className="h-12 w-12 text-red-500" />
+                <AlertTriangle className="h-12 w-12 text-red-500" />
               </div>
               <Alert variant="destructive" className="mb-4">
                 <AlertTitle>Verification Failed</AlertTitle>
