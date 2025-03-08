@@ -22,26 +22,43 @@ const AuthVerify = () => {
         console.log("Starting verification process...");
         console.log("Current URL:", window.location.href);
         
-        // Get URL hash parameters
+        // Get URL hash parameters - check both fragment and query parameters
+        // First try fragment (#)
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
-        const accessToken = hashParams.get("access_token");
-        const refreshToken = hashParams.get("refresh_token");
-        const type = hashParams.get("type");
-        const error = hashParams.get("error");
-        const errorDescription = hashParams.get("error_description");
+        
+        // If no parameters in fragment, check query parameters (?)
+        const queryParams = new URLSearchParams(window.location.search);
+        
+        // Determine which set of params to use
+        let accessToken = hashParams.get("access_token");
+        let refreshToken = hashParams.get("refresh_token");
+        let type = hashParams.get("type");
+        let tokenError = hashParams.get("error");
+        let errorDescription = hashParams.get("error_description");
+        
+        // If no token in hash, check query params
+        if (!accessToken) {
+          accessToken = queryParams.get("access_token");
+          refreshToken = queryParams.get("refresh_token");
+          type = queryParams.get("type");
+          tokenError = queryParams.get("error");
+          errorDescription = queryParams.get("error_description");
+        }
 
         // Log the URL parameters for debugging
         console.log("URL parameters:", { 
           accessToken: !!accessToken, 
           refreshToken: !!refreshToken,
           type, 
-          error,
-          errorDescription
+          error: tokenError,
+          errorDescription,
+          hash: window.location.hash,
+          search: window.location.search
         });
         
         // Check for errors in URL
-        if (error) {
-          throw new Error(`${error}: ${errorDescription || 'Unknown error'}`);
+        if (tokenError) {
+          throw new Error(`${tokenError}: ${errorDescription || 'Unknown error'}`);
         }
         
         // Handle password reset flow
@@ -59,7 +76,7 @@ const AuthVerify = () => {
         
         // Handle email verification for signup
         if (accessToken && type === "signup") {
-          console.log("Processing signup verification");
+          console.log("Processing signup verification with token");
           
           // Set session with tokens
           const { data, error: sessionError } = await supabase.auth.setSession({
@@ -82,21 +99,38 @@ const AuthVerify = () => {
             description: "Your account has been verified successfully",
           });
         } else {
-          // Check if user already has session
-          const { data, error: sessionError } = await supabase.auth.getSession();
-          
-          if (sessionError) {
-            console.error("Session check error:", sessionError);
-            throw sessionError;
-          }
-          
-          console.log("Existing session check:", !!data.session);
-          
-          if (data.session) {
-            setVerifying(false);
-            setSuccess(true);
+          // Handle special case where Supabase redirects after email verification
+          // Some Supabase configurations might redirect without tokens in URL
+          if (location.pathname === "/auth/verify" && !accessToken) {
+            console.log("No token in URL, checking for valid session");
+            
+            // Check if user already has session
+            const { data, error: sessionError } = await supabase.auth.getSession();
+            
+            if (sessionError) {
+              console.error("Session check error:", sessionError);
+              throw sessionError;
+            }
+            
+            console.log("Existing session check:", !!data.session);
+            
+            if (data.session) {
+              setVerifying(false);
+              setSuccess(true);
+              toast({
+                title: "Account verified",
+                description: "Your account has been verified successfully",
+              });
+            } else {
+              // Try to extract token from URL if it's embedded differently
+              const fullUrl = window.location.href;
+              console.log("Full URL for debugging:", fullUrl);
+              
+              // If no tokens found anywhere, show error
+              throw new Error("No verification token found. Please check your email link or try signing in.");
+            }
           } else {
-            throw new Error("No verification token found or session expired");
+            throw new Error("Invalid verification link. Please try again or contact support.");
           }
         }
       } catch (err: any) {
@@ -114,7 +148,7 @@ const AuthVerify = () => {
     };
 
     handleVerification();
-  }, [navigate, toast]);
+  }, [navigate, location.pathname, toast]);
 
   return (
     <div className="min-h-screen bg-secondary flex items-center justify-center p-4">
