@@ -12,6 +12,7 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { useSavedJobs } from "@/hooks/useSavedJobs";
 import { supabase } from "@/integrations/supabase/client";
 import { NavBar } from "@/components/NavBar";
+import HeroSection from "@/components/HeroSection";
 import {
   Select,
   SelectContent,
@@ -286,14 +287,10 @@ const Search = () => {
     <div className="min-h-screen bg-secondary">
       <NavBar />
       
-      <div className="bg-white border-b">
-        <div className="max-w-[1200px] mx-auto px-4 py-12 text-center">
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">Search Jobs</h1>
-          <p className="text-gray-600 max-w-2xl mx-auto">
-            Find the perfect job opportunity by searching through thousands of positions
-          </p>
-        </div>
-      </div>
+      <HeroSection 
+        title="Search Jobs" 
+        description="Find the perfect job opportunity by searching through thousands of positions" 
+      />
 
       <div className="max-w-[1200px] mx-auto px-4 py-8">
         <div className="space-y-4">
