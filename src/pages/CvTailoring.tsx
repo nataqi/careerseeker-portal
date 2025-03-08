@@ -9,7 +9,6 @@ import { useSavedJobs } from "@/hooks/useSavedJobs";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { NavBar } from "@/components/NavBar";
-import HeroSection from "@/components/HeroSection";
 
 const AF_BASE_URL = "https://arbetsformedlingen.se/platsbanken/annonser";
 const JOBS_PER_PAGE = 5;
@@ -114,10 +113,15 @@ const CvTailoring = () => {
     <div className="min-h-screen bg-secondary">
       <NavBar />
       
-      <HeroSection 
-        title="CV Tailoring" 
-        description="Optimize your CV for specific job applications" 
-      />
+      <div className="bg-white border-b">
+        <div className="max-w-[1200px] mx-auto px-4 py-12 text-center">
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">CV Tailoring</h1>
+          <p className="text-gray-600 max-w-2xl mx-auto">
+            Upload your CV and select a job to get AI-powered tailoring suggestions
+            that help match your CV to the job requirements.
+          </p>
+        </div>
+      </div>
 
       <div className="max-w-[1200px] mx-auto px-4 py-8">
         <div className="flex flex-col lg:flex-row gap-6">
