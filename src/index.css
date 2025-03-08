@@ -38,8 +38,24 @@
     font-family: 'Inter', sans-serif;
   }
 
+  h1 {
+    @apply text-4xl md:text-5xl font-bold tracking-tight;
+  }
+
+  h2 {
+    @apply text-3xl md:text-4xl font-bold tracking-tight;
+  }
+
+  h3 {
+    @apply text-2xl md:text-3xl font-semibold tracking-tight;
+  }
+
+  p {
+    @apply text-base md:text-lg leading-relaxed;
+  }
+
   .card-hover {
-    @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
+    @apply transition-all duration-300 hover:shadow-md hover:-translate-y-1;
   }
 
   .button-animation {
@@ -56,6 +72,19 @@
   animation: slideIn 0.5s ease-out forwards;
 }
 
+.scale-in {
+  animation: scaleIn 0.3s ease-out forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 @keyframes slideIn {
   from {
     opacity: 0;
@@ -65,4 +94,42 @@
     opacity: 1;
     transform: translateX(0);
   }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Green gradient backgrounds */
+.bg-gradient-green-soft {
+  @apply bg-gradient-to-br from-primary/20 to-primary/5;
+}
+
+.bg-gradient-green {
+  @apply bg-gradient-to-br from-primary to-primary-hover;
+}
+
+.bg-gradient-hero {
+  @apply bg-gradient-to-br from-primary/10 via-secondary to-white;
+}
+
+/* Custom card and input styling */
+.input-focus {
+  @apply focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all duration-200;
+}
+
+.card-shadow {
+  @apply shadow-sm hover:shadow transition-shadow duration-300;
+}
+
+/* Container width consistency */
+.container-width {
+  @apply max-w-[1200px] mx-auto px-4;
 }

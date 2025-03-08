@@ -44,6 +44,11 @@ export default {
           foreground: "hsl(var(--card-foreground))",
         },
       },
+      borderRadius: {
+        lg: "var(--radius)",
+        md: "calc(var(--radius) - 2px)",
+        sm: "calc(var(--radius) - 4px)",
+      },
       keyframes: {
         "accordion-down": {
           from: { height: "0" },
@@ -62,6 +67,10 @@ export default {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         fadeIn: "fadeIn 0.5s ease-out forwards",
+      },
+      boxShadow: {
+        'soft': '0 4px 8px rgba(0, 0, 0, 0.04)',
+        'medium': '0 6px 12px rgba(0, 0, 0, 0.05)',
       },
     },
   },
