@@ -12,7 +12,6 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { useSavedJobs } from "@/hooks/useSavedJobs";
 import { supabase } from "@/integrations/supabase/client";
 import { NavBar } from "@/components/NavBar";
-import HeroSection from "@/components/HeroSection";
 import {
   Select,
   SelectContent,
@@ -287,10 +286,14 @@ const Search = () => {
     <div className="min-h-screen bg-secondary">
       <NavBar />
       
-      <HeroSection 
-        title="Search Jobs" 
-        description="Find the perfect job opportunity by searching through thousands of positions" 
-      />
+      <div className="bg-white border-b">
+        <div className="max-w-[1200px] mx-auto px-4 py-12 text-center">
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">Search Jobs</h1>
+          <p className="text-gray-600 max-w-2xl mx-auto">
+            Find the perfect job opportunity by searching through thousands of positions
+          </p>
+        </div>
+      </div>
 
       <div className="max-w-[1200px] mx-auto px-4 py-8">
         <div className="space-y-4">
@@ -331,7 +334,7 @@ const Search = () => {
               </div>
             </div>
 
-            <div className="mt-4 flex flex-wrap gap-2">
+            <div className="mt-4">
               <Collapsible open={isFiltersOpen} onOpenChange={setIsFiltersOpen}>
                 <CollapsibleTrigger asChild>
                   <Button variant="outline" className="w-full md:w-auto">
@@ -364,37 +367,49 @@ const Search = () => {
                   </div>
                 </CollapsibleContent>
               </Collapsible>
-              
-              {/* CV Upload Button */}
-              <input 
-                type="file" 
-                accept=".pdf" 
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) handleFileUpload(file);
-                }} 
-                className="hidden" 
-                id="cv-upload" 
-                disabled={isProcessingCV}
-              />
-              <Button 
-                variant="outline"
-                className="w-full md:w-auto"
-                onClick={() => document.getElementById('cv-upload')?.click()}
-                disabled={isProcessingCV}
-              >
-                {isProcessingCV ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Processing CV...
-                  </>
-                ) : (
-                  <>
-                    <Upload className="w-4 h-4 mr-2" />
-                    Upload CV
-                  </>
-                )}
-              </Button>
+            </div>
+          </div>
+
+          {/* CV Upload Section */}
+          <div className="bg-white p-4 rounded-lg shadow-sm">
+            <div className="flex items-center gap-4">
+              <h2 className="text-sm font-semibold text-gray-900 whitespace-nowrap">Upload Your CV</h2>
+              <div className="flex-1">
+                <input 
+                  type="file" 
+                  accept=".pdf" 
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleFileUpload(file);
+                  }} 
+                  className="hidden" 
+                  id="cv-upload" 
+                  disabled={isProcessingCV}
+                />
+                <div
+                  onDrop={handleDrop}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  className={`relative border-2 ${
+                    isDragging ? 'border-primary bg-primary/10' : 'border-dashed border-gray-300'
+                  } rounded-lg p-3 transition-all cursor-pointer hover:border-primary/50`}
+                  onClick={() => document.getElementById('cv-upload')?.click()}
+                >
+                  {isProcessingCV ? (
+                    <div className="flex items-center justify-center h-12 gap-2">
+                      <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                      <p className="text-sm text-gray-600">Processing CV...</p>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center h-12 gap-3">
+                      <Upload className="w-5 h-5 text-gray-400" />
+                      <p className="text-sm font-medium text-gray-700">
+                        {isDragging ? "Drop your CV here" : "Drag and drop your CV here or click to select"}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
 

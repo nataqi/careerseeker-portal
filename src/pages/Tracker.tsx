@@ -10,38 +10,36 @@ import { useSavedJobs } from "@/hooks/useSavedJobs";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import type { SavedJob } from "@/types/saved-job";
 import { useToast } from "@/hooks/use-toast";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { NavBar } from "@/components/NavBar";
-import HeroSection from "@/components/HeroSection";
 
 const AF_BASE_URL = "https://arbetsformedlingen.se/platsbanken/annonser";
 const JOBS_PER_PAGE = 10;
-const APPLICATION_STATUSES = [{
-  value: "Not Applied",
-  label: "Not Applied"
-}, {
-  value: "Applied",
-  label: "Applied"
-}, {
-  value: "No Response",
-  label: "No Response"
-}, {
-  value: "Rejected",
-  label: "Rejected"
-}, {
-  value: "Interview Scheduled",
-  label: "Interview Scheduled"
-}, {
-  value: "Offer Received",
-  label: "Offer Received"
-}, {
-  value: "Offer Accepted",
-  label: "Offer Accepted"
-}, {
-  value: "Offer Declined",
-  label: "Offer Declined"
-} as const] as const;
+
+const APPLICATION_STATUSES = [
+  { value: "Not Applied", label: "Not Applied" },
+  { value: "Applied", label: "Applied" },
+  { value: "No Response", label: "No Response" },
+  { value: "Rejected", label: "Rejected" },
+  { value: "Interview Scheduled", label: "Interview Scheduled" },
+  { value: "Offer Received", label: "Offer Received" },
+  { value: "Offer Accepted", label: "Offer Accepted" },
+  { value: "Offer Declined", label: "Offer Declined" } as const,
+] as const;
 
 type ApplicationStatus = typeof APPLICATION_STATUSES[number]['value'];
 
@@ -54,23 +52,15 @@ const formatDate = (date: Date) => {
 };
 
 const Tracker = () => {
-  const {
-    user
-  } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
-  const {
-    savedJobs,
-    isLoading,
-    updateJobStatus
-  } = useSavedJobs();
+  const { savedJobs, isLoading, updateJobStatus } = useSavedJobs();
   const [trackedJobs, setTrackedJobs] = useState<SavedJob[]>([]);
   const [availableJobs, setAvailableJobs] = useState<SavedJob[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [editingJob, setEditingJob] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<SavedJob>>({});
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
 
   useEffect(() => {
     if (!user) {
@@ -86,10 +76,9 @@ const Tracker = () => {
 
   const handleDragEnd = (result: any) => {
     if (!result.destination) return;
-    const {
-      source,
-      destination
-    } = result;
+
+    const { source, destination } = result;
+
     if (source.droppableId === "savedJobs" && destination.droppableId === "trackerTable") {
       const draggedJob = availableJobs[source.index];
       if (!trackedJobs.some(job => job.id === draggedJob.id)) {
@@ -120,10 +109,9 @@ const Tracker = () => {
 
   const handleSaveEdit = async (jobId: string) => {
     setTrackedJobs(prev => {
-      const updatedJobs = prev.map(job => job.id === jobId ? {
-        ...job,
-        ...editForm
-      } : job);
+      const updatedJobs = prev.map(job =>
+        job.id === jobId ? { ...job, ...editForm } : job
+      );
       return updatedJobs.sort((a, b) => {
         if (a.tracking_date === b.tracking_date) {
           return a.headline.localeCompare(b.headline);
@@ -141,10 +129,12 @@ const Tracker = () => {
   };
 
   const handleStatusChange = async (jobId: string, status: ApplicationStatus) => {
-    setTrackedJobs(prev => prev.map(job => job.id === jobId ? {
-      ...job,
-      response_status: status
-    } : job));
+    setTrackedJobs(prev =>
+      prev.map(job =>
+        job.id === jobId ? { ...job, response_status: status } : job
+      )
+    );
+    
     await updateJobStatus(jobId, status);
   };
 
@@ -161,25 +151,35 @@ const Tracker = () => {
       toast({
         title: "No jobs to export",
         description: "Add jobs to your tracker first before exporting.",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
+
     const headers = ["Job Title", "Job URL", "Employer", "Location", "Status", "Date", "Notes"];
     const csvRows = [headers];
+
     trackedJobs.forEach(job => {
       const jobUrl = `${AF_BASE_URL}/${job.job_id}`;
-      const row = [job.headline, jobUrl, job.employer_name, job.workplace_city || "Not specified", job.response_status || "Not Applied", job.tracking_date || "", job.notes || ""];
+      const row = [
+        job.headline,
+        jobUrl,
+        job.employer_name,
+        job.workplace_city || "Not specified",
+        job.response_status || "Not Applied",
+        job.tracking_date || "",
+        job.notes || ""
+      ];
       const escapedRow = row.map(field => {
         const escaped = field.toString().replace(/"/g, '""');
         return `"${escaped}"`;
       });
       csvRows.push(escapedRow);
     });
+
     const csvContent = csvRows.map(row => row.join(",")).join("\n");
-    const blob = new Blob([csvContent], {
-      type: "text/csv;charset=utf-8;"
-    });
+    
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.setAttribute("href", url);
@@ -187,9 +187,10 @@ const Tracker = () => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    
     toast({
       title: "Export successful",
-      description: `Exported ${trackedJobs.length} job applications to CSV`
+      description: `Exported ${trackedJobs.length} job applications to CSV`,
     });
   };
 
@@ -204,23 +205,46 @@ const Tracker = () => {
     <div className="min-h-screen bg-secondary">
       <NavBar />
       
-      <HeroSection 
-        title="Application Tracker" 
-        description="Keep track of all your job applications in one place" 
-      />
+      <div className="bg-white border-b">
+        <div className="max-w-[1200px] mx-auto px-4 py-8">
+          <div className="text-center space-y-3">
+            <h1 className="text-3xl md:text-4xl font-bold text-gray-900">Job Application Tracker</h1>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              Keep track of your job applications and their status
+            </p>
+          </div>
+        </div>
+      </div>
 
-      <div className="max-w-[1200px] mx-auto px-4 py-8">
-        {isLoading ? <div className="flex items-center justify-center py-8">
+      <div className="max-w-[1400px] mx-auto px-4 py-8">
+        {isLoading ? (
+          <div className="flex items-center justify-center py-8">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
-          </div> : <DragDropContext onDragEnd={handleDragEnd}>
+          </div>
+        ) : (
+          <DragDropContext onDragEnd={handleDragEnd}>
             <div className="grid grid-cols-12 gap-6 items-start">
               <div className="col-span-12 md:col-span-4 xl:col-span-3">
                 <div className="bg-white rounded-lg p-4 shadow-sm">
                   <h2 className="text-xl font-semibold mb-4">Saved Jobs</h2>
                   <Droppable droppableId="savedJobs">
-                    {provided => <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-3">
-                        {currentJobs.map((job, index) => <Draggable key={job.id} draggableId={job.id} index={index}>
-                            {(provided, snapshot) => <Card ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} className={`p-4 ${snapshot.isDragging ? "shadow-lg ring-2 ring-primary" : ""}`}>
+                    {(provided) => (
+                      <div
+                        {...provided.droppableProps}
+                        ref={provided.innerRef}
+                        className="space-y-3"
+                      >
+                        {currentJobs.map((job, index) => (
+                          <Draggable key={job.id} draggableId={job.id} index={index}>
+                            {(provided, snapshot) => (
+                              <Card
+                                ref={provided.innerRef}
+                                {...provided.draggableProps}
+                                {...provided.dragHandleProps}
+                                className={`p-4 ${
+                                  snapshot.isDragging ? "shadow-lg ring-2 ring-primary" : ""
+                                }`}
+                              >
                                 <div className="space-y-2">
                                   <h3 className="font-medium text-sm leading-tight break-words">
                                     {job.headline}
@@ -230,27 +254,46 @@ const Tracker = () => {
                                       <BriefcaseIcon className="w-3 h-3 shrink-0" />
                                       <span className="break-words">{job.employer_name}</span>
                                     </div>
-                                    <Button size="sm" onClick={() => window.open(`${AF_BASE_URL}/${job.job_id}`, '_blank')} className="bg-primary hover:bg-primary-hover text-white shrink-0 h-7 text-xs px-2.5">
+                                    <Button
+                                      size="sm"
+                                      onClick={() => window.open(`${AF_BASE_URL}/${job.job_id}`, '_blank')}
+                                      className="bg-primary hover:bg-primary-hover text-white shrink-0 h-7 text-xs px-2.5"
+                                    >
                                       Apply
                                     </Button>
                                   </div>
                                 </div>
-                              </Card>}
-                          </Draggable>)}
+                              </Card>
+                            )}
+                          </Draggable>
+                        ))}
                         {provided.placeholder}
-                      </div>}
+                      </div>
+                    )}
                   </Droppable>
-                  {totalPages > 1 && <div className="flex items-center justify-between mt-4 pt-3 border-t">
-                      <Button variant="ghost" size="sm" onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1}>
+                  {totalPages > 1 && (
+                    <div className="flex items-center justify-between mt-4 pt-3 border-t">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                        disabled={currentPage === 1}
+                      >
                         <ChevronLeft className="h-4 w-4" />
                       </Button>
                       <span className="text-sm text-gray-600">
                         {currentPage} / {totalPages}
                       </span>
-                      <Button variant="ghost" size="sm" onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                        disabled={currentPage === totalPages}
+                      >
                         <ChevronRight className="h-4 w-4" />
                       </Button>
-                    </div>}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -258,7 +301,12 @@ const Tracker = () => {
                 <div className="bg-white rounded-lg border shadow-sm">
                   <div className="p-4 border-b flex justify-between items-center">
                     <h2 className="text-xl font-semibold">Tracked Applications</h2>
-                    <Button onClick={handleExportCSV} variant="outline" size="sm" className="bg-white text-primary border-primary hover:bg-primary/5">
+                    <Button 
+                      onClick={handleExportCSV} 
+                      variant="outline" 
+                      size="sm" 
+                      className="bg-white text-primary border-primary hover:bg-primary/5"
+                    >
                       <Download className="w-4 h-4 mr-2" />
                       Export to CSV
                     </Button>
@@ -278,82 +326,168 @@ const Tracker = () => {
                           </TableRow>
                         </TableHeader>
                         <Droppable droppableId="trackerTable">
-                          {provided => <TableBody {...provided.droppableProps} ref={provided.innerRef} className="min-h-[400px] relative">
-                              {trackedJobs.length === 0 ? <TableRow>
-                                  <TableCell colSpan={7} className="text-center text-gray-500 h-[300px]">
+                          {(provided) => (
+                            <TableBody
+                              {...provided.droppableProps}
+                              ref={provided.innerRef}
+                              className="min-h-[400px] relative"
+                            >
+                              {trackedJobs.length === 0 ? (
+                                <TableRow>
+                                  <TableCell 
+                                    colSpan={7} 
+                                    className="text-center text-gray-500 h-[300px]"
+                                  >
                                     Drag jobs here to track them
                                   </TableCell>
-                                </TableRow> : trackedJobs.map((job, index) => <Draggable key={job.id} draggableId={job.id} index={index}>
-                                    {provided => <TableRow ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
+                                </TableRow>
+                              ) : (
+                                trackedJobs.map((job, index) => (
+                                  <Draggable
+                                    key={job.id}
+                                    draggableId={job.id}
+                                    index={index}
+                                  >
+                                    {(provided) => (
+                                      <TableRow
+                                        ref={provided.innerRef}
+                                        {...provided.draggableProps}
+                                        {...provided.dragHandleProps}
+                                      >
                                         <TableCell className="font-medium">
-                                          {editingJob === job.id ? <Input value={editForm.headline || ''} onChange={e => setEditForm(prev => ({
-                                ...prev,
-                                headline: e.target.value
-                              }))} /> : <a href={`https://arbetsformedlingen.se/platsbanken/annonser/${job.job_id}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                                          {editingJob === job.id ? (
+                                            <Input
+                                              value={editForm.headline || ''}
+                                              onChange={(e) => setEditForm(prev => ({ ...prev, headline: e.target.value }))}
+                                            />
+                                          ) : (
+                                            <a
+                                              href={`https://arbetsformedlingen.se/platsbanken/annonser/${job.job_id}`}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              className="text-primary hover:underline"
+                                            >
                                               {job.headline}
-                                            </a>}
+                                            </a>
+                                          )}
                                         </TableCell>
                                         <TableCell>
-                                          {editingJob === job.id ? <Input value={editForm.employer_name || ''} onChange={e => setEditForm(prev => ({
-                                ...prev,
-                                employer_name: e.target.value
-                              }))} /> : job.employer_name}
+                                          {editingJob === job.id ? (
+                                            <Input
+                                              value={editForm.employer_name || ''}
+                                              onChange={(e) => setEditForm(prev => ({ ...prev, employer_name: e.target.value }))}
+                                            />
+                                          ) : (
+                                            job.employer_name
+                                          )}
                                         </TableCell>
                                         <TableCell>
-                                          {editingJob === job.id ? <Input value={editForm.workplace_city || ''} onChange={e => setEditForm(prev => ({
-                                ...prev,
-                                workplace_city: e.target.value
-                              }))} /> : job.workplace_city}
+                                          {editingJob === job.id ? (
+                                            <Input
+                                              value={editForm.workplace_city || ''}
+                                              onChange={(e) => setEditForm(prev => ({ ...prev, workplace_city: e.target.value }))}
+                                            />
+                                          ) : (
+                                            job.workplace_city
+                                          )}
                                         </TableCell>
                                         <TableCell>
-                                          <Select defaultValue={job.response_status || "Not Applied"} onValueChange={value => handleStatusChange(job.id, value as ApplicationStatus)} disabled={editingJob !== job.id}>
+                                          <Select
+                                            defaultValue={job.response_status || "Not Applied"}
+                                            onValueChange={(value) => handleStatusChange(job.id, value as ApplicationStatus)}
+                                            disabled={editingJob !== job.id}
+                                          >
                                             <SelectTrigger className="w-[150px]">
                                               <SelectValue />
                                             </SelectTrigger>
                                             <SelectContent>
-                                              {APPLICATION_STATUSES.map(status => <SelectItem key={status.value} value={status.value}>
+                                              {APPLICATION_STATUSES.map((status) => (
+                                                <SelectItem key={status.value} value={status.value}>
                                                   {status.label}
-                                                </SelectItem>)}
+                                                </SelectItem>
+                                              ))}
                                             </SelectContent>
                                           </Select>
                                         </TableCell>
                                         <TableCell>
-                                          {editingJob === job.id ? <Input value={editForm.tracking_date || ''} onChange={e => setEditForm(prev => ({
-                                ...prev,
-                                tracking_date: e.target.value
-                              }))} placeholder="DD.MM.YY" /> : job.tracking_date}
+                                          {editingJob === job.id ? (
+                                            <Input
+                                              value={editForm.tracking_date || ''}
+                                              onChange={(e) => setEditForm(prev => ({ ...prev, tracking_date: e.target.value }))}
+                                              placeholder="DD.MM.YY"
+                                            />
+                                          ) : (
+                                            job.tracking_date
+                                          )}
                                         </TableCell>
                                         <TableCell>
-                                          {editingJob === job.id ? <Textarea value={editForm.notes || ''} onChange={e => setEditForm(prev => ({
-                                ...prev,
-                                notes: e.target.value
-                              }))} className="min-h-[80px]" /> : <div className="max-h-[80px] overflow-hidden text-sm">
-                                              {job.notes ? job.notes.length > 50 ? `${job.notes.slice(0, 50)}...` : job.notes : '-'}
-                                            </div>}
+                                          {editingJob === job.id ? (
+                                            <Textarea
+                                              value={editForm.notes || ''}
+                                              onChange={(e) => setEditForm(prev => ({ ...prev, notes: e.target.value }))}
+                                              className="min-h-[80px]"
+                                            />
+                                          ) : (
+                                            <div className="max-h-[80px] overflow-hidden text-sm">
+                                              {job.notes ? (
+                                                job.notes.length > 50 ? 
+                                                  `${job.notes.slice(0, 50)}...` : 
+                                                  job.notes
+                                              ) : '-'}
+                                            </div>
+                                          )}
                                         </TableCell>
                                         <TableCell>
                                           <div className="flex items-center gap-2">
-                                            {editingJob === job.id ? <>
-                                                <Button variant="ghost" size="icon" onClick={() => handleSaveEdit(job.id)} className="h-8 w-8 text-gray-500 hover:text-green-600">
+                                            {editingJob === job.id ? (
+                                              <>
+                                                <Button
+                                                  variant="ghost"
+                                                  size="icon"
+                                                  onClick={() => handleSaveEdit(job.id)}
+                                                  className="h-8 w-8 text-gray-500 hover:text-green-600"
+                                                >
                                                   <Save className="h-4 w-4" />
                                                 </Button>
-                                                <Button variant="ghost" size="icon" onClick={handleCancelEdit} className="h-8 w-8 text-gray-500 hover:text-red-600">
+                                                <Button
+                                                  variant="ghost"
+                                                  size="icon"
+                                                  onClick={handleCancelEdit}
+                                                  className="h-8 w-8 text-gray-500 hover:text-red-600"
+                                                >
                                                   <X className="h-4 w-4" />
                                                 </Button>
-                                              </> : <>
-                                                <Button variant="ghost" size="icon" onClick={() => handleRemoveJob(job.id)} className="h-8 w-8 text-gray-500 hover:text-red-600">
+                                              </>
+                                            ) : (
+                                              <>
+                                                <Button
+                                                  variant="ghost"
+                                                  size="icon"
+                                                  onClick={() => handleRemoveJob(job.id)}
+                                                  className="h-8 w-8 text-gray-500 hover:text-red-600"
+                                                >
                                                   <Trash2 className="h-4 w-4" />
                                                 </Button>
-                                                <Button variant="ghost" size="icon" onClick={() => handleEditClick(job)} className="h-8 w-8 text-gray-500 hover:text-primary">
+                                                <Button
+                                                  variant="ghost"
+                                                  size="icon"
+                                                  onClick={() => handleEditClick(job)}
+                                                  className="h-8 w-8 text-gray-500 hover:text-primary"
+                                                >
                                                   <Edit className="h-4 w-4" />
                                                 </Button>
-                                              </>}
+                                              </>
+                                            )}
                                           </div>
                                         </TableCell>
-                                      </TableRow>}
-                                  </Draggable>)}
+                                      </TableRow>
+                                    )}
+                                  </Draggable>
+                                ))
+                              )}
                               {provided.placeholder}
-                            </TableBody>}
+                            </TableBody>
+                          )}
                         </Droppable>
                       </Table>
                     </div>
@@ -361,7 +495,8 @@ const Tracker = () => {
                 </div>
               </div>
             </div>
-          </DragDropContext>}
+          </DragDropContext>
+        )}
       </div>
     </div>
   );
