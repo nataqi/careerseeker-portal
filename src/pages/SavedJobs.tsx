@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
@@ -7,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { BriefcaseIcon, Loader2, Star, ChevronLeft, ChevronRight } from "lucide-react";
 import { useSavedJobs } from "@/hooks/useSavedJobs";
 import { NavBar } from "@/components/NavBar";
+import HeroSection from "@/components/HeroSection";
 
 const AF_BASE_URL = "https://arbetsformedlingen.se/platsbanken/annonser";
 const JOBS_PER_PAGE = 10;
@@ -45,14 +45,10 @@ const SavedJobs = () => {
     <div className="min-h-screen bg-secondary">
       <NavBar />
       
-      <div className="bg-white border-b">
-        <div className="max-w-[1200px] mx-auto px-4 py-12 text-center">
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">Saved Jobs</h1>
-          <p className="text-gray-600 max-w-2xl mx-auto">
-            View and manage all the jobs you've saved for later application
-          </p>
-        </div>
-      </div>
+      <HeroSection 
+        title="Saved Jobs" 
+        description="View and manage all the jobs you've saved for later application" 
+      />
 
       <div className="max-w-[1200px] mx-auto px-4 py-8">
         <div className="space-y-4">
