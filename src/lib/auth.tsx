@@ -3,6 +3,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User, AuthResponse } from "@supabase/supabase-js";
 import { useNavigate } from "react-router-dom";
+import { useToast } from "@/components/ui/use-toast";
 
 interface AuthState {
   user: User | null;
@@ -25,6 +26,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     loading: true,
   });
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   useEffect(() => {
     // Check active sessions and sets the user
@@ -38,8 +40,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     // Listen for changes on auth state (sign in, sign out, etc.)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      console.log("Auth state changed:", _event, !!session);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("Auth state changed:", event, !!session);
       setState(prev => ({
         ...prev,
         user: session?.user ?? null,
@@ -57,11 +59,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     
     console.log("Starting signup for:", email);
+    
+    // Define the current URL for proper redirects
+    const origin = window.location.origin;
+    const redirectUrl = `${origin}/auth/verify`;
+    
+    console.log("Using redirect URL:", redirectUrl);
+    
     const response = await supabase.auth.signUp({
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/verify`,
+        emailRedirectTo: redirectUrl,
         data: {
           full_name: "",
           avatar_url: "",
@@ -91,6 +100,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     
     console.log("Signin successful, redirecting to search");
+    toast({
+      title: "Welcome back!",
+      description: "You have successfully signed in"
+    });
     navigate("/search");
   };
 
@@ -105,9 +118,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const resetPassword = async (email: string) => {
+    if (!email.includes('@')) {
+      throw new Error("Please enter a valid email address");
+    }
+    
     console.log("Requesting password reset for:", email);
+    
+    // Define the current URL for proper redirects
+    const origin = window.location.origin;
+    const redirectUrl = `${origin}/auth/reset-confirmation`;
+    
+    console.log("Using reset redirect URL:", redirectUrl);
+    
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/reset-confirmation`,
+      redirectTo: redirectUrl,
     });
     
     if (error) {
@@ -119,6 +143,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const updatePassword = async (newPassword: string) => {
+    if (!newPassword || newPassword.length < 6) {
+      throw new Error("Password must be at least 6 characters");
+    }
+    
     console.log("Updating password");
     const { error } = await supabase.auth.updateUser({
       password: newPassword,
@@ -130,6 +158,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     
     console.log("Password updated successfully");
+    
+    // Optionally refresh the session after password update
+    try {
+      const { error: refreshError } = await supabase.auth.refreshSession();
+      if (refreshError) {
+        console.warn("Session refresh after password update failed:", refreshError);
+      }
+    } catch (refreshErr) {
+      console.warn("Error refreshing session after password update:", refreshErr);
+    }
   };
 
   return (

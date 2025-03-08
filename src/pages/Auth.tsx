@@ -31,9 +31,17 @@ const Auth = () => {
     // Check if we have access token for reset password flow
     if (isResetPassword) {
       const checkSession = async () => {
-        const { data } = await supabase.auth.getSession();
+        console.log("Checking session for password reset...");
+        const { data, error } = await supabase.auth.getSession();
+        
+        console.log("Session check result:", { 
+          hasSession: !!data.session, 
+          error: error?.message 
+        });
+        
         if (!data.session) {
           // If no session on reset password page, redirect to auth
+          console.error("No active session for password reset");
           navigate("/auth");
           toast({
             title: "Error",
@@ -84,20 +92,27 @@ const Auth = () => {
 
     try {
       if (isResetPassword) {
+        console.log("Updating password...");
         await updatePassword(password);
+        console.log("Password updated successfully");
+        
         toast({
           title: "Success",
           description: "Your password has been updated successfully",
         });
         setIsNewPasswordSet(true);
       } else if (isReset) {
+        console.log("Sending password reset email to:", email);
         await resetPassword(email);
+        console.log("Password reset email sent");
+        
         toast({
           title: "Success",
           description: "Password reset instructions have been sent to your email",
         });
         setIsReset(false);
       } else if (isSignUp) {
+        console.log("Signing up user:", email);
         const response = await signUp(email, password);
         console.log("Signup response:", response);
         
@@ -111,6 +126,7 @@ const Auth = () => {
           navigate("/search");
         }
       } else {
+        console.log("Signing in user:", email);
         await signIn(email, password);
       }
     } catch (error: any) {

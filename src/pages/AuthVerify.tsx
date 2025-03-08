@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, CheckCircle, Loader } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useToast } from "@/components/ui/use-toast";
 
 const AuthVerify = () => {
   const [verifying, setVerifying] = useState(true);
@@ -13,60 +14,107 @@ const AuthVerify = () => {
   const [success, setSuccess] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const { toast } = useToast();
 
   useEffect(() => {
     const handleVerification = async () => {
       try {
+        console.log("Starting verification process...");
+        console.log("Current URL:", window.location.href);
+        
         // Get URL hash parameters
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
         const accessToken = hashParams.get("access_token");
         const refreshToken = hashParams.get("refresh_token");
         const type = hashParams.get("type");
+        const error = hashParams.get("error");
+        const errorDescription = hashParams.get("error_description");
 
-        console.log("Verification process started:", { accessToken: !!accessToken, type });
+        // Log the URL parameters for debugging
+        console.log("URL parameters:", { 
+          accessToken: !!accessToken, 
+          refreshToken: !!refreshToken,
+          type, 
+          error,
+          errorDescription
+        });
         
+        // Check for errors in URL
+        if (error) {
+          throw new Error(`${error}: ${errorDescription || 'Unknown error'}`);
+        }
+        
+        // Handle password reset flow
         if (accessToken && type === "recovery") {
-          // This is a password reset flow
-          navigate("/auth/reset-password");
+          console.log("Redirecting to password reset page");
+          navigate("/auth/reset-password", { 
+            state: { 
+              from: "verification",
+              accessToken,
+              refreshToken 
+            } 
+          });
           return;
         }
         
+        // Handle email verification for signup
         if (accessToken && type === "signup") {
-          // Handle email confirmation for signup
-          const { data, error: sessionError } = await supabase.auth.getSession();
+          console.log("Processing signup verification");
+          
+          // Set session with tokens
+          const { data, error: sessionError } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken || ""
+          });
           
           if (sessionError) {
+            console.error("Session error:", sessionError);
             throw sessionError;
           }
           
+          console.log("Session established successfully:", !!data.session);
           setVerifying(false);
           setSuccess(true);
-          console.log("User verified successfully");
+          
+          // Show success toast
+          toast({
+            title: "Email verified",
+            description: "Your account has been verified successfully",
+          });
         } else {
           // Check if user already has session
           const { data, error: sessionError } = await supabase.auth.getSession();
           
           if (sessionError) {
+            console.error("Session check error:", sessionError);
             throw sessionError;
           }
+          
+          console.log("Existing session check:", !!data.session);
           
           if (data.session) {
             setVerifying(false);
             setSuccess(true);
-            console.log("User already has active session");
           } else {
-            throw new Error("No verification token found");
+            throw new Error("No verification token found or session expired");
           }
         }
       } catch (err: any) {
         console.error("Verification error:", err);
         setError(err.message || "Verification failed");
         setVerifying(false);
+        
+        // Show error toast
+        toast({
+          title: "Verification failed",
+          description: err.message || "Could not verify your account",
+          variant: "destructive",
+        });
       }
     };
 
     handleVerification();
-  }, [navigate]);
+  }, [navigate, toast]);
 
   return (
     <div className="min-h-screen bg-secondary flex items-center justify-center p-4">
