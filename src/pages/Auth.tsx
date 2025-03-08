@@ -6,8 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
-import { AlertCircle, Info } from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const Auth = () => {
   const [email, setEmail] = useState("");
@@ -17,7 +15,6 @@ const Auth = () => {
   const [isReset, setIsReset] = useState(false);
   const [isNewPasswordSet, setIsNewPasswordSet] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [signupComplete, setSignupComplete] = useState(false);
   const { signIn, signUp, resetPassword, updatePassword } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -49,30 +46,16 @@ const Auth = () => {
         });
         setIsReset(false);
       } else if (isSignUp) {
-        if (password !== confirmPassword) {
-          throw new Error("Passwords do not match");
-        }
-        
-        const response = await signUp(email, password);
-        console.log("Signup response:", response);
-        
-        if (response.data.user && response.data.session === null) {
-          // User needs to confirm email
-          setSignupComplete(true);
-          toast({
-            title: "Email Verification Required",
-            description: "Please check your email to verify your account before signing in",
-          });
-        } else {
-          // Auto sign-in (if email confirmation is disabled)
-          navigate("/search");
-        }
+        await signUp(email, password);
+        toast({
+          title: "Success",
+          description: "Please check your email to verify your account",
+        });
       } else {
         await signIn(email, password);
         navigate("/search");
       }
     } catch (error: any) {
-      console.error("Auth error:", error);
       toast({
         title: "Error",
         description: error.message || "Something went wrong",
@@ -107,80 +90,55 @@ const Auth = () => {
           </p>
         </div>
 
-        {signupComplete ? (
-          <div className="space-y-4">
-            <Alert>
-              <Info className="h-4 w-4" />
-              <AlertDescription>
-                We've sent a verification email to <strong>{email}</strong>. 
-                Please check your inbox and follow the link to verify your account.
-              </AlertDescription>
-            </Alert>
-            <p className="text-sm text-gray-500 text-center">
-              After verifying your email, you can sign in to your account.
-            </p>
-            <Button
-              variant="default"
-              className="w-full mt-4"
-              onClick={() => {
-                setIsSignUp(false);
-                setSignupComplete(false);
-              }}
-            >
-              Back to Sign In
-            </Button>
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {!isResetPassword && (
-              <div className="space-y-2">
-                <Input
-                  type="email"
-                  placeholder="Email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
-            )}
-            
-            {(!isReset || isResetPassword) && (
-              <div className="space-y-2">
-                <Input
-                  type="password"
-                  placeholder="Password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
-            )}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {!isResetPassword && (
+            <div className="space-y-2">
+              <Input
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+          )}
+          
+          {(!isReset || isResetPassword) && (
+            <div className="space-y-2">
+              <Input
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+          )}
 
-            {(isSignUp || isResetPassword) && (
-              <div className="space-y-2">
-                <Input
-                  type="password"
-                  placeholder="Confirm Password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                />
-              </div>
-            )}
+          {isResetPassword && (
+            <div className="space-y-2">
+              <Input
+                type="password"
+                placeholder="Confirm Password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+              />
+            </div>
+          )}
 
-            <Button type="submit" className="w-full" disabled={isLoading || isNewPasswordSet}>
-              {isLoading
-                ? "Loading..."
-                : isResetPassword
-                ? "Update Password"
-                : isReset
-                ? "Send Reset Instructions"
-                : isSignUp
-                ? "Sign Up"
-                : "Sign In"}
-            </Button>
-          </form>
-        )}
+          <Button type="submit" className="w-full" disabled={isLoading || isNewPasswordSet}>
+            {isLoading
+              ? "Loading..."
+              : isResetPassword
+              ? "Update Password"
+              : isReset
+              ? "Send Reset Instructions"
+              : isSignUp
+              ? "Sign Up"
+              : "Sign In"}
+          </Button>
+        </form>
 
         {isNewPasswordSet ? (
           <div className="text-center space-y-4">
@@ -193,7 +151,7 @@ const Auth = () => {
               Go to Login
             </Button>
           </div>
-        ) : !signupComplete && (
+        ) : (
           <div className="text-center space-y-2">
             {!isResetPassword && (
               <Button
