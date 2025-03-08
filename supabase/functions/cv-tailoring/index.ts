@@ -94,7 +94,7 @@ async function tailorCVWithOpenAI(cvText: string, jobTitle: string, jobDescripti
         'Authorization': `Bearer ${openAIApiKey}`
       },
       body: JSON.stringify({
-        model: 'gpt-4',
+        model: 'gpt-4o-mini',
         messages: [
           {
             role: 'system',

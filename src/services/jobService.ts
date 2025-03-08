@@ -1,3 +1,4 @@
+
 import { JobSearchResponse } from "@/types/job";
 
 const API_URL = "https://jobsearch.api.jobtechdev.se/search";
@@ -6,10 +7,10 @@ type PublishDateFilter = "last-hour" | "today" | "last-7-days" | "last-30-days" 
 
 export const searchJobs = async (
   query: string, 
-  offset: number = 0,
-  limit: number = 10,
+  mode: "OR" | "AND", 
   publishDateFilter: PublishDateFilter = "",
-  mode: "OR" | "AND" = "OR"
+  limit: number = 10,
+  offset: number = 0
 ): Promise<JobSearchResponse> => {
   try {
     // Build query parameters
@@ -19,8 +20,8 @@ export const searchJobs = async (
     params.append('offset', offset.toString());
     
     // Add publish date filter if selected
-    let publishedAfter = '';
     if (publishDateFilter) {
+      let publishedAfter: string;
       const now = new Date();
       
       switch (publishDateFilter) {
@@ -42,16 +43,13 @@ export const searchJobs = async (
       
       if (publishedAfter) {
         params.append('published-after', publishedAfter);
-        console.log(`[INFO] Applied date filter: ${publishDateFilter}, date: ${publishedAfter}`);
       }
     }
 
-    console.log(`[INFO] Searching jobs with query: "${query}", offset: ${offset}, limit: ${limit}, date filter: ${publishDateFilter || 'none'}`);
-    
     const response = await fetch(`${API_URL}?${params.toString()}`, {
       headers: {
         'accept': 'application/json',
-        'x-feature-freetext-bool-method': 'and',
+        'x-feature-freetext-bool-method': mode === "AND" ? 'and' : 'or',
         'x-feature-disable-smart-freetext': 'false',
         'x-feature-enable-false-negative': 'true'
       }
@@ -62,14 +60,7 @@ export const searchJobs = async (
     }
 
     const data = await response.json();
-    console.log(`[INFO] Found ${data.total?.value || 0} total jobs, returning ${data.hits?.length || 0} results`);
-    
-    return {
-      hits: data.hits || [],
-      total: {
-        value: data.total?.value || 0
-      }
-    };
+    return data;
   } catch (error) {
     console.error("Error fetching jobs:", error);
     throw error;

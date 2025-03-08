@@ -1,3 +1,4 @@
+
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { PdfReader } from "npm:pdfreader";
@@ -20,7 +21,6 @@ async function extractTextFromPDF(pdfBuffer: ArrayBuffer): Promise<string> {
           reject(`PDF parsing error: ${err.message}`);
           return;
         }
-        
         
         if (!item) { // End of file
           resolve(textItems.join(' '));
@@ -158,24 +158,19 @@ serve(async (req) => {
 
     // Convert skills to search query
     const skillsArray = extractedSkills.split(',').map(skill => skill.trim());
-    const searchQuery = skillsArray.join(' ').substring(0, 255);
+    const searchQuery = skillsArray.join(' ').substring(0, 255); // Just space-separated
 
     // Search for jobs using the extracted skills
     console.log('Searching for matching jobs...');
-
-    // Use the same pattern as in jobService.ts
-    const params = new URLSearchParams();
-    params.append('q', searchQuery);
-    params.append('limit', '100'); // Get initial batch of 100 jobs
-
-    const jobResponse = await fetch(`https://jobsearch.api.jobtechdev.se/search?${params.toString()}`, {
+    const jobResponse = await fetch(`https://jobsearch.api.jobtechdev.se/search?q=${encodeURIComponent(searchQuery)}&limit=100`, {
       headers: {
         'accept': 'application/json',
-        'x-feature-freetext-bool-method': 'or', // Always use 'or'
+        'x-feature-freetext-bool-method': 'or',
         'x-feature-disable-smart-freetext': 'false',
         'x-feature-enable-false-negative': 'true'
       }
     });
+
 
     if (!jobResponse.ok) {
       const errorText = await jobResponse.text();

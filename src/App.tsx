@@ -7,8 +7,6 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/lib/auth";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
-import AuthVerify from "./pages/AuthVerify";
-import AuthResetPassword from "./pages/AuthResetPassword";
 import Search from "./pages/Search";
 import SavedJobs from "./pages/SavedJobs";
 import Tracker from "./pages/Tracker";
@@ -27,9 +25,6 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
-            <Route path="/auth/verify" element={<AuthVerify />} />
-            <Route path="/auth/reset-password" element={<Auth />} />
-            <Route path="/auth/reset-confirmation" element={<AuthResetPassword />} />
             <Route path="/search" element={<Search />} />
             <Route path="/saved-jobs" element={<SavedJobs />} />
             <Route path="/tracker" element={<Tracker />} />
