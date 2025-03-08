@@ -1,11 +1,14 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
+import { AlertTriangle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { supabase } from "@/integrations/supabase/client";
 
 const Auth = () => {
   const [email, setEmail] = useState("");
@@ -15,6 +18,7 @@ const Auth = () => {
   const [isReset, setIsReset] = useState(false);
   const [isNewPasswordSet, setIsNewPasswordSet] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
   const { signIn, signUp, resetPassword, updatePassword } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -23,15 +27,63 @@ const Auth = () => {
   // Check if we're in password reset mode
   const isResetPassword = location.pathname === "/auth/reset-password";
 
+  useEffect(() => {
+    // Check if we have access token for reset password flow
+    if (isResetPassword) {
+      const checkSession = async () => {
+        const { data } = await supabase.auth.getSession();
+        if (!data.session) {
+          // If no session on reset password page, redirect to auth
+          navigate("/auth");
+          toast({
+            title: "Error",
+            description: "Password reset session expired or invalid",
+            variant: "destructive",
+          });
+        }
+      };
+      
+      checkSession();
+    }
+  }, [isResetPassword, navigate, toast]);
+
+  const validateForm = () => {
+    setFormError(null);
+    
+    if (isResetPassword || (!isReset && (isSignUp || !isSignUp))) {
+      if (!password || password.length < 6) {
+        setFormError("Password must be at least 6 characters");
+        return false;
+      }
+    }
+    
+    if (isResetPassword || isSignUp) {
+      if (password !== confirmPassword) {
+        setFormError("Passwords do not match");
+        return false;
+      }
+    }
+    
+    if (!isResetPassword && !email) {
+      setFormError("Email is required");
+      return false;
+    }
+    
+    return true;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+    
     setIsLoading(true);
+    setFormError(null);
 
     try {
       if (isResetPassword) {
-        if (password !== confirmPassword) {
-          throw new Error("Passwords do not match");
-        }
         await updatePassword(password);
         toast({
           title: "Success",
@@ -46,16 +98,24 @@ const Auth = () => {
         });
         setIsReset(false);
       } else if (isSignUp) {
-        await signUp(email, password);
-        toast({
-          title: "Success",
-          description: "Please check your email to verify your account",
-        });
+        const response = await signUp(email, password);
+        console.log("Signup response:", response);
+        
+        if (response.data.user && !response.data.session) {
+          toast({
+            title: "Success",
+            description: "Please check your email to verify your account",
+          });
+        } else {
+          // User is auto-confirmed (for development)
+          navigate("/search");
+        }
       } else {
         await signIn(email, password);
-        navigate("/search");
       }
     } catch (error: any) {
+      console.error("Auth error:", error);
+      setFormError(error.message || "Authentication failed");
       toast({
         title: "Error",
         description: error.message || "Something went wrong",
@@ -90,6 +150,13 @@ const Auth = () => {
           </p>
         </div>
 
+        {formError && (
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>{formError}</AlertDescription>
+          </Alert>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-4">
           {!isResetPassword && (
             <div className="space-y-2">
@@ -98,7 +165,7 @@ const Auth = () => {
                 placeholder="Email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                required
+                required={!isResetPassword}
               />
             </div>
           )}
@@ -110,19 +177,19 @@ const Auth = () => {
                 placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                required
+                required={!isReset}
               />
             </div>
           )}
 
-          {isResetPassword && (
+          {(isResetPassword || isSignUp) && (
             <div className="space-y-2">
               <Input
                 type="password"
                 placeholder="Confirm Password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                required
+                required={isResetPassword || isSignUp}
               />
             </div>
           )}
@@ -159,6 +226,7 @@ const Auth = () => {
                 onClick={() => {
                   setIsSignUp(!isSignUp);
                   setIsReset(false);
+                  setFormError(null);
                 }}
                 className="text-gray-500"
               >
@@ -171,7 +239,10 @@ const Auth = () => {
             {!isReset && !isSignUp && !isResetPassword && (
               <Button
                 variant="link"
-                onClick={() => setIsReset(true)}
+                onClick={() => {
+                  setIsReset(true);
+                  setFormError(null);
+                }}
                 className="text-gray-500 block mx-auto"
               >
                 Forgot password?
@@ -184,6 +255,7 @@ const Auth = () => {
                 onClick={() => {
                   setIsReset(false);
                   navigate("/auth");
+                  setFormError(null);
                 }}
                 className="text-gray-500"
               >

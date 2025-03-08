@@ -29,6 +29,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Check active sessions and sets the user
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log("Initial session check:", !!session);
       setState(prev => ({
         ...prev,
         user: session?.user ?? null,
@@ -38,6 +39,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Listen for changes on auth state (sign in, sign out, etc.)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      console.log("Auth state changed:", _event, !!session);
       setState(prev => ({
         ...prev,
         user: session?.user ?? null,
@@ -49,6 +51,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signUp = async (email: string, password: string): Promise<AuthResponse> => {
+    // Check email format
+    if (!email.includes('@')) {
+      throw new Error("Please enter a valid email address");
+    }
+    
+    console.log("Starting signup for:", email);
     const response = await supabase.auth.signUp({
       email,
       password,
@@ -66,46 +74,62 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       throw response.error;
     }
     
+    console.log("Signup response:", response);
     return response;
   };
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
+    console.log("Starting signin for:", email);
+    const { error, data } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
+    
     if (error) {
       console.error("Signin error:", error);
       throw error;
     }
+    
+    console.log("Signin successful, redirecting to search");
     navigate("/search");
   };
 
   const signOut = async () => {
+    console.log("Signing out");
     const { error } = await supabase.auth.signOut();
-    if (error) throw error;
+    if (error) {
+      console.error("Signout error:", error);
+      throw error;
+    }
     navigate("/");
   };
 
   const resetPassword = async (email: string) => {
+    console.log("Requesting password reset for:", email);
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/reset-password`,
+      redirectTo: `${window.location.origin}/auth/reset-confirmation`,
     });
+    
     if (error) {
       console.error("Reset password error:", error);
       throw error;
     }
+    
+    console.log("Password reset email sent");
   };
 
   const updatePassword = async (newPassword: string) => {
+    console.log("Updating password");
     const { error } = await supabase.auth.updateUser({
       password: newPassword,
     });
+    
     if (error) {
       console.error("Update password error:", error);
       throw error;
     }
-    navigate("/search");
+    
+    console.log("Password updated successfully");
   };
 
   return (
