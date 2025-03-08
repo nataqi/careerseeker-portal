@@ -1,11 +1,14 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { InfoIcon } from "lucide-react";
+import { Label } from "@/components/ui/label";
 
 const Auth = () => {
   const [email, setEmail] = useState("");
@@ -15,7 +18,9 @@ const Auth = () => {
   const [isReset, setIsReset] = useState(false);
   const [isNewPasswordSet, setIsNewPasswordSet] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { signIn, signUp, resetPassword, updatePassword } = useAuth();
+  const [passwordsMatch, setPasswordsMatch] = useState(true);
+  const [signupComplete, setSignupComplete] = useState(false);
+  const { signIn, signUp, resetPassword, updatePassword, user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
@@ -23,15 +28,33 @@ const Auth = () => {
   // Check if we're in password reset mode
   const isResetPassword = location.pathname === "/auth/reset-password";
 
+  // If user is already logged in, redirect to search page
+  useEffect(() => {
+    if (user && !isResetPassword && !isNewPasswordSet) {
+      navigate("/search");
+    }
+  }, [user, navigate, isResetPassword, isNewPasswordSet]);
+
+  // Check password match when either password field changes
+  useEffect(() => {
+    if (isSignUp || isResetPassword) {
+      setPasswordsMatch(password === confirmPassword || confirmPassword === "");
+    }
+  }, [password, confirmPassword, isSignUp, isResetPassword]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
+    // Password validation for signup or reset
+    if ((isSignUp || isResetPassword) && password !== confirmPassword) {
+      setPasswordsMatch(false);
+      setIsLoading(false);
+      return;
+    }
+
     try {
       if (isResetPassword) {
-        if (password !== confirmPassword) {
-          throw new Error("Passwords do not match");
-        }
         await updatePassword(password);
         toast({
           title: "Success",
@@ -46,19 +69,39 @@ const Auth = () => {
         });
         setIsReset(false);
       } else if (isSignUp) {
-        await signUp(email, password);
-        toast({
-          title: "Success",
-          description: "Please check your email to verify your account",
-        });
+        const response = await signUp(email, password);
+        console.log("Signup response:", response);
+        
+        if (response.data?.user && !response.data?.session) {
+          setSignupComplete(true);
+          toast({
+            title: "Verification email sent",
+            description: "Please check your email to verify your account",
+          });
+        } else if (response.data?.session) {
+          // User was immediately signed in (email verification disabled)
+          navigate("/search");
+        }
       } else {
         await signIn(email, password);
         navigate("/search");
       }
     } catch (error: any) {
+      console.error("Auth error:", error);
+      let errorMessage = error.message || "Something went wrong";
+      
+      // Handle common error cases with more user-friendly messages
+      if (errorMessage.includes("Email not confirmed")) {
+        errorMessage = "Email not confirmed. Please check your inbox for the verification link.";
+      } else if (errorMessage.includes("Invalid login credentials")) {
+        errorMessage = "Invalid email or password. Please try again.";
+      } else if (errorMessage.includes("User already registered")) {
+        errorMessage = "This email is already registered. Please sign in instead.";
+      }
+      
       toast({
         title: "Error",
-        description: error.message || "Something went wrong",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -68,7 +111,7 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen bg-secondary flex items-center justify-center p-4">
-      <Card className="w-full max-w-md p-6 space-y-6 bg-white">
+      <Card className="w-full max-w-md p-6 space-y-6 bg-white shadow-md">
         <div className="text-center space-y-2">
           <h1 className="text-2xl font-bold">
             {isResetPassword
@@ -90,55 +133,93 @@ const Auth = () => {
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {!isResetPassword && (
-            <div className="space-y-2">
-              <Input
-                type="email"
-                placeholder="Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-          )}
-          
-          {(!isReset || isResetPassword) && (
-            <div className="space-y-2">
-              <Input
-                type="password"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-          )}
+        {signupComplete ? (
+          <div className="space-y-4">
+            <Alert className="bg-blue-50 border-blue-200">
+              <InfoIcon className="h-4 w-4 text-blue-600" />
+              <AlertTitle className="text-blue-800">Verification Email Sent</AlertTitle>
+              <AlertDescription className="text-blue-700">
+                We've sent a verification email to <strong>{email}</strong>. 
+                Please check your inbox and click the verification link to activate your account.
+              </AlertDescription>
+            </Alert>
+            <p className="text-gray-600 text-sm">
+              If you don't see the email, please check your spam folder. The verification link will expire after 24 hours.
+            </p>
+            <Button 
+              className="w-full mt-4" 
+              onClick={() => {
+                setSignupComplete(false);
+                setIsSignUp(false);
+              }}
+            >
+              Back to Sign In
+            </Button>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {!isResetPassword && (
+              <div className="space-y-2">
+                <Label htmlFor="email">Email address</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={isLoading}
+                  required
+                />
+              </div>
+            )}
+            
+            {(!isReset || isResetPassword) && (
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={isLoading}
+                  required
+                />
+              </div>
+            )}
 
-          {isResetPassword && (
-            <div className="space-y-2">
-              <Input
-                type="password"
-                placeholder="Confirm Password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                required
-              />
-            </div>
-          )}
+            {(isSignUp || isResetPassword) && (
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  placeholder="Confirm Password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  disabled={isLoading}
+                  required
+                  className={!passwordsMatch ? "border-red-500" : ""}
+                />
+                {!passwordsMatch && (
+                  <p className="text-red-500 text-sm mt-1">Passwords do not match</p>
+                )}
+              </div>
+            )}
 
-          <Button type="submit" className="w-full" disabled={isLoading || isNewPasswordSet}>
-            {isLoading
-              ? "Loading..."
-              : isResetPassword
-              ? "Update Password"
-              : isReset
-              ? "Send Reset Instructions"
-              : isSignUp
-              ? "Sign Up"
-              : "Sign In"}
-          </Button>
-        </form>
+            <Button type="submit" className="w-full" disabled={isLoading || isNewPasswordSet || (isSignUp && !passwordsMatch)}>
+              {isLoading
+                ? "Processing..."
+                : isResetPassword
+                ? "Update Password"
+                : isReset
+                ? "Send Reset Instructions"
+                : isSignUp
+                ? "Sign Up"
+                : "Sign In"}
+            </Button>
+          </form>
+        )}
 
         {isNewPasswordSet ? (
           <div className="text-center space-y-4">
@@ -151,7 +232,7 @@ const Auth = () => {
               Go to Login
             </Button>
           </div>
-        ) : (
+        ) : !signupComplete && (
           <div className="text-center space-y-2">
             {!isResetPassword && (
               <Button
@@ -159,6 +240,7 @@ const Auth = () => {
                 onClick={() => {
                   setIsSignUp(!isSignUp);
                   setIsReset(false);
+                  setPasswordsMatch(true);
                 }}
                 className="text-gray-500"
               >
