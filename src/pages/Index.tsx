@@ -1,23 +1,20 @@
 
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { HeroSection } from "@/components/HeroSection";
 
 const Index = () => {
   const navigate = useNavigate();
   
   return (
     <div className="min-h-screen bg-gradient-hero">
+      <HeroSection 
+        title="Find Your Tech Job in Sweden"
+        description="Leverage Arbetsförmedlingen's job listings with smart AI-powered tools."
+      />
+
       <div className="container-width py-16 md:py-24">
         <div className="max-w-3xl mx-auto text-center space-y-8 fade-in">
-          <div className="space-y-4">
-            <h1 className="text-5xl md:text-6xl font-bold text-gray-900 tracking-tight">
-              Find Your Tech Job in Sweden
-            </h1>
-            <p className="text-xl text-gray-600 mt-6 max-w-2xl mx-auto">
-              Leverage Arbetsförmedlingen's job listings with smart AI-powered tools.
-            </p>
-          </div>
-
           <div className="flex justify-center mt-12">
             <Button 
               className="button-animation text-lg bg-primary hover:bg-primary-hover text-white px-10 py-7 rounded-xl shadow-md"
