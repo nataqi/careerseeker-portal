@@ -37,7 +37,11 @@ const SavedJobs = () => {
             employer: {
               name: jobToUnsave.employer_name
             },
-            workplace: jobToUnsave.workplace_city ? { city: jobToUnsave.workplace_city } : undefined
+            description: { text: "" }, // Add missing required property
+            application_details: { url: "" }, // Add missing required property
+            workplace: jobToUnsave.workplace_city ? { city: jobToUnsave.workplace_city } : { city: "" },
+            working_hours_type: { label: "" }, // Add missing required property
+            salary_type: { label: "" } // Add missing required property
           });
           
           toast({
