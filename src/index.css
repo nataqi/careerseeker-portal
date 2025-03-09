@@ -61,6 +61,11 @@
   .button-animation {
     @apply transition-all duration-300 hover:scale-[1.02] active:scale-[0.98];
   }
+  
+  /* Hero section styles */
+  .hero-section {
+    @apply bg-hero-gradient py-8 md:py-10;
+  }
 }
 
 /* Custom animation classes */

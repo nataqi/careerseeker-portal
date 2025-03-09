@@ -72,6 +72,9 @@ export default {
         'soft': '0 4px 8px rgba(0, 0, 0, 0.04)',
         'medium': '0 6px 12px rgba(0, 0, 0, 0.05)',
       },
+      backgroundImage: {
+        'hero-gradient': 'linear-gradient(135deg, rgba(74, 103, 65, 0.08) 0%, rgba(232, 243, 232, 0.5) 100%)',
+      },
     },
   },
   plugins: [require("tailwindcss-animate")],
