@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { NavBar } from "@/components/NavBar";
+
 const AF_BASE_URL = "https://arbetsformedlingen.se/platsbanken/annonser";
 const JOBS_PER_PAGE = 10;
 const APPLICATION_STATUSES = [{
@@ -40,7 +41,9 @@ const APPLICATION_STATUSES = [{
   value: "Offer Declined",
   label: "Offer Declined"
 } as const] as const;
+
 type ApplicationStatus = typeof APPLICATION_STATUSES[number]['value'];
+
 const formatDate = (date: Date) => {
   return date.toLocaleDateString('en-GB', {
     day: '2-digit',
@@ -48,6 +51,7 @@ const formatDate = (date: Date) => {
     year: '2-digit'
   }).replace(/\//g, '.');
 };
+
 const Tracker = () => {
   const {
     user
@@ -66,16 +70,19 @@ const Tracker = () => {
   const {
     toast
   } = useToast();
+
   useEffect(() => {
     if (!user) {
       navigate("/auth");
     }
   }, [user, navigate]);
+
   useEffect(() => {
     if (savedJobs) {
       setAvailableJobs(savedJobs.filter(job => !trackedJobs.some(tracked => tracked.id === job.id)));
     }
   }, [savedJobs, trackedJobs]);
+
   const handleDragEnd = (result: any) => {
     if (!result.destination) return;
     const {
@@ -104,10 +111,12 @@ const Tracker = () => {
       }
     }
   };
+
   const handleEditClick = (job: SavedJob) => {
     setEditingJob(job.id);
     setEditForm(job);
   };
+
   const handleSaveEdit = async (jobId: string) => {
     setTrackedJobs(prev => {
       const updatedJobs = prev.map(job => job.id === jobId ? {
@@ -124,10 +133,12 @@ const Tracker = () => {
     setEditingJob(null);
     setEditForm({});
   };
+
   const handleCancelEdit = () => {
     setEditingJob(null);
     setEditForm({});
   };
+
   const handleStatusChange = async (jobId: string, status: ApplicationStatus) => {
     setTrackedJobs(prev => prev.map(job => job.id === jobId ? {
       ...job,
@@ -135,6 +146,7 @@ const Tracker = () => {
     } : job));
     await updateJobStatus(jobId, status);
   };
+
   const handleRemoveJob = (jobId: string) => {
     const jobToRemove = trackedJobs.find(job => job.id === jobId);
     if (jobToRemove) {
@@ -142,6 +154,7 @@ const Tracker = () => {
       setAvailableJobs(prev => [...prev, jobToRemove]);
     }
   };
+
   const handleExportCSV = () => {
     if (trackedJobs.length === 0) {
       toast({
@@ -178,22 +191,20 @@ const Tracker = () => {
       description: `Exported ${trackedJobs.length} job applications to CSV`
     });
   };
+
   const totalPages = Math.ceil(availableJobs.length / JOBS_PER_PAGE);
   const startIndex = (currentPage - 1) * JOBS_PER_PAGE;
   const endIndex = startIndex + JOBS_PER_PAGE;
   const currentJobs = availableJobs.slice(startIndex, endIndex);
+
   if (!user) return null;
+
   return <div className="min-h-screen bg-secondary">
       <NavBar />
       
-      <div className="bg-white border-b">
-        <div className="max-w-[1200px] mx-auto px-4 py-8 bg-green-50">
-          <div className="text-center space-y-3">
-            <h1 className="text-3xl md:text-4xl font-bold text-gray-900">Job Application Tracker</h1>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">Keep track of your job applications and their status. Just drag and Drop
-
-          </p>
-          </div>
+      <div className="hero-section">
+        <div className="max-w-[1200px] mx-auto px-4">
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Job Application Tracker</h1>
         </div>
       </div>
 
@@ -353,4 +364,5 @@ const Tracker = () => {
       </div>
     </div>;
 };
+
 export default Tracker;
