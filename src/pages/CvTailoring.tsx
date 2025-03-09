@@ -113,9 +113,13 @@ const CvTailoring = () => {
     <div className="min-h-screen bg-secondary">
       <NavBar />
       
-      <div className="hero-section">
-        <div className="max-w-[1200px] mx-auto px-4 flex items-center justify-center h-full">
-          <h1 className="hero-title">CV Tailoring</h1>
+      <div className="bg-hero-gradient">
+        <div className="max-w-[1200px] mx-auto px-4 py-8 md:py-10 text-center">
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">CV Tailoring</h1>
+          <p className="text-gray-600 max-w-2xl mx-auto">
+            Upload your CV and select a job to get AI-powered tailoring suggestions
+            that help match your CV to the job requirements.
+          </p>
         </div>
       </div>
 

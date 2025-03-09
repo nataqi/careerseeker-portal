@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { Search as SearchIcon, Upload, BriefcaseIcon, Loader2, Filter, ChevronDown, ChevronUp, Star } from "lucide-react";
+import { Search as SearchIcon, Upload, BriefcaseIcon, Loader2, Info, Star, Filter, ChevronDown, ChevronUp } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/lib/auth";
 import { useNavigate } from "react-router-dom";
@@ -17,17 +17,13 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-
 const AF_BASE_URL = "https://arbetsformedlingen.se/platsbanken/annonser";
-
 type SearchMode = "OR" | "AND";
 type PublishDateFilter = "last-hour" | "today" | "last-7-days" | "last-30-days" | "";
-
 const searchModeHelp = {
   OR: "Find jobs containing any of the words (e.g., 'developer designer')",
   AND: "Find jobs containing all words (e.g., 'frontend react')"
 };
-
 const publishDateOptions = [{
   value: "",
   label: "Any time"
@@ -44,10 +40,8 @@ const publishDateOptions = [{
   value: "last-30-days",
   label: "Last 30 days"
 }];
-
 const RESULTS_PER_PAGE = 10;
 const SEARCH_LIMIT = 100;
-
 const Search = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchMode, setSearchMode] = useState<SearchMode>("OR");
@@ -60,7 +54,6 @@ const Search = () => {
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalJobs, setTotalJobs] = useState(0);
-
   const {
     toast
   } = useToast();
@@ -74,20 +67,17 @@ const Search = () => {
     toggleSaveJob,
     isJobSaved
   } = useSavedJobs();
-
   useEffect(() => {
     if (!user) {
       navigate("/auth");
     }
   }, [user, navigate]);
-
   const formatSearchQuery = (query: string, mode: SearchMode): string => {
     if (mode === "AND") {
       return query.split(" ").filter(Boolean).map(term => `+${term}`).join(" ");
     }
     return query;
   };
-
   useEffect(() => {
     const fetchJobs = async () => {
       if (!debouncedSearchQuery.trim()) {
@@ -114,7 +104,6 @@ const Search = () => {
     };
     fetchJobs();
   }, [debouncedSearchQuery, searchMode, publishDateFilter, currentPage, toast]);
-
   const handleFileUpload = async (file: File) => {
     if (!file) return;
     if (file.type !== "application/pdf") {
@@ -160,7 +149,6 @@ const Search = () => {
       setIsProcessingCV(false);
     }
   };
-
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
@@ -170,30 +158,24 @@ const Search = () => {
       handleFileUpload(file);
     }
   };
-
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(true);
   };
-
   const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(false);
   };
-
   const handleFiltersToggle = () => {
     setIsFiltersOpen(!isFiltersOpen);
   };
-
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
     window.scrollTo(0, 0);
   };
-
   const totalPages = Math.ceil(totalJobs / RESULTS_PER_PAGE);
-
   const renderPaginationItems = () => {
     const items = [];
     const maxVisiblePages = 5;
@@ -206,18 +188,21 @@ const Search = () => {
           </PaginationItem>);
       }
     } else {
+      // Always show first page
       items.push(<PaginationItem key={1}>
           <PaginationLink onClick={() => handlePageChange(1)} isActive={currentPage === 1}>
             1
           </PaginationLink>
         </PaginationItem>);
 
+      // Show ellipsis if current page is more than 3
       if (currentPage > 3) {
         items.push(<PaginationItem key="ellipsis1">
             <PaginationEllipsis />
           </PaginationItem>);
       }
 
+      // Show pages around current page
       const startPage = Math.max(2, currentPage - 1);
       const endPage = Math.min(totalPages - 1, currentPage + 1);
       for (let i = startPage; i <= endPage; i++) {
@@ -228,12 +213,14 @@ const Search = () => {
           </PaginationItem>);
       }
 
+      // Show ellipsis if current page is less than totalPages - 2
       if (currentPage < totalPages - 2) {
         items.push(<PaginationItem key="ellipsis2">
             <PaginationEllipsis />
           </PaginationItem>);
       }
 
+      // Always show last page
       items.push(<PaginationItem key={totalPages}>
           <PaginationLink onClick={() => handlePageChange(totalPages)} isActive={currentPage === totalPages}>
             {totalPages}
@@ -242,15 +229,16 @@ const Search = () => {
     }
     return items;
   };
-
   if (!user) return null;
-
   return <div className="min-h-screen bg-secondary">
       <NavBar />
       
       <div className="hero-section">
-        <div className="max-w-[1200px] mx-auto px-4 flex items-center justify-center h-full">
-          <h1 className="hero-title">Search Jobs</h1>
+        <div className="max-w-[1200px] mx-auto px-4 py-8 md:py-10 text-center relative z-10">
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">Search Jobs</h1>
+          <p className="text-gray-600 max-w-2xl mx-auto">
+            Find the perfect job opportunity by searching through thousands of positions
+          </p>
         </div>
       </div>
 
@@ -298,6 +286,7 @@ const Search = () => {
                     </Button>
                   </CollapsibleTrigger>
                   
+                  {/* CV Upload Button - Moved next to Filters */}
                   <input type="file" accept=".pdf" onChange={e => {
                   const file = e.target.files?.[0];
                   if (file) handleFileUpload(file);
@@ -401,5 +390,4 @@ const Search = () => {
       </div>
     </div>;
 };
-
 export default Search;
