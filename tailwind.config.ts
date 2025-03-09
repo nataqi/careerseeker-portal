@@ -74,7 +74,6 @@ export default {
       },
       backgroundImage: {
         'hero-gradient': 'linear-gradient(135deg, rgba(74, 103, 65, 0.08) 0%, rgba(232, 243, 232, 0.5) 100%)',
-        'hero-shine': 'linear-gradient(60deg, rgba(232, 243, 232, 0.4) 0%, rgba(184, 226, 184, 0.6) 50%, rgba(232, 243, 232, 0.4) 100%)',
       },
     },
   },

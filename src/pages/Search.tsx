@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -287,8 +286,8 @@ const Search = () => {
     <div className="min-h-screen bg-secondary">
       <NavBar />
       
-      <div className="hero-section">
-        <div className="hero-content max-w-[1200px] mx-auto px-4 text-center">
+      <div className="bg-hero-gradient">
+        <div className="max-w-[1200px] mx-auto px-4 py-8 md:py-10 text-center">
           <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">Search Jobs</h1>
           <p className="text-gray-600 max-w-2xl mx-auto">
             Find the perfect job opportunity by searching through thousands of positions
@@ -309,13 +308,13 @@ const Search = () => {
                     placeholder="Search jobs by title, company, or keywords..." 
                     value={searchQuery} 
                     onChange={e => setSearchQuery(e.target.value)} 
-                    className="pl-10 w-full h-10" 
+                    className="pl-10 w-full" 
                   />
                 </div>
               </div>
               <div className="flex gap-2 w-full md:w-auto">
                 <Select value={searchMode} onValueChange={value => setSearchMode(value as SearchMode)}>
-                  <SelectTrigger className="w-[180px] h-10">
+                  <SelectTrigger className="w-[180px]">
                     <SelectValue placeholder="Search mode" />
                   </SelectTrigger>
                   <SelectContent>
@@ -323,7 +322,7 @@ const Search = () => {
                     <SelectItem value="AND">All words (AND)</SelectItem>
                   </SelectContent>
                 </Select>
-                <Button className="bg-primary hover:bg-primary-hover text-white h-10" disabled={isLoading}>
+                <Button className="bg-primary hover:bg-primary-hover text-white" disabled={isLoading}>
                   {isLoading ? <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                       Searching...
@@ -336,70 +335,68 @@ const Search = () => {
             </div>
 
             <div className="mt-4 flex flex-wrap gap-2">
-              <div className="flex flex-1 flex-wrap gap-2">
-                <Collapsible open={isFiltersOpen} onOpenChange={setIsFiltersOpen} className="flex-1 md:flex-initial">
-                  <CollapsibleTrigger asChild>
-                    <Button variant="outline" className="w-full md:w-auto h-10">
-                      <Filter className="mr-2 h-4 w-4" />
-                      Filters
-                      {isFiltersOpen ? (
-                        <ChevronUp className="ml-2 h-4 w-4" />
-                      ) : (
-                        <ChevronDown className="ml-2 h-4 w-4" />
-                      )}
-                    </Button>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent className="mt-4 p-4 border rounded-md">
-                    <div className="space-y-4">
-                      <div>
-                        <h3 className="font-medium mb-2">Publishing Date</h3>
-                        <RadioGroup 
-                          value={publishDateFilter} 
-                          onValueChange={(value) => setPublishDateFilter(value as PublishDateFilter)}
-                          className="flex flex-wrap gap-4"
-                        >
-                          {publishDateOptions.map((option) => (
-                            <div key={option.value} className="flex items-center space-x-2">
-                              <RadioGroupItem value={option.value} id={`date-${option.value}`} />
-                              <Label htmlFor={`date-${option.value}`}>{option.label}</Label>
-                            </div>
-                          ))}
-                        </RadioGroup>
-                      </div>
+              <Collapsible open={isFiltersOpen} onOpenChange={setIsFiltersOpen} className="flex-1">
+                <CollapsibleTrigger asChild>
+                  <Button variant="outline" className="w-full md:w-auto">
+                    <Filter className="mr-2 h-4 w-4" />
+                    Filters
+                    {isFiltersOpen ? (
+                      <ChevronUp className="ml-2 h-4 w-4" />
+                    ) : (
+                      <ChevronDown className="ml-2 h-4 w-4" />
+                    )}
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="mt-4 p-4 border rounded-md">
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="font-medium mb-2">Publishing Date</h3>
+                      <RadioGroup 
+                        value={publishDateFilter} 
+                        onValueChange={(value) => setPublishDateFilter(value as PublishDateFilter)}
+                        className="flex flex-wrap gap-4"
+                      >
+                        {publishDateOptions.map((option) => (
+                          <div key={option.value} className="flex items-center space-x-2">
+                            <RadioGroupItem value={option.value} id={`date-${option.value}`} />
+                            <Label htmlFor={`date-${option.value}`}>{option.label}</Label>
+                          </div>
+                        ))}
+                      </RadioGroup>
                     </div>
-                  </CollapsibleContent>
-                </Collapsible>
-                
-                {/* CV Upload Button - Moved next to Filters button */}
-                <input 
-                  type="file" 
-                  accept=".pdf" 
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) handleFileUpload(file);
-                  }} 
-                  className="hidden" 
-                  id="cv-upload" 
-                  disabled={isProcessingCV}
-                />
-                <Button
-                  onClick={() => document.getElementById('cv-upload')?.click()}
-                  className="bg-primary hover:bg-primary-hover text-white h-10"
-                  disabled={isProcessingCV}
-                >
-                  {isProcessingCV ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Processing CV...
-                    </>
-                  ) : (
-                    <>
-                      <Upload className="w-4 h-4 mr-2" />
-                      Upload CV
-                    </>
-                  )}
-                </Button>
-              </div>
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+              
+              {/* CV Upload Button */}
+              <input 
+                type="file" 
+                accept=".pdf" 
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleFileUpload(file);
+                }} 
+                className="hidden" 
+                id="cv-upload" 
+                disabled={isProcessingCV}
+              />
+              <Button
+                onClick={() => document.getElementById('cv-upload')?.click()}
+                className="bg-primary hover:bg-primary-hover text-white"
+                disabled={isProcessingCV}
+              >
+                {isProcessingCV ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Processing CV...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-4 h-4 mr-2" />
+                    Upload CV
+                  </>
+                )}
+              </Button>
             </div>
           </div>
 

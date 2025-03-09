@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
@@ -44,8 +45,8 @@ const SavedJobs = () => {
     <div className="min-h-screen bg-secondary">
       <NavBar />
       
-      <div className="hero-section">
-        <div className="hero-content max-w-[1200px] mx-auto px-4 text-center">
+      <div className="bg-hero-gradient">
+        <div className="max-w-[1200px] mx-auto px-4 py-8 md:py-10 text-center">
           <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">Saved Jobs</h1>
           <p className="text-gray-600 max-w-2xl mx-auto">
             View and manage all the jobs you've saved for later application
