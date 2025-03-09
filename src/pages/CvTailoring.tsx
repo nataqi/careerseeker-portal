@@ -113,8 +113,8 @@ const CvTailoring = () => {
     <div className="min-h-screen bg-secondary">
       <NavBar />
       
-      <div className="bg-hero-gradient">
-        <div className="max-w-[1200px] mx-auto px-4 py-1 md:py-2 text-center relative z-10">
+      <div className="bg-hero-gradient sticky top-0 z-50">
+        <div className="max-w-[1200px] mx-auto px-4 py-4 md:py-6 text-center relative z-10">
           <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">CV Tailoring</h1>
           <p className="text-gray-600 max-w-2xl mx-auto">
             Tailor your CV to match specific job descriptions and increase your chances
