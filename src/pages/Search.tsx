@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -286,8 +287,8 @@ const Search = () => {
     <div className="min-h-screen bg-secondary">
       <NavBar />
       
-      <div className="bg-hero-gradient">
-        <div className="max-w-[1200px] mx-auto px-4 py-8 md:py-10 text-center">
+      <div className="hero-section">
+        <div className="max-w-[1200px] mx-auto px-4 py-8 md:py-10 text-center relative z-10">
           <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">Search Jobs</h1>
           <p className="text-gray-600 max-w-2xl mx-auto">
             Find the perfect job opportunity by searching through thousands of positions
@@ -299,7 +300,7 @@ const Search = () => {
         <div className="space-y-4">
           {/* Search Section */}
           <div className="bg-white p-6 rounded-lg shadow-sm">
-            <div className="flex flex-col md:flex-row gap-4 items-center">
+            <div className="flex flex-col md:flex-row gap-4">
               <div className="flex-1 w-full">
                 <div className="relative">
                   <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -308,13 +309,13 @@ const Search = () => {
                     placeholder="Search jobs by title, company, or keywords..." 
                     value={searchQuery} 
                     onChange={e => setSearchQuery(e.target.value)} 
-                    className="pl-10 w-full" 
+                    className="pl-10 w-full h-11" 
                   />
                 </div>
               </div>
-              <div className="flex gap-2 w-full md:w-auto">
+              <div className="flex items-center gap-2 w-full md:w-auto">
                 <Select value={searchMode} onValueChange={value => setSearchMode(value as SearchMode)}>
-                  <SelectTrigger className="w-[180px]">
+                  <SelectTrigger className="w-[180px] h-11">
                     <SelectValue placeholder="Search mode" />
                   </SelectTrigger>
                   <SelectContent>
@@ -322,31 +323,70 @@ const Search = () => {
                     <SelectItem value="AND">All words (AND)</SelectItem>
                   </SelectContent>
                 </Select>
-                <Button className="bg-primary hover:bg-primary-hover text-white" disabled={isLoading}>
-                  {isLoading ? <>
+                <Button 
+                  className="bg-primary hover:bg-primary-hover text-white h-11" 
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                       Searching...
-                    </> : <>
+                    </>
+                  ) : (
+                    <>
                       <SearchIcon className="w-4 h-4 mr-2" />
                       Search
-                    </>}
+                    </>
+                  )}
                 </Button>
               </div>
             </div>
 
-            <div className="mt-4 flex flex-wrap gap-2">
+            <div className="mt-4 flex flex-wrap gap-2 items-center">
               <Collapsible open={isFiltersOpen} onOpenChange={setIsFiltersOpen} className="flex-1">
-                <CollapsibleTrigger asChild>
-                  <Button variant="outline" className="w-full md:w-auto">
-                    <Filter className="mr-2 h-4 w-4" />
-                    Filters
-                    {isFiltersOpen ? (
-                      <ChevronUp className="ml-2 h-4 w-4" />
+                <div className="flex items-center gap-2">
+                  <CollapsibleTrigger asChild>
+                    <Button variant="outline" className="h-11">
+                      <Filter className="mr-2 h-4 w-4" />
+                      Filters
+                      {isFiltersOpen ? (
+                        <ChevronUp className="ml-2 h-4 w-4" />
+                      ) : (
+                        <ChevronDown className="ml-2 h-4 w-4" />
+                      )}
+                    </Button>
+                  </CollapsibleTrigger>
+                  
+                  {/* CV Upload Button - Moved next to Filters */}
+                  <input 
+                    type="file" 
+                    accept=".pdf" 
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleFileUpload(file);
+                    }} 
+                    className="hidden" 
+                    id="cv-upload" 
+                    disabled={isProcessingCV}
+                  />
+                  <Button
+                    onClick={() => document.getElementById('cv-upload')?.click()}
+                    className="bg-primary hover:bg-primary-hover text-white h-11"
+                    disabled={isProcessingCV}
+                  >
+                    {isProcessingCV ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Processing CV...
+                      </>
                     ) : (
-                      <ChevronDown className="ml-2 h-4 w-4" />
+                      <>
+                        <Upload className="w-4 h-4 mr-2" />
+                        Upload CV
+                      </>
                     )}
                   </Button>
-                </CollapsibleTrigger>
+                </div>
                 <CollapsibleContent className="mt-4 p-4 border rounded-md">
                   <div className="space-y-4">
                     <div>
@@ -367,36 +407,6 @@ const Search = () => {
                   </div>
                 </CollapsibleContent>
               </Collapsible>
-              
-              {/* CV Upload Button */}
-              <input 
-                type="file" 
-                accept=".pdf" 
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) handleFileUpload(file);
-                }} 
-                className="hidden" 
-                id="cv-upload" 
-                disabled={isProcessingCV}
-              />
-              <Button
-                onClick={() => document.getElementById('cv-upload')?.click()}
-                className="bg-primary hover:bg-primary-hover text-white"
-                disabled={isProcessingCV}
-              >
-                {isProcessingCV ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Processing CV...
-                  </>
-                ) : (
-                  <>
-                    <Upload className="w-4 h-4 mr-2" />
-                    Upload CV
-                  </>
-                )}
-              </Button>
             </div>
           </div>
 
