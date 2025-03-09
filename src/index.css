@@ -64,7 +64,23 @@
   
   /* Hero section styles */
   .hero-section {
-    @apply bg-hero-gradient py-8 md:py-10;
+    @apply bg-hero-shine py-12 md:py-16 relative overflow-hidden;
+    position: relative;
+  }
+  
+  .hero-section::before {
+    content: '';
+    @apply absolute inset-0 bg-hero-gradient opacity-80;
+  }
+  
+  .hero-section::after {
+    content: '';
+    @apply absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cGF0dGVybiBpZD0iZ3JpZCIgd2lkdGg9IjIwIiBoZWlnaHQ9IjIwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cGF0aCBmaWxsPSJub25lIiBzdHJva2U9InJnYmEoMjU1LDI1NSwyNTUsMC4xKSIgZD0iTSAwIDEwIEwgMjAgMTAiLz48cGF0aCBmaWxsPSJub25lIiBzdHJva2U9InJnYmEoMjU1LDI1NSwyNTUsMC4xKSIgZD0iTSAxMCAwIEwgMTAgMjAiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JpZCkiLz48L3N2Zz4=')]
+    opacity-10;
+  }
+  
+  .hero-content {
+    @apply relative z-10;
   }
 }
 

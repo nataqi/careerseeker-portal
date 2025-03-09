@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
@@ -113,8 +114,8 @@ const CvTailoring = () => {
     <div className="min-h-screen bg-secondary">
       <NavBar />
       
-      <div className="bg-hero-gradient">
-        <div className="max-w-[1200px] mx-auto px-4 py-8 md:py-10 text-center">
+      <div className="hero-section">
+        <div className="hero-content max-w-[1200px] mx-auto px-4 text-center">
           <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">CV Tailoring</h1>
           <p className="text-gray-600 max-w-2xl mx-auto">
             Upload your CV and select a job to get AI-powered tailoring suggestions
@@ -189,7 +190,7 @@ const CvTailoring = () => {
                                 {job.headline}
                               </a>
                             </h3>
-                            <div className="flex flex-wrap items-center gap-1 text-gray-600">
+                            <div className="flex flex-wrap items-center gap-1 text-gray-600 text-sm">
                               <BriefcaseIcon className="w-4 h-4 flex-shrink-0" />
                               <span className="truncate">{job.employer_name}</span>
                               {job.workplace_city && (
