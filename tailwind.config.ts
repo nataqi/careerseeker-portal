@@ -62,11 +62,16 @@ export default {
           "0%": { opacity: "0", transform: "translateY(10px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
         },
+        shimmer: {
+          "0%": { backgroundPosition: "-1000px 0" },
+          "100%": { backgroundPosition: "1000px 0" },
+        }
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         fadeIn: "fadeIn 0.5s ease-out forwards",
+        shimmer: "shimmer 10s infinite linear",
       },
       boxShadow: {
         'soft': '0 4px 8px rgba(0, 0, 0, 0.04)',
@@ -74,6 +79,7 @@ export default {
       },
       backgroundImage: {
         'hero-gradient': 'linear-gradient(135deg, rgba(74, 103, 65, 0.08) 0%, rgba(232, 243, 232, 0.5) 100%)',
+        'hero-shine': 'linear-gradient(135deg, rgba(184, 255, 174, 0.15) 0%, rgba(155, 232, 167, 0.25) 50%, rgba(207, 255, 204, 0.15) 100%)',
       },
     },
   },

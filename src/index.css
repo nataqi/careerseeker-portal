@@ -125,6 +125,21 @@
   @apply bg-gradient-to-br from-primary/10 via-secondary to-white;
 }
 
+/* Shiny hero section */
+.hero-shine {
+  @apply relative overflow-hidden;
+  background: linear-gradient(135deg, rgba(184, 255, 174, 0.15) 0%, rgba(155, 232, 167, 0.25) 50%, rgba(207, 255, 204, 0.15) 100%);
+}
+
+.hero-shine::after {
+  content: "";
+  @apply absolute top-0 left-0 w-full h-full;
+  background: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0));
+  transform: skewX(-20deg);
+  animation: shimmer 6s infinite linear;
+  background-size: 200% 100%;
+}
+
 /* Custom card and input styling */
 .input-focus {
   @apply focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all duration-200;
