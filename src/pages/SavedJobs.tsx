@@ -16,7 +16,7 @@ const SavedJobs = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { savedJobs, isLoading, unsaveJob } = useSavedJobs();
+  const { savedJobs, isLoading, toggleSaveJob } = useSavedJobs();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -28,11 +28,23 @@ const SavedJobs = () => {
   const handleDeleteJob = async (jobId: string) => {
     if (confirm("Are you sure you want to remove this job from your saved list?")) {
       try {
-        await unsaveJob(jobId);
-        toast({
-          title: "Job removed",
-          description: "The job has been removed from your saved list",
-        });
+        // Since there's no direct unsaveJob method, we need to find the job and use toggleSaveJob
+        const jobToUnsave = savedJobs.find(job => job.id === jobId);
+        if (jobToUnsave) {
+          await toggleSaveJob({
+            id: jobToUnsave.job_id,
+            headline: jobToUnsave.headline,
+            employer: {
+              name: jobToUnsave.employer_name
+            },
+            workplace: jobToUnsave.workplace_city ? { city: jobToUnsave.workplace_city } : undefined
+          });
+          
+          toast({
+            title: "Job removed",
+            description: "The job has been removed from your saved list",
+          });
+        }
       } catch (error) {
         toast({
           title: "Error",
