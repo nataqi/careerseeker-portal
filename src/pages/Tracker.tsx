@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { BriefcaseIcon, Loader2, ChevronLeft, ChevronRight, Edit, Save, X, Trash2, Download } from "lucide-react";
+import { BriefcaseIcon, ArrowLeft, Home, Loader2, Trash2, ChevronLeft, ChevronRight, Edit, Save, X, BookmarkIcon, Download } from "lucide-react";
 import { useSavedJobs } from "@/hooks/useSavedJobs";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import type { SavedJob } from "@/types/saved-job";
@@ -13,7 +13,6 @@ import { useToast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { NavBar } from "@/components/NavBar";
-
 const AF_BASE_URL = "https://arbetsformedlingen.se/platsbanken/annonser";
 const JOBS_PER_PAGE = 10;
 const APPLICATION_STATUSES = [{
@@ -41,9 +40,7 @@ const APPLICATION_STATUSES = [{
   value: "Offer Declined",
   label: "Offer Declined"
 } as const] as const;
-
 type ApplicationStatus = typeof APPLICATION_STATUSES[number]['value'];
-
 const formatDate = (date: Date) => {
   return date.toLocaleDateString('en-GB', {
     day: '2-digit',
@@ -51,7 +48,6 @@ const formatDate = (date: Date) => {
     year: '2-digit'
   }).replace(/\//g, '.');
 };
-
 const Tracker = () => {
   const {
     user
@@ -70,19 +66,16 @@ const Tracker = () => {
   const {
     toast
   } = useToast();
-
   useEffect(() => {
     if (!user) {
       navigate("/auth");
     }
   }, [user, navigate]);
-
   useEffect(() => {
     if (savedJobs) {
       setAvailableJobs(savedJobs.filter(job => !trackedJobs.some(tracked => tracked.id === job.id)));
     }
   }, [savedJobs, trackedJobs]);
-
   const handleDragEnd = (result: any) => {
     if (!result.destination) return;
     const {
@@ -111,12 +104,10 @@ const Tracker = () => {
       }
     }
   };
-
   const handleEditClick = (job: SavedJob) => {
     setEditingJob(job.id);
     setEditForm(job);
   };
-
   const handleSaveEdit = async (jobId: string) => {
     setTrackedJobs(prev => {
       const updatedJobs = prev.map(job => job.id === jobId ? {
@@ -133,12 +124,10 @@ const Tracker = () => {
     setEditingJob(null);
     setEditForm({});
   };
-
   const handleCancelEdit = () => {
     setEditingJob(null);
     setEditForm({});
   };
-
   const handleStatusChange = async (jobId: string, status: ApplicationStatus) => {
     setTrackedJobs(prev => prev.map(job => job.id === jobId ? {
       ...job,
@@ -146,7 +135,6 @@ const Tracker = () => {
     } : job));
     await updateJobStatus(jobId, status);
   };
-
   const handleRemoveJob = (jobId: string) => {
     const jobToRemove = trackedJobs.find(job => job.id === jobId);
     if (jobToRemove) {
@@ -154,7 +142,6 @@ const Tracker = () => {
       setAvailableJobs(prev => [...prev, jobToRemove]);
     }
   };
-
   const handleExportCSV = () => {
     if (trackedJobs.length === 0) {
       toast({
@@ -191,14 +178,11 @@ const Tracker = () => {
       description: `Exported ${trackedJobs.length} job applications to CSV`
     });
   };
-
   const totalPages = Math.ceil(availableJobs.length / JOBS_PER_PAGE);
   const startIndex = (currentPage - 1) * JOBS_PER_PAGE;
   const endIndex = startIndex + JOBS_PER_PAGE;
   const currentJobs = availableJobs.slice(startIndex, endIndex);
-
   if (!user) return null;
-
   return <div className="min-h-screen bg-secondary">
       <NavBar />
       
@@ -369,5 +353,4 @@ const Tracker = () => {
       </div>
     </div>;
 };
-
 export default Tracker;
