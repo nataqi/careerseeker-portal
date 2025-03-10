@@ -31,7 +31,7 @@ const Index = () => {
                 </Button>
               </div>
 
-              <div className="mt-24 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 max-w-4xl mx-auto">
+              <div className="mt-24 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 w-full">
                 {[
                   {
                     title: "Smart Job Matching",
@@ -52,7 +52,7 @@ const Index = () => {
                 ].map((feature, index) => (
                   <div 
                     key={index} 
-                    className="card-hover bg-white p-10 rounded-xl shadow-soft scale-in aspect-square flex flex-col justify-center" 
+                    className="card-hover bg-white p-8 rounded-xl shadow-soft scale-in flex flex-col justify-center w-full" 
                     style={{
                       animationDelay: `${index * 100}ms`
                     }}
