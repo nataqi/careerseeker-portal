@@ -26,15 +26,8 @@ const Auth = () => {
 
     try {
       if (isReset) {
-        const { error } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: `${window.location.origin}/auth`,
-        });
-        if (error) throw error;
-        toast({
-          title: "Success",
-          description: "Password reset instructions have been sent to your email",
-        });
-        setIsReset(false);
+        navigate("/forgot-password");
+        return;
       } else if (isSignUp) {
         await signUp(email, password);
         toast({
@@ -57,8 +50,8 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-green-soft flex items-center justify-center p-4">
-      <Card className="w-full max-w-md p-8 space-y-6 bg-white rounded-xl shadow-medium scale-in">
+    <div className="min-h-screen bg-gradient-to-b from-accent/30 to-background flex items-center justify-center p-4">
+      <Card className="w-full max-w-md p-8 space-y-6 bg-white rounded-xl shadow-sm scale-in">
         <div className="text-center space-y-2">
           <div className="inline-flex justify-center items-center w-16 h-16 bg-accent rounded-full mb-4">
             <UserRound className="w-8 h-8 text-primary" />
@@ -151,7 +144,7 @@ const Auth = () => {
           {!isReset && !isSignUp && (
             <Button
               variant="link"
-              onClick={() => setIsReset(true)}
+              onClick={() => navigate("/forgot-password")}
               className="text-gray-500 text-base block mx-auto"
             >
               Forgot password?
