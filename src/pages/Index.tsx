@@ -20,22 +20,34 @@ const Index = () => {
             </Button>
           </div>
 
-          <div className="mt-24 grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[{
-            title: "Smart Job Matching",
-            description: "Upload your CV and let our AI find the perfect jobs for you"
-          }, {
-            title: "Powerful Search",
-            description: "Search and filter through thousands of job listings"
-          }, {
-            title: "Track Applications",
-            description: "Keep track of your job applications in one place"
-          }].map((feature, index) => <div key={index} className="card-hover bg-white p-8 rounded-xl shadow-soft scale-in" style={{
-            animationDelay: `${index * 100}ms`
-          }}>
-                <h3 className="text-xl font-semibold text-gray-900 mb-3">{feature.title}</h3>
-                <p className="text-gray-600">{feature.description}</p>
-              </div>)}
+          <div className="mt-24 grid grid-cols-1 md:grid-cols-4 gap-4">
+            {[
+              {
+                title: "Smart Job Matching",
+                description: "Upload your CV and let our AI find the perfect jobs for you",
+              },
+              {
+                title: "Powerful Search",
+                description: "Search and filter through thousands of job listings",
+              },
+              {
+                title: "Track Applications",
+                description: "Keep track of your job applications in one place",
+              },
+              {
+                title: "CV Tailoring",
+                description: "Tailor your CV to match specific job descriptions",
+              },
+            ].map((feature, index) => (
+              <div
+                key={index}
+                className="card-hover bg-white p-4 rounded-xl shadow-soft scale-in"
+                style={{ animationDelay: `${index * 100}ms` }}
+              >
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">{feature.title}</h3>
+                <p className="text-sm text-gray-600">{feature.description}</p>
+              </div>
+            ))}
           </div>
         </div>
       </div>
