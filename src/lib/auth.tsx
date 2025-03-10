@@ -1,7 +1,7 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import type { User, AuthResponse } from "@supabase/supabase-js";
+import type { User, AuthResponse, AuthError } from "@supabase/supabase-js";
 import { useNavigate } from "react-router-dom";
 
 interface AuthState {
@@ -13,6 +13,8 @@ interface AuthContextType extends AuthState {
   signUp: (email: string, password: string) => Promise<AuthResponse>;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
+  resetPassword: (email: string) => Promise<{ error: AuthError | null }>;
+  updatePassword: (password: string) => Promise<{ error: AuthError | null }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -51,7 +53,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth`,
+        emailRedirectTo: `${window.location.origin}/confirm-email`,
         data: {
           full_name: "",
           avatar_url: "",
@@ -85,8 +87,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     navigate("/");
   };
 
+  const resetPassword = async (email: string) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    return { error };
+  };
+
+  const updatePassword = async (password: string) => {
+    const { error } = await supabase.auth.updateUser({
+      password,
+    });
+    return { error };
+  };
+
   return (
-    <AuthContext.Provider value={{ ...state, signUp, signIn, signOut }}>
+    <AuthContext.Provider value={{ 
+      ...state, 
+      signUp, 
+      signIn, 
+      signOut,
+      resetPassword,
+      updatePassword
+    }}>
       {!state.loading && children}
     </AuthContext.Provider>
   );
