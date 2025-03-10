@@ -24,7 +24,7 @@ const DynamicBackground = ({ children }: DynamicBackgroundProps) => {
     window.addEventListener('resize', handleResize);
     handleResize();
 
-    // Define soft green gradient colors
+    // Define soft green gradient colors - made more vibrant for better visibility
     const colors = [
       { r: 232, g: 243, b: 232 }, // Light green
       { r: 226, g: 240, b: 226 }, // Soft green
@@ -33,17 +33,17 @@ const DynamicBackground = ({ children }: DynamicBackgroundProps) => {
       { r: 242, g: 252, b: 242 }, // Very light green
     ];
 
-    // Animation parameters
-    const numberOfGradients = 3;
+    // Animation parameters - increased values for more noticeable animation
+    const numberOfGradients = 5; // Increased from 3
     const gradients = Array.from({ length: numberOfGradients }, (_, i) => ({
       x: Math.random() * canvas.width,
       y: Math.random() * canvas.height,
-      size: Math.random() * 300 + 200,
+      size: Math.random() * 400 + 300, // Increased size
       colorIndex1: Math.floor(Math.random() * colors.length),
       colorIndex2: Math.floor(Math.random() * colors.length),
-      speedX: (Math.random() - 0.5) * 0.5,
-      speedY: (Math.random() - 0.5) * 0.5,
-      opacity: 0.15 + Math.random() * 0.15,
+      speedX: (Math.random() - 0.5) * 1.2, // Increased speed
+      speedY: (Math.random() - 0.5) * 1.2, // Increased speed
+      opacity: 0.25 + Math.random() * 0.2, // Increased opacity
     }));
 
     let animationFrameId: number;

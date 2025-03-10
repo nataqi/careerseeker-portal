@@ -29,7 +29,7 @@ const Index = () => {
               </Button>
             </div>
 
-            <div className="mt-24 grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="mt-24 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
               {[
                 {
                   title: "Smart Job Matching",
@@ -42,6 +42,10 @@ const Index = () => {
                 {
                   title: "Track Applications",
                   description: "Keep track of your job applications in one place"
+                },
+                {
+                  title: "CV Tailoring",
+                  description: "Optimize your CV for specific job listings with AI-powered suggestions"
                 }
               ].map((feature, index) => (
                 <div 
