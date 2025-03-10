@@ -53,7 +53,7 @@ const Index = () => {
                   animationDelay: `${index * 100}ms`
                 }}
               >
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">{feature.title}</h3>
+                <h3 className="text-base font-semibold text-gray-900 mb-2">{feature.title}</h3>
                 <p className="text-sm text-gray-600">{feature.description}</p>
               </div>
             ))}
