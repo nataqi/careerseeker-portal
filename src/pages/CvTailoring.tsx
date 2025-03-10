@@ -178,7 +178,7 @@ const CvTailoring = () => {
                       <Card key={job.id} className={`p-4 card-hover bg-white ${job.job_id === selectedJobId ? 'ring-2 ring-primary' : ''}`}>
                         <div className="flex items-start justify-between gap-2">
                           <div className="space-y-1 flex-1">
-                            <h3 className="font-semibold text-gray-900">
+                            <h3 className="text-base font-semibold text-gray-900">
                               <a 
                                 href={`${AF_BASE_URL}/${job.job_id}`} 
                                 target="_blank" 
@@ -188,7 +188,7 @@ const CvTailoring = () => {
                                 {job.headline}
                               </a>
                             </h3>
-                            <div className="flex flex-wrap items-center gap-1 text-gray-600">
+                            <div className="flex flex-wrap items-center gap-1 text-sm text-gray-600">
                               <BriefcaseIcon className="w-4 h-4 flex-shrink-0" />
                               <span className="truncate">{job.employer_name}</span>
                               {job.workplace_city && (
