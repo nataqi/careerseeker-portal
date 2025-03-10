@@ -208,12 +208,12 @@ const Tracker = () => {
                         {currentJobs.map((job, index) => <Draggable key={job.id} draggableId={job.id} index={index}>
                             {(provided, snapshot) => <Card ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} className={`p-4 ${snapshot.isDragging ? "shadow-lg ring-2 ring-primary" : ""}`}>
                                 <div className="space-y-2">
-                                  <h3 className="font-medium text-sm leading-tight break-words">
+                                  <h3 className="text-base font-semibold text-gray-900 leading-tight break-words">
                                     {job.headline}
                                   </h3>
                                   <div className="flex flex-wrap items-center gap-2">
-                                    <div className="flex items-center gap-1.5 text-xs text-gray-600 min-w-0 flex-1">
-                                      <BriefcaseIcon className="w-3 h-3 shrink-0" />
+                                    <div className="flex items-center gap-1.5 text-sm text-gray-600 min-w-0 flex-1">
+                                      <BriefcaseIcon className="w-4 h-4 shrink-0" />
                                       <span className="break-words">{job.employer_name}</span>
                                     </div>
                                     <Button size="sm" onClick={() => window.open(`${AF_BASE_URL}/${job.job_id}`, '_blank')} className="bg-primary hover:bg-primary-hover text-white shrink-0 h-7 text-xs px-2.5">
