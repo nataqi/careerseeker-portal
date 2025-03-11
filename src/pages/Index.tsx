@@ -6,14 +6,14 @@ const Index = () => {
   const navigate = useNavigate();
   
   return (
-    <div className="min-h-screen bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-custom-green-1 via-[#e0f7e0] to-custom-green-1 animate-soft-gradient-move bg-[length:200%_200%]">
+    <div className="min-h-screen bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-custom-green-1 via-[#e0f7e0] to-custom-green-3 animate-soft-gradient-move bg-[length:200%_200%]">
       <div className="container-width py-16 md:py-24">
         <div className="max-w-3xl mx-auto text-center space-y-8 fade-in">
           <div className="space-y-4">
             <h1 className="text-5xl md:text-6xl font-bold text-gray-900 tracking-tight">
               Find Your Tech Job in Sweden
             </h1>
-            <p className="text-xl text-gray-600 mt-6 max-w-2xl mx-auto">
+            <p className="text-xl text-gray-900 mt-6 max-w-2xl mx-auto">
               Leverage Arbetsförmedlingen's job listings with smart AI-powered tools.
             </p>
           </div>
