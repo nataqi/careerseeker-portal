@@ -43,7 +43,7 @@ export default {
           foreground: "hsl(var(--card-foreground))",
         },
         'custom-green-1': '#5B7D52', // buttons green
-        'custom-green-2': '#1a7a1a', // Dark green
+        'custom-green-2': '#e1ebe1', // Dark green
       },
       borderRadius: {
         lg: "var(--radius)",
