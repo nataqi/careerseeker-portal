@@ -247,7 +247,7 @@ const Search = () => {
 
   return (
     <div className="min-h-screen bg-secondary">
-      <div className="sticky top-0 z-50">
+      <div className="bg-white sticky top-0 z-50">
         <NavBar />
         
         <div className="bg-hero-gradient transition-all duration-300">
