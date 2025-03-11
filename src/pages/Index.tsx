@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import DynamicBackground from "@/components/DynamicBackground";
@@ -6,9 +7,9 @@ const Index = () => {
   const navigate = useNavigate();
   
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-1 to-green-100">
-      <div className="container-width py-16 md:py-24 bg-[#e0ec1a]/[0.29]">
-        <div className="max-w-3xl mx-auto text-center space-y-8 fade-in">
+    <div className="min-h-screen w-full bg-gradient-to-br from-green-1 to-green-100">
+      <div className="w-full min-h-screen py-16 md:py-24 bg-[#e0ec1a]/[0.29]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8 fade-in">
           <div className="space-y-4">
             <h1 className="text-5xl md:text-6xl font-bold text-gray-900 tracking-tight">
               Find Your Tech Job in Sweden
@@ -27,7 +28,7 @@ const Index = () => {
             </Button>
           </div>
 
-          <div className="mt-24 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 w-full">
+          <div className="mt-24 grid grid-cols-1 sm:grid-cols-2 gap-8 max-w-5xl mx-auto px-4">
             {[
               {
                 title: "Smart Job Matching",
@@ -48,13 +49,13 @@ const Index = () => {
             ].map((feature, index) => (
               <div 
                 key={index} 
-                className="card-hover bg-white p-6 rounded-xl shadow-soft scale-in flex flex-col justify-center w-full" 
+                className="card-hover bg-white p-8 rounded-xl shadow-soft scale-in flex flex-col justify-center w-full h-full" 
                 style={{
                   animationDelay: `${index * 100}ms`
                 }}
               >
-                <h3 className="text-base font-semibold text-gray-900 mb-2">{feature.title}</h3>
-                <p className="text-sm text-gray-600">{feature.description}</p>
+                <h3 className="text-xl font-semibold text-gray-900 mb-3">{feature.title}</h3>
+                <p className="text-base text-gray-600">{feature.description}</p>
               </div>
             ))}
           </div>
