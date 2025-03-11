@@ -44,6 +44,7 @@ export default {
         },
         'custom-green-1': '#5B7D52', // buttons green
         'custom-green-2': '#e1ebe1', // Dark green
+        'custom-green-3': '#729e67', // New medium green
       },
       borderRadius: {
         lg: "var(--radius)",
