@@ -67,15 +67,15 @@ export default {
           "0%": { backgroundPosition: "-500px 0" },
           "100%": { backgroundPosition: "500px 0" },
         },
-        dynamic-gradient: {
+        "dynamic-gradient": {
           "0%": {
-            background: linear-gradient(135deg, #5B7D52, #e0f7e0);
+            background: "linear-gradient(135deg, #5B7D52, #e0f7e0)",
           },
           "50%": {
-            background: linear-gradient(135deg, #e0f7e0, #5B7D52);
+            background: "linear-gradient(135deg, #e0f7e0, #5B7D52)",
           },
           "100%": {
-            background: linear-gradient(135deg, #5B7D52, #e0f7e0);
+            background: "linear-gradient(135deg, #5B7D52, #e0f7e0)",
           },
         },
       },
@@ -84,7 +84,7 @@ export default {
         "accordion-up": "accordion-up 0.2s ease-out",
         fadeIn: "fadeIn 0.5s ease-out forwards",
         shimmer: "shimmer 2s infinite linear",
-        dynamic-gradient: "dynamic-gradient 10s infinite ease-in-out",
+        "dynamic-gradient": "dynamic-gradient 10s infinite ease-in-out",
       },
       boxShadow: {
         'soft': '0 4px 8px rgba(0, 0, 0, 0.04)',
