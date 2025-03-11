@@ -35,7 +35,7 @@ const Index = () => {
               }, 
               {
                 title: "Powerful Search",
-                description: "Search and filter through thousands of job listings"
+                description: "Search and filter through thousands of jobs from Arbetsförmedlingen"
               }, 
               {
                 title: "Track Applications",
