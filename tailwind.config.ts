@@ -84,7 +84,7 @@ export default {
         "accordion-up": "accordion-up 0.2s ease-out",
         fadeIn: "fadeIn 0.5s ease-out forwards",
         shimmer: "shimmer 2s infinite linear",
-        "dynamic-gradient": "dynamic-gradient 10s infinite ease-in-out",
+        "dynamic-gradient": "dynamic-gradient 3s infinite ease-in-out",
       },
       boxShadow: {
         'soft': '0 4px 8px rgba(0, 0, 0, 0.04)',
