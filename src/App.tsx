@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -15,7 +14,6 @@ import SavedJobs from "./pages/SavedJobs";
 import Tracker from "./pages/Tracker";
 import NotFound from "./pages/NotFound";
 import CvTailoring from "./pages/CvTailoring";
-import "./components/ScrollBehavior.css";
 
 const queryClient = new QueryClient();
 

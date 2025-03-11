@@ -14,7 +14,7 @@ export const NavBar = () => {
   };
   
   return (
-    <div className="w-full bg-white border-b shadow-sm">
+    <div className="sticky top-0 z-50 w-full bg-white border-b shadow-sm">
       <div className="max-w-[1200px] mx-auto px-4 flex items-center justify-between h-16 md:h-20">
         <Button
           variant="ghost"
