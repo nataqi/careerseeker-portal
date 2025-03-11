@@ -6,7 +6,7 @@ const Index = () => {
   const navigate = useNavigate();
   
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-100">
+    <div className="min-h-screen bg-gradient-to-br from-green-5 to-green-70">
       <div className="container-width py-16 md:py-24 bg-[#e0ec1a]/[0.29]">
         <div className="max-w-3xl mx-auto text-center space-y-8 fade-in">
           <div className="space-y-4">
