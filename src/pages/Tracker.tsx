@@ -13,9 +13,6 @@ import { useToast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { NavBar } from "@/components/NavBar";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
-import "../styles/globals.css";
 
 const AF_BASE_URL = "https://arbetsformedlingen.se/platsbanken/annonser";
 const JOBS_PER_PAGE = 10;
@@ -73,7 +70,6 @@ const Tracker = () => {
   const {
     toast
   } = useToast();
-  const [date, setDate] = useState(new Date());
 
   useEffect(() => {
     if (!user) {
@@ -327,14 +323,10 @@ const Tracker = () => {
                                           </Select>
                                         </TableCell>
                                         <TableCell>
-                                          {editingJob === job.id ? <DatePicker
-                                            selected={date}
-                                            onChange={(date) => setDate(date)}
-                                            className="bg-white px-3 py-2 border border-gray-300 rounded-md"
-                                            dateFormat="yyyy-MM-dd"
-                                            popperClassName="z-[9999]"
-                                            calendarClassName="font-sans border border-gray-200 rounded-md"
-                                          /> : job.tracking_date}
+                                          {editingJob === job.id ? <Input value={editForm.tracking_date || ''} onChange={e => setEditForm(prev => ({
+                                ...prev,
+                                tracking_date: e.target.value
+                              }))} placeholder="DD.MM.YY" /> : job.tracking_date}
                                         </TableCell>
                                         <TableCell>
                                           {editingJob === job.id ? <Textarea value={editForm.notes || ''} onChange={e => setEditForm(prev => ({
