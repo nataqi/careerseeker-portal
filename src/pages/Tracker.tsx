@@ -204,11 +204,11 @@ const Tracker = () => {
       <div className="sticky top-0 z-50">
         <NavBar />
         
-        <div className="bg-hero-gradient transition-all duration-300">
-          <div className="max-w-[1200px] mx-auto px-4 py-4 md:py-6 text-center relative z-10">
-            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">Tracker</h1>
+        <div className="bg-gradient-to-br from-primary to-primary-hover sticky top-0 z-50">
+          <div className="max-w-[1200px] mx-auto px-4 py-4 md:py-6 text-center">
+            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">Application Tracker</h1>
             <p className="text-gray-600 max-w-2xl mx-auto">
-              Track the status of your job applications and stay organized
+              Track the status of your job applications in one place
             </p>
           </div>
         </div>
