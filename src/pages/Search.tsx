@@ -251,7 +251,7 @@ const Search = () => {
         <NavBar />
         
         
-        <div className="bg-gradient-to-br from-green-100 to-green-200 sticky top-0 z-50">
+        <div className="bg-gradient-to-br from-custom-green-1 to-custom-green-2 sticky top-0 z-50">
           <div className="max-w-[1200px] mx-auto px-4 py-1 md:py-6 text-center relative z-10">
             <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">Search Jobs</h1>
             <p className="text-gray-600 max-w-2xl mx-auto">
