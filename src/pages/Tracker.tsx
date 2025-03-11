@@ -332,6 +332,8 @@ const Tracker = () => {
                                             onChange={(date) => setDate(date)}
                                             className="bg-white px-3 py-2 border border-gray-300 rounded-md"
                                             dateFormat="yyyy-MM-dd"
+                                            popperClassName="z-[9999]"
+                                            calendarClassName="font-sans border border-gray-200 rounded-md"
                                           /> : job.tracking_date}
                                         </TableCell>
                                         <TableCell>
