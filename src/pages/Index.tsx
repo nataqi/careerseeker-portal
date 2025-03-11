@@ -6,7 +6,7 @@ const Index = () => {
   const navigate = useNavigate();
   
   return (
-    <div className="min-h-screen bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-custom-green-1 via-custom-green-2 to-custom-green-1 animate-soft-gradient-move bg-200%">
+    <div className="min-h-screen bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-custom-green-1 via-custom-green-2 to-custom-green-1 animate-soft-gradient-move bg-[length:200%_200%]">
       <div className="container-width py-16 md:py-24">
         <div className="max-w-3xl mx-auto text-center space-y-8 fade-in">
           <div className="space-y-4">

@@ -78,6 +78,17 @@ export default {
             background: "linear-gradient(135deg, #5B7D52, #e0f7e0)",
           },
         },
+        "soft-gradient-move": {
+          "0%": {
+            backgroundPosition: "0% 50%",
+          },
+          "50%": {
+            backgroundPosition: "100% 50%",
+          },
+          "100%": {
+            backgroundPosition: "0% 50%",
+          },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -85,6 +96,7 @@ export default {
         fadeIn: "fadeIn 0.5s ease-out forwards",
         shimmer: "shimmer 2s infinite linear",
         "dynamic-gradient": "dynamic-gradient 3s infinite ease-in-out",
+        "soft-gradient-move": "soft-gradient-move 10s infinite ease-in-out",
       },
       boxShadow: {
         'soft': '0 4px 8px rgba(0, 0, 0, 0.04)',
@@ -94,6 +106,9 @@ export default {
       backgroundImage: {
         'hero-gradient': 'linear-gradient(135deg, rgba(232, 243, 232, 0.8) 0%, rgba(74, 103, 65, 0.1) 100%)',
         'hero-shine': 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent)',
+      },
+      backgroundSize: {
+        "200%": "200% 200%", // Double the size for smooth movement
       },
     },
   },
