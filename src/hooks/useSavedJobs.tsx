@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -32,24 +31,16 @@ export const useSavedJobs = () => {
 
       if (error) throw error;
 
-      // Initialize tracking_date for each job with created_at date if not set
-      const formattedData: SavedJob[] = (data as any[]).map(job => {
-        const jobWithDefaults = {
-          ...job,
-          application_date: job.application_date || null,
-          interview_date: job.interview_date || null,
-          notes: job.notes || null,
-          response_status: job.response_status || 'Not Applied',
-          workplace_city: job.workplace_city || null,
-          tracking_date: job.tracking_date || null,
-          is_tracked: job.is_tracked || false
-        };
-
-        // Set tracking_date to either existing value or formatted created_at date
-        jobWithDefaults.tracking_date = jobWithDefaults.tracking_date || formatDate(new Date(job.created_at));
-        
-        return jobWithDefaults;
-      });
+      const formattedData: SavedJob[] = (data as any[]).map(job => ({
+        ...job,
+        application_date: job.application_date || null,
+        interview_date: job.interview_date || null,
+        notes: job.notes || null,
+        response_status: job.response_status || 'Not Applied',
+        workplace_city: job.workplace_city || null,
+        tracking_date: job.tracking_date || job.created_at,
+        is_tracked: job.is_tracked || false
+      }));
 
       setSavedJobs(formattedData);
     } catch (error) {
@@ -108,7 +99,6 @@ export const useSavedJobs = () => {
         throw error;
       }
 
-      // Optimistic update
       setSavedJobs(prev =>
         prev.map(job =>
           job.id === jobId ? { ...job, response_status: status } : job
@@ -140,15 +130,10 @@ export const useSavedJobs = () => {
       console.log(`Toggling job tracking for job ${jobId} to ${isTracked ? 'tracked' : 'untracked'}`);
       
       const currentDate = formatDate(new Date());
-      // Fix the typing issue by explicitly typing the update object
       const updates: Partial<SavedJob> = { 
-        is_tracked: isTracked
+        is_tracked: isTracked,
+        tracking_date: isTracked ? currentDate : null
       };
-      
-      // Only update tracking_date if turning tracking on
-      if (isTracked) {
-        updates.tracking_date = currentDate;
-      }
       
       const { error } = await supabase
         .from('saved_jobs')
@@ -160,7 +145,6 @@ export const useSavedJobs = () => {
         throw error;
       }
 
-      // Optimistic update
       setSavedJobs(prev =>
         prev.map(job =>
           job.id === jobId ? { 
@@ -205,7 +189,6 @@ export const useSavedJobs = () => {
         throw error;
       }
 
-      // Optimistic update
       setSavedJobs(prev =>
         prev.map(job =>
           job.id === jobId ? { ...job, ...updates } : job
