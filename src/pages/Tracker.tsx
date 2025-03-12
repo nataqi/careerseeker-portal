@@ -13,6 +13,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { NavBar } from "@/components/NavBar";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
 const AF_BASE_URL = "https://arbetsformedlingen.se/platsbanken/annonser";
 const JOBS_PER_PAGE = 10;
