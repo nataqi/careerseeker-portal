@@ -45,7 +45,6 @@ export type Database = {
           headline: string
           id: string
           interview_date: string | null
-          is_tracked: boolean
           job_id: string
           notes: string | null
           response_status:
@@ -63,7 +62,6 @@ export type Database = {
           headline: string
           id?: string
           interview_date?: string | null
-          is_tracked?: boolean
           job_id: string
           notes?: string | null
           response_status?:
@@ -81,7 +79,6 @@ export type Database = {
           headline?: string
           id?: string
           interview_date?: string | null
-          is_tracked?: boolean
           job_id?: string
           notes?: string | null
           response_status?:
