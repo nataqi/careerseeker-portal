@@ -237,9 +237,6 @@ const Tracker = () => {
                                       <BriefcaseIcon className="w-4 h-4 shrink-0" />
                                       <span className="break-words">{job.employer_name}</span>
                                     </div>
-                                    <Button size="sm" onClick={() => window.open(`${AF_BASE_URL}/${job.job_id}`, '_blank')} className="bg-primary hover:bg-primary-hover text-white shrink-0 h-7 text-xs px-2.5">
-                                      Apply
-                                    </Button>
                                   </div>
                                 </div>
                               </Card>}
