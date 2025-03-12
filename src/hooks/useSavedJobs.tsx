@@ -94,14 +94,19 @@ export const useSavedJobs = () => {
 
   const updateJobStatus = async (jobId: string, status: SavedJob['response_status']) => {
     if (!user) return;
-
+    
     try {
+      console.log(`Updating job status for job ${jobId} to ${status}`);
+      
       const { error } = await supabase
         .from('saved_jobs')
         .update({ response_status: status })
         .eq('id', jobId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error updating job status:', error);
+        throw error;
+      }
 
       // Optimistic update
       setSavedJobs(prev =>
@@ -114,6 +119,8 @@ export const useSavedJobs = () => {
         title: "Status updated",
         description: "Job status has been updated successfully",
       });
+      
+      return true;
     } catch (error) {
       console.error('Error updating job status:', error);
       toast({
@@ -121,6 +128,8 @@ export const useSavedJobs = () => {
         description: "Failed to update job status",
         variant: "destructive",
       });
+      
+      return false;
     }
   };
 
@@ -128,16 +137,27 @@ export const useSavedJobs = () => {
     if (!user) return;
 
     try {
+      console.log(`Toggling job tracking for job ${jobId} to ${isTracked ? 'tracked' : 'untracked'}`);
+      
       const currentDate = formatDate(new Date());
+      const updates = { 
+        is_tracked: isTracked
+      };
+      
+      // Only update tracking_date if turning tracking on
+      if (isTracked) {
+        updates['tracking_date'] = currentDate;
+      }
+      
       const { error } = await supabase
         .from('saved_jobs')
-        .update({ 
-          is_tracked: isTracked,
-          tracking_date: isTracked ? currentDate : null
-        })
+        .update(updates)
         .eq('id', jobId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error toggling job tracking:', error);
+        throw error;
+      }
 
       // Optimistic update
       setSavedJobs(prev =>
@@ -154,6 +174,8 @@ export const useSavedJobs = () => {
         title: isTracked ? "Job added to tracker" : "Job removed from tracker",
         description: isTracked ? "You can now track the application status" : "Job moved back to saved jobs"
       });
+      
+      return true;
     } catch (error) {
       console.error('Error updating job tracking status:', error);
       toast({
@@ -161,6 +183,8 @@ export const useSavedJobs = () => {
         description: "Failed to update job tracking status",
         variant: "destructive",
       });
+      
+      return false;
     }
   };
 
@@ -168,12 +192,17 @@ export const useSavedJobs = () => {
     if (!user) return;
 
     try {
+      console.log(`Updating job details for job ${jobId}:`, updates);
+      
       const { error } = await supabase
         .from('saved_jobs')
         .update(updates)
         .eq('id', jobId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error updating job details:', error);
+        throw error;
+      }
 
       // Optimistic update
       setSavedJobs(prev =>
