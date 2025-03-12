@@ -13,4 +13,5 @@ export interface SavedJob {
   notes: string | null;
   display_order: number | null;
   tracking_date: string | null;
+  is_tracked: boolean;
 }

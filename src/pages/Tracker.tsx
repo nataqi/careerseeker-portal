@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
@@ -60,16 +61,15 @@ const Tracker = () => {
   const {
     savedJobs,
     isLoading,
-    updateJobStatus
+    updateJobStatus,
+    toggleJobTracking,
+    updateJobDetails
   } = useSavedJobs();
-  const [trackedJobs, setTrackedJobs] = useState<SavedJob[]>([]);
-  const [availableJobs, setAvailableJobs] = useState<SavedJob[]>([]);
+  
   const [currentPage, setCurrentPage] = useState(1);
   const [editingJob, setEditingJob] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<SavedJob>>({});
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
 
   useEffect(() => {
     if (!user) {
@@ -77,11 +77,15 @@ const Tracker = () => {
     }
   }, [user, navigate]);
 
-  useEffect(() => {
-    if (savedJobs) {
-      setAvailableJobs(savedJobs.filter(job => !trackedJobs.some(tracked => tracked.id === job.id)));
+  // Separate jobs into tracked and untracked
+  const trackedJobs = savedJobs.filter(job => job.is_tracked).sort((a, b) => {
+    if (a.tracking_date === b.tracking_date) {
+      return a.headline.localeCompare(b.headline);
     }
-  }, [savedJobs, trackedJobs]);
+    return (b.tracking_date || '').localeCompare(a.tracking_date || '');
+  });
+  
+  const untrackedJobs = savedJobs.filter(job => !job.is_tracked);
 
   const handleDragEnd = (result: any) => {
     if (!result.destination) return;
@@ -89,25 +93,11 @@ const Tracker = () => {
       source,
       destination
     } = result;
+    
     if (source.droppableId === "savedJobs" && destination.droppableId === "trackerTable") {
-      const draggedJob = availableJobs[source.index];
-      if (!trackedJobs.some(job => job.id === draggedJob.id)) {
-        const currentDate = formatDate(new Date());
-        setTrackedJobs(prev => {
-          const newJobs = [...prev, {
-            ...draggedJob,
-            workplace_city: draggedJob.workplace_city || 'Not specified',
-            notes: null,
-            tracking_date: currentDate
-          }];
-          return newJobs.sort((a, b) => {
-            if (a.tracking_date === b.tracking_date) {
-              return a.headline.localeCompare(b.headline);
-            }
-            return (b.tracking_date || '').localeCompare(a.tracking_date || '');
-          });
-        });
-        setAvailableJobs(prev => prev.filter(job => job.id !== draggedJob.id));
+      const draggedJob = untrackedJobs[source.index];
+      if (draggedJob) {
+        toggleJobTracking(draggedJob.id, true);
       }
     }
   };
@@ -118,20 +108,11 @@ const Tracker = () => {
   };
 
   const handleSaveEdit = async (jobId: string) => {
-    setTrackedJobs(prev => {
-      const updatedJobs = prev.map(job => job.id === jobId ? {
-        ...job,
-        ...editForm
-      } : job);
-      return updatedJobs.sort((a, b) => {
-        if (a.tracking_date === b.tracking_date) {
-          return a.headline.localeCompare(b.headline);
-        }
-        return (b.tracking_date || '').localeCompare(a.tracking_date || '');
-      });
-    });
-    setEditingJob(null);
-    setEditForm({});
+    const success = await updateJobDetails(jobId, editForm);
+    if (success) {
+      setEditingJob(null);
+      setEditForm({});
+    }
   };
 
   const handleCancelEdit = () => {
@@ -140,19 +121,11 @@ const Tracker = () => {
   };
 
   const handleStatusChange = async (jobId: string, status: ApplicationStatus) => {
-    setTrackedJobs(prev => prev.map(job => job.id === jobId ? {
-      ...job,
-      response_status: status
-    } : job));
     await updateJobStatus(jobId, status);
   };
 
   const handleRemoveJob = (jobId: string) => {
-    const jobToRemove = trackedJobs.find(job => job.id === jobId);
-    if (jobToRemove) {
-      setTrackedJobs(prev => prev.filter(job => job.id !== jobId));
-      setAvailableJobs(prev => [...prev, jobToRemove]);
-    }
+    toggleJobTracking(jobId, false);
   };
 
   const handleExportCSV = () => {
@@ -192,10 +165,10 @@ const Tracker = () => {
     });
   };
 
-  const totalPages = Math.ceil(availableJobs.length / JOBS_PER_PAGE);
+  const totalPages = Math.ceil(untrackedJobs.length / JOBS_PER_PAGE);
   const startIndex = (currentPage - 1) * JOBS_PER_PAGE;
   const endIndex = startIndex + JOBS_PER_PAGE;
-  const currentJobs = availableJobs.slice(startIndex, endIndex);
+  const currentJobs = untrackedJobs.slice(startIndex, endIndex);
 
   if (!user) return null;
 
@@ -311,11 +284,11 @@ const Tracker = () => {
                               }))} /> : job.workplace_city}
                                         </TableCell>
                                         <TableCell>
-                                          <Select className="bg-white" defaultValue={job.response_status || "Not Applied"} onValueChange={value => handleStatusChange(job.id, value as ApplicationStatus)} disabled={editingJob !== job.id}>
+                                          <Select defaultValue={job.response_status || "Not Applied"} onValueChange={value => handleStatusChange(job.id, value as ApplicationStatus)} disabled={editingJob !== job.id}>
                                             <SelectTrigger className="w-[150px]">
                                               <SelectValue />
                                             </SelectTrigger>
-                                            <SelectContent className="bg-white">
+                                            <SelectContent>
                                               {APPLICATION_STATUSES.map(status => (
                                                 <SelectItem key={status.value} value={status.value}>
                                                   {status.label}
