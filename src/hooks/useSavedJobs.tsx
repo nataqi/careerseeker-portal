@@ -41,11 +41,9 @@ export const useSavedJobs = () => {
           notes: job.notes || null,
           response_status: job.response_status || 'Not Applied',
           workplace_city: job.workplace_city || null,
-          tracking_date: null
+          tracking_date: job.tracking_date || null,
+          is_tracked: Boolean(job.tracking_date)
         };
-
-        // Set tracking_date to either existing value or formatted created_at date
-        jobWithDefaults.tracking_date = jobWithDefaults.tracking_date || formatDate(new Date(job.created_at));
         
         return jobWithDefaults;
       });
@@ -123,6 +121,77 @@ export const useSavedJobs = () => {
     }
   };
 
+  const toggleTrackJob = async (jobId: string, isTracked: boolean) => {
+    if (!user) return;
+
+    try {
+      const currentDate = isTracked ? formatDate(new Date()) : null;
+      
+      const { error } = await supabase
+        .from('saved_jobs')
+        .update({ 
+          tracking_date: currentDate,
+          response_status: isTracked ? 'Not Applied' : null 
+        })
+        .eq('id', jobId);
+
+      if (error) throw error;
+
+      // Optimistic update
+      setSavedJobs(prev =>
+        prev.map(job =>
+          job.id === jobId 
+            ? { 
+                ...job, 
+                tracking_date: currentDate,
+                response_status: isTracked ? 'Not Applied' : job.response_status,
+                is_tracked: isTracked
+              } 
+            : job
+        )
+      );
+    } catch (error) {
+      console.error('Error updating tracking status:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update tracking status",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const updateJobDetails = async (jobId: string, updates: Partial<SavedJob>) => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from('saved_jobs')
+        .update(updates)
+        .eq('id', jobId);
+
+      if (error) throw error;
+
+      // Optimistic update
+      setSavedJobs(prev =>
+        prev.map(job =>
+          job.id === jobId ? { ...job, ...updates } : job
+        )
+      );
+
+      toast({
+        title: "Job updated",
+        description: "Job details have been updated successfully",
+      });
+    } catch (error) {
+      console.error('Error updating job details:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update job details",
+        variant: "destructive",
+      });
+    }
+  };
+
   const toggleSaveJob = async (job: JobListing) => {
     if (!user) {
       toast({
@@ -158,7 +227,6 @@ export const useSavedJobs = () => {
       }
     } else {
       try {
-        const currentDate = formatDate(new Date());
         const { error } = await supabase
           .from('saved_jobs')
           .insert({
@@ -167,7 +235,6 @@ export const useSavedJobs = () => {
             headline: job.headline,
             employer_name: job.employer.name,
             workplace_city: job.workplace?.city || null,
-            tracking_date: currentDate
           });
 
         if (error) throw error;
@@ -197,5 +264,7 @@ export const useSavedJobs = () => {
     toggleSaveJob,
     isJobSaved,
     updateJobStatus,
+    toggleTrackJob,
+    updateJobDetails,
   };
 };
