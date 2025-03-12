@@ -140,13 +140,14 @@ export const useSavedJobs = () => {
       console.log(`Toggling job tracking for job ${jobId} to ${isTracked ? 'tracked' : 'untracked'}`);
       
       const currentDate = formatDate(new Date());
-      const updates = { 
+      // Fix the typing issue by explicitly typing the update object
+      const updates: Partial<SavedJob> = { 
         is_tracked: isTracked
       };
       
       // Only update tracking_date if turning tracking on
       if (isTracked) {
-        updates['tracking_date'] = currentDate;
+        updates.tracking_date = currentDate;
       }
       
       const { error } = await supabase
