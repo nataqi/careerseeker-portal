@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
@@ -77,7 +76,6 @@ const Tracker = () => {
     }
   }, [user, navigate]);
 
-  // Filter tracked and untracked jobs
   const trackedJobs = savedJobs.filter(job => job.tracking_date !== null);
   const untrackedJobs = savedJobs.filter(job => job.tracking_date === null);
 
@@ -358,7 +356,6 @@ const Tracker = () => {
                                     
                                     <TableCell>
                                       <Select 
-                                        className="bg-white" 
                                         defaultValue={job.response_status || "Not Applied"} 
                                         onValueChange={value => handleStatusChange(job.id, value as ApplicationStatus)} 
                                         disabled={editingJob !== job.id}
@@ -366,7 +363,7 @@ const Tracker = () => {
                                         <SelectTrigger className="w-[150px]">
                                           <SelectValue />
                                         </SelectTrigger>
-                                        <SelectContent className="bg-white">
+                                        <SelectContent>
                                           {APPLICATION_STATUSES.map(status => (
                                             <SelectItem key={status.value} value={status.value}>
                                               {status.label}
