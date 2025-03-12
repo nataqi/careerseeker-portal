@@ -315,10 +315,12 @@ const Tracker = () => {
                                             <SelectTrigger className="w-[150px]">
                                               <SelectValue />
                                             </SelectTrigger>
-                                            <SelectContent>
-                                              {APPLICATION_STATUSES.map(status => <SelectItem key={status.value} value={status.value}>
+                                            <SelectContent className="bg-white">
+                                              {APPLICATION_STATUSES.map(status => (
+                                                <SelectItem key={status.value} value={status.value}>
                                                   {status.label}
-                                                </SelectItem>)}
+                                                </SelectItem>
+                                              ))}
                                             </SelectContent>
                                           </Select>
                                         </TableCell>
