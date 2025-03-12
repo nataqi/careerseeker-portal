@@ -327,10 +327,15 @@ const Tracker = () => {
                                           </Select>
                                         </TableCell>
                                         <TableCell>
-                                          {editingJob === job.id ? <Input value={editForm.tracking_date || ''} onChange={e => setEditForm(prev => ({
-                                ...prev,
-                                tracking_date: e.target.value
-                              }))} placeholder="DD.MM.YY" /> : job.tracking_date}
+                                          {editingJob === job.id ? <DatePicker
+                                            selected={editForm.tracking_date ? new Date(editForm.tracking_date) : null}
+                                            onChange={(date) => setEditForm(prev => ({ ...prev, tracking_date: date ? formatDate(date) : "" }))}
+                                            className="bg-white px-3 py-2 border border-gray-300 rounded-md w-full"
+                                            dateFormat="dd.MM.yy"
+                                            popperClassName="z-[9999] bg-white border border-gray-200 rounded-md shadow-lg"
+                                            calendarClassName="bg-white border border-gray-200 rounded-md shadow-lg"
+                                            popperPlacement="top-start"
+                                          /> : job.tracking_date}
                                         </TableCell>
                                         <TableCell>
                                           {editingJob === job.id ? <Textarea value={editForm.notes || ''} onChange={e => setEditForm(prev => ({
