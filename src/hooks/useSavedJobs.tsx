@@ -25,6 +25,7 @@ export const useSavedJobs = () => {
     if (!user) return;
 
     try {
+      setIsLoading(true);
       const { data, error } = await supabase
         .from('saved_jobs')
         .select('*')
@@ -42,16 +43,19 @@ export const useSavedJobs = () => {
           response_status: job.response_status || 'Not Applied',
           workplace_city: job.workplace_city || null,
           tracking_date: job.tracking_date || null,
-          is_tracked: job.is_tracked || false
+          is_tracked: job.is_tracked === true // ensure boolean type
         };
 
-        // Set tracking_date to either existing value or formatted created_at date
-        jobWithDefaults.tracking_date = jobWithDefaults.tracking_date || formatDate(new Date(job.created_at));
+        // Set tracking_date to either existing value or formatted created_at date if tracked
+        if (jobWithDefaults.is_tracked && !jobWithDefaults.tracking_date) {
+          jobWithDefaults.tracking_date = formatDate(new Date(job.created_at));
+        }
         
         return jobWithDefaults;
       });
 
       setSavedJobs(formattedData);
+      console.log('Fetched saved jobs:', formattedData);
     } catch (error) {
       console.error('Error fetching saved jobs:', error);
       toast({
@@ -140,24 +144,32 @@ export const useSavedJobs = () => {
       console.log(`Toggling job tracking for job ${jobId} to ${isTracked ? 'tracked' : 'untracked'}`);
       
       const currentDate = formatDate(new Date());
-      const updates = { 
+      
+      // Properly type the updates object to match database schema
+      const updates: { 
+        is_tracked: boolean; 
+        tracking_date?: string | null;
+      } = { 
         is_tracked: isTracked
       };
       
       // Only update tracking_date if turning tracking on
       if (isTracked) {
-        updates['tracking_date'] = currentDate;
+        updates.tracking_date = currentDate;
       }
       
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('saved_jobs')
         .update(updates)
-        .eq('id', jobId);
+        .eq('id', jobId)
+        .select();
 
       if (error) {
         console.error('Supabase error toggling job tracking:', error);
         throw error;
       }
+
+      console.log('Toggle tracking response:', data);
 
       // Optimistic update
       setSavedJobs(prev =>
@@ -264,7 +276,6 @@ export const useSavedJobs = () => {
       }
     } else {
       try {
-        const currentDate = formatDate(new Date());
         const { error } = await supabase
           .from('saved_jobs')
           .insert({
