@@ -29,9 +29,12 @@ export const useSavedJobs = () => {
       const { data, error } = await supabase
         .from('saved_jobs')
         .select('*')
+        .eq('user_id', user.id) // Make sure to filter for the current user
         .order('created_at', { ascending: false });
 
       if (error) throw error;
+
+      console.log('Raw saved jobs data:', data);
 
       // Initialize tracking_date for each job with created_at date if not set
       const formattedData: SavedJob[] = (data as any[]).map(job => {
@@ -83,7 +86,7 @@ export const useSavedJobs = () => {
       .channel('saved_jobs_changes')
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'saved_jobs' },
+        { event: '*', schema: 'public', table: 'saved_jobs', filter: `user_id=eq.${user.id}` },
         (payload) => {
           console.log('Realtime update:', payload);
           fetchSavedJobs();
@@ -105,7 +108,8 @@ export const useSavedJobs = () => {
       const { error } = await supabase
         .from('saved_jobs')
         .update({ response_status: status })
-        .eq('id', jobId);
+        .eq('id', jobId)
+        .eq('user_id', user.id);
 
       if (error) {
         console.error('Supabase error updating job status:', error);
@@ -162,6 +166,7 @@ export const useSavedJobs = () => {
         .from('saved_jobs')
         .update(updates)
         .eq('id', jobId)
+        .eq('user_id', user.id) // Make sure to update only for the current user
         .select();
 
       if (error) {
@@ -171,16 +176,8 @@ export const useSavedJobs = () => {
 
       console.log('Toggle tracking response:', data);
 
-      // Optimistic update
-      setSavedJobs(prev =>
-        prev.map(job =>
-          job.id === jobId ? { 
-            ...job, 
-            is_tracked: isTracked,
-            tracking_date: isTracked ? currentDate : job.tracking_date
-          } : job
-        )
-      );
+      // Wait for the database update to complete before updating UI
+      await fetchSavedJobs();
 
       toast({
         title: isTracked ? "Job added to tracker" : "Job removed from tracker",
@@ -209,19 +206,16 @@ export const useSavedJobs = () => {
       const { error } = await supabase
         .from('saved_jobs')
         .update(updates)
-        .eq('id', jobId);
+        .eq('id', jobId)
+        .eq('user_id', user.id); // Make sure to update only for the current user
 
       if (error) {
         console.error('Supabase error updating job details:', error);
         throw error;
       }
 
-      // Optimistic update
-      setSavedJobs(prev =>
-        prev.map(job =>
-          job.id === jobId ? { ...job, ...updates } : job
-        )
-      );
+      // Refresh data from the server instead of optimistic UI update
+      await fetchSavedJobs();
 
       toast({
         title: "Job updated",
@@ -258,9 +252,13 @@ export const useSavedJobs = () => {
         const { error } = await supabase
           .from('saved_jobs')
           .delete()
-          .eq('job_id', job.id);
+          .eq('job_id', job.id)
+          .eq('user_id', user.id);
 
         if (error) throw error;
+
+        // Refresh data after operation
+        await fetchSavedJobs();
 
         toast({
           title: "Job unsaved",
@@ -289,6 +287,9 @@ export const useSavedJobs = () => {
           });
 
         if (error) throw error;
+
+        // Refresh data after operation
+        await fetchSavedJobs();
 
         toast({
           title: "Job saved",
