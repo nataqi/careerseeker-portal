@@ -41,8 +41,7 @@ export const useSavedJobs = () => {
           notes: job.notes || null,
           response_status: job.response_status || 'Not Applied',
           workplace_city: job.workplace_city || null,
-          tracking_date: job.tracking_date || null,
-          is_tracked: job.is_tracked || false
+          tracking_date: null
         };
 
         // Set tracking_date to either existing value or formatted created_at date
@@ -94,19 +93,14 @@ export const useSavedJobs = () => {
 
   const updateJobStatus = async (jobId: string, status: SavedJob['response_status']) => {
     if (!user) return;
-    
+
     try {
-      console.log(`Updating job status for job ${jobId} to ${status}`);
-      
       const { error } = await supabase
         .from('saved_jobs')
         .update({ response_status: status })
         .eq('id', jobId);
 
-      if (error) {
-        console.error('Supabase error updating job status:', error);
-        throw error;
-      }
+      if (error) throw error;
 
       // Optimistic update
       setSavedJobs(prev =>
@@ -119,8 +113,6 @@ export const useSavedJobs = () => {
         title: "Status updated",
         description: "Job status has been updated successfully",
       });
-      
-      return true;
     } catch (error) {
       console.error('Error updating job status:', error);
       toast({
@@ -128,104 +120,6 @@ export const useSavedJobs = () => {
         description: "Failed to update job status",
         variant: "destructive",
       });
-      
-      return false;
-    }
-  };
-
-  const toggleJobTracking = async (jobId: string, isTracked: boolean) => {
-    if (!user) return;
-
-    try {
-      console.log(`Toggling job tracking for job ${jobId} to ${isTracked ? 'tracked' : 'untracked'}`);
-      
-      const currentDate = formatDate(new Date());
-      const updates = { 
-        is_tracked: isTracked
-      };
-      
-      // Only update tracking_date if turning tracking on
-      if (isTracked) {
-        updates['tracking_date'] = currentDate;
-      }
-      
-      const { error } = await supabase
-        .from('saved_jobs')
-        .update(updates)
-        .eq('id', jobId);
-
-      if (error) {
-        console.error('Supabase error toggling job tracking:', error);
-        throw error;
-      }
-
-      // Optimistic update
-      setSavedJobs(prev =>
-        prev.map(job =>
-          job.id === jobId ? { 
-            ...job, 
-            is_tracked: isTracked,
-            tracking_date: isTracked ? currentDate : job.tracking_date
-          } : job
-        )
-      );
-
-      toast({
-        title: isTracked ? "Job added to tracker" : "Job removed from tracker",
-        description: isTracked ? "You can now track the application status" : "Job moved back to saved jobs"
-      });
-      
-      return true;
-    } catch (error) {
-      console.error('Error updating job tracking status:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update job tracking status",
-        variant: "destructive",
-      });
-      
-      return false;
-    }
-  };
-
-  const updateJobDetails = async (jobId: string, updates: Partial<SavedJob>) => {
-    if (!user) return;
-
-    try {
-      console.log(`Updating job details for job ${jobId}:`, updates);
-      
-      const { error } = await supabase
-        .from('saved_jobs')
-        .update(updates)
-        .eq('id', jobId);
-
-      if (error) {
-        console.error('Supabase error updating job details:', error);
-        throw error;
-      }
-
-      // Optimistic update
-      setSavedJobs(prev =>
-        prev.map(job =>
-          job.id === jobId ? { ...job, ...updates } : job
-        )
-      );
-
-      toast({
-        title: "Job updated",
-        description: "Job details have been updated successfully"
-      });
-      
-      return true;
-    } catch (error) {
-      console.error('Error updating job details:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update job details",
-        variant: "destructive",
-      });
-      
-      return false;
     }
   };
 
@@ -273,8 +167,7 @@ export const useSavedJobs = () => {
             headline: job.headline,
             employer_name: job.employer.name,
             workplace_city: job.workplace?.city || null,
-            tracking_date: null,
-            is_tracked: false
+            tracking_date: currentDate
           });
 
         if (error) throw error;
@@ -304,7 +197,5 @@ export const useSavedJobs = () => {
     toggleSaveJob,
     isJobSaved,
     updateJobStatus,
-    toggleJobTracking,
-    updateJobDetails
   };
 };

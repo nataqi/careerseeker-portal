@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
@@ -14,6 +13,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { NavBar } from "@/components/NavBar";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
 const AF_BASE_URL = "https://arbetsformedlingen.se/platsbanken/annonser";
 const JOBS_PER_PAGE = 10;
@@ -61,15 +62,16 @@ const Tracker = () => {
   const {
     savedJobs,
     isLoading,
-    updateJobStatus,
-    toggleJobTracking,
-    updateJobDetails
+    updateJobStatus
   } = useSavedJobs();
-  
+  const [trackedJobs, setTrackedJobs] = useState<SavedJob[]>([]);
+  const [availableJobs, setAvailableJobs] = useState<SavedJob[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [editingJob, setEditingJob] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<SavedJob>>({});
-  const { toast } = useToast();
+  const {
+    toast
+  } = useToast();
 
   useEffect(() => {
     if (!user) {
@@ -77,15 +79,11 @@ const Tracker = () => {
     }
   }, [user, navigate]);
 
-  // Separate jobs into tracked and untracked
-  const trackedJobs = savedJobs.filter(job => job.is_tracked).sort((a, b) => {
-    if (a.tracking_date === b.tracking_date) {
-      return a.headline.localeCompare(b.headline);
+  useEffect(() => {
+    if (savedJobs) {
+      setAvailableJobs(savedJobs.filter(job => !trackedJobs.some(tracked => tracked.id === job.id)));
     }
-    return (b.tracking_date || '').localeCompare(a.tracking_date || '');
-  });
-  
-  const untrackedJobs = savedJobs.filter(job => !job.is_tracked);
+  }, [savedJobs, trackedJobs]);
 
   const handleDragEnd = (result: any) => {
     if (!result.destination) return;
@@ -93,11 +91,25 @@ const Tracker = () => {
       source,
       destination
     } = result;
-    
     if (source.droppableId === "savedJobs" && destination.droppableId === "trackerTable") {
-      const draggedJob = untrackedJobs[source.index];
-      if (draggedJob) {
-        toggleJobTracking(draggedJob.id, true);
+      const draggedJob = availableJobs[source.index];
+      if (!trackedJobs.some(job => job.id === draggedJob.id)) {
+        const currentDate = formatDate(new Date());
+        setTrackedJobs(prev => {
+          const newJobs = [...prev, {
+            ...draggedJob,
+            workplace_city: draggedJob.workplace_city || 'Not specified',
+            notes: null,
+            tracking_date: currentDate
+          }];
+          return newJobs.sort((a, b) => {
+            if (a.tracking_date === b.tracking_date) {
+              return a.headline.localeCompare(b.headline);
+            }
+            return (b.tracking_date || '').localeCompare(a.tracking_date || '');
+          });
+        });
+        setAvailableJobs(prev => prev.filter(job => job.id !== draggedJob.id));
       }
     }
   };
@@ -108,11 +120,20 @@ const Tracker = () => {
   };
 
   const handleSaveEdit = async (jobId: string) => {
-    const success = await updateJobDetails(jobId, editForm);
-    if (success) {
-      setEditingJob(null);
-      setEditForm({});
-    }
+    setTrackedJobs(prev => {
+      const updatedJobs = prev.map(job => job.id === jobId ? {
+        ...job,
+        ...editForm
+      } : job);
+      return updatedJobs.sort((a, b) => {
+        if (a.tracking_date === b.tracking_date) {
+          return a.headline.localeCompare(b.headline);
+        }
+        return (b.tracking_date || '').localeCompare(a.tracking_date || '');
+      });
+    });
+    setEditingJob(null);
+    setEditForm({});
   };
 
   const handleCancelEdit = () => {
@@ -121,11 +142,19 @@ const Tracker = () => {
   };
 
   const handleStatusChange = async (jobId: string, status: ApplicationStatus) => {
+    setTrackedJobs(prev => prev.map(job => job.id === jobId ? {
+      ...job,
+      response_status: status
+    } : job));
     await updateJobStatus(jobId, status);
   };
 
   const handleRemoveJob = (jobId: string) => {
-    toggleJobTracking(jobId, false);
+    const jobToRemove = trackedJobs.find(job => job.id === jobId);
+    if (jobToRemove) {
+      setTrackedJobs(prev => prev.filter(job => job.id !== jobId));
+      setAvailableJobs(prev => [...prev, jobToRemove]);
+    }
   };
 
   const handleExportCSV = () => {
@@ -165,10 +194,10 @@ const Tracker = () => {
     });
   };
 
-  const totalPages = Math.ceil(untrackedJobs.length / JOBS_PER_PAGE);
+  const totalPages = Math.ceil(availableJobs.length / JOBS_PER_PAGE);
   const startIndex = (currentPage - 1) * JOBS_PER_PAGE;
   const endIndex = startIndex + JOBS_PER_PAGE;
-  const currentJobs = untrackedJobs.slice(startIndex, endIndex);
+  const currentJobs = availableJobs.slice(startIndex, endIndex);
 
   if (!user) return null;
 
@@ -208,9 +237,6 @@ const Tracker = () => {
                                       <BriefcaseIcon className="w-4 h-4 shrink-0" />
                                       <span className="break-words">{job.employer_name}</span>
                                     </div>
-                                    <Button size="sm" onClick={() => window.open(`${AF_BASE_URL}/${job.job_id}`, '_blank')} className="bg-primary hover:bg-primary-hover text-white shrink-0 h-7 text-xs px-2.5">
-                                      Apply
-                                    </Button>
                                   </div>
                                 </div>
                               </Card>}
@@ -284,11 +310,11 @@ const Tracker = () => {
                               }))} /> : job.workplace_city}
                                         </TableCell>
                                         <TableCell>
-                                          <Select defaultValue={job.response_status || "Not Applied"} onValueChange={value => handleStatusChange(job.id, value as ApplicationStatus)} disabled={editingJob !== job.id}>
+                                          <Select className="bg-white" defaultValue={job.response_status || "Not Applied"} onValueChange={value => handleStatusChange(job.id, value as ApplicationStatus)} disabled={editingJob !== job.id}>
                                             <SelectTrigger className="w-[150px]">
                                               <SelectValue />
                                             </SelectTrigger>
-                                            <SelectContent>
+                                            <SelectContent className="bg-white">
                                               {APPLICATION_STATUSES.map(status => (
                                                 <SelectItem key={status.value} value={status.value}>
                                                   {status.label}
@@ -298,10 +324,15 @@ const Tracker = () => {
                                           </Select>
                                         </TableCell>
                                         <TableCell>
-                                          {editingJob === job.id ? <Input value={editForm.tracking_date || ''} onChange={e => setEditForm(prev => ({
-                                ...prev,
-                                tracking_date: e.target.value
-                              }))} placeholder="DD.MM.YY" /> : job.tracking_date}
+                                          {editingJob === job.id ? <DatePicker
+                                            selected={editForm.tracking_date ? new Date(editForm.tracking_date) : null}
+                                            onChange={(date) => setEditForm(prev => ({ ...prev, tracking_date: date ? formatDate(date) : "" }))}
+                                            className="bg-white px-3 py-2 border border-gray-300 rounded-md w-full"
+                                            dateFormat="dd.MM.yy"
+                                            popperClassName="z-[9999] bg-white border border-gray-200 rounded-md shadow-lg"
+                                            calendarClassName="bg-white border border-gray-200 rounded-md shadow-lg"
+                                            popperPlacement="top-start"
+                                          /> : job.tracking_date}
                                         </TableCell>
                                         <TableCell>
                                           {editingJob === job.id ? <Textarea value={editForm.notes || ''} onChange={e => setEditForm(prev => ({
