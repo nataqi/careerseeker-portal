@@ -142,41 +142,49 @@ export const useSavedJobs = () => {
   };
 
   const toggleJobTracking = async (jobId: string, isTracked: boolean) => {
-    if (!user) return;
+    if (!user) return false;
 
     try {
       console.log(`Toggling job tracking for job ${jobId} to ${isTracked ? 'tracked' : 'untracked'}`);
       
       const currentDate = formatDate(new Date());
       
-      // Properly type the updates object to match database schema
-      const updates: { 
-        is_tracked: boolean; 
-        tracking_date?: string | null;
-      } = { 
-        is_tracked: isTracked
+      // Create a simple update object with just the necessary fields
+      const updates = {
+        is_tracked: isTracked,
+        tracking_date: isTracked ? currentDate : null
       };
       
-      // Only update tracking_date if turning tracking on
-      if (isTracked) {
-        updates.tracking_date = currentDate;
+      console.log('Sending update to Supabase:', updates);
+      
+      // First, check if the job exists and belongs to the user
+      const { data: jobData, error: jobError } = await supabase
+        .from('saved_jobs')
+        .select('id')
+        .eq('id', jobId)
+        .eq('user_id', user.id)
+        .single();
+      
+      if (jobError) {
+        console.error('Error checking job existence:', jobError);
+        throw new Error(`Job not found or doesn't belong to user: ${jobError.message}`);
       }
       
+      // Now perform the update
       const { data, error } = await supabase
         .from('saved_jobs')
         .update(updates)
         .eq('id', jobId)
-        .eq('user_id', user.id) // Make sure to update only for the current user
-        .select();
-
+        .eq('user_id', user.id); // Make sure to update only for the current user
+      
       if (error) {
         console.error('Supabase error toggling job tracking:', error);
         throw error;
       }
-
-      console.log('Toggle tracking response:', data);
-
-      // Wait for the database update to complete before updating UI
+      
+      console.log('Database update successful. Response:', data);
+      
+      // Immediately refresh from database to ensure UI reflects actual state
       await fetchSavedJobs();
 
       toast({
@@ -189,7 +197,7 @@ export const useSavedJobs = () => {
       console.error('Error updating job tracking status:', error);
       toast({
         title: "Error",
-        description: "Failed to update job tracking status",
+        description: `Failed to update job tracking status: ${error instanceof Error ? error.message : 'Unknown error'}`,
         variant: "destructive",
       });
       

@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
@@ -87,7 +86,7 @@ const Tracker = () => {
   
   const untrackedJobs = savedJobs.filter(job => !job.is_tracked);
 
-  const handleDragEnd = (result: any) => {
+  const handleDragEnd = async (result: any) => {
     if (!result.destination) return;
     const {
       source,
@@ -97,7 +96,9 @@ const Tracker = () => {
     if (source.droppableId === "savedJobs" && destination.droppableId === "trackerTable") {
       const draggedJob = untrackedJobs[source.index];
       if (draggedJob) {
-        toggleJobTracking(draggedJob.id, true);
+        console.log("Starting drag operation for job:", draggedJob);
+        const success = await toggleJobTracking(draggedJob.id, true);
+        console.log(`Drag operation ${success ? 'successful' : 'failed'} for job:`, draggedJob.id);
       }
     }
   };
@@ -124,8 +125,10 @@ const Tracker = () => {
     await updateJobStatus(jobId, status);
   };
 
-  const handleRemoveJob = (jobId: string) => {
-    toggleJobTracking(jobId, false);
+  const handleRemoveJob = async (jobId: string) => {
+    console.log("Removing job from tracker:", jobId);
+    const success = await toggleJobTracking(jobId, false);
+    console.log(`Job removal ${success ? 'successful' : 'failed'} for job:`, jobId);
   };
 
   const handleExportCSV = () => {
