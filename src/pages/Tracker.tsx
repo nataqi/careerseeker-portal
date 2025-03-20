@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
@@ -288,17 +289,12 @@ const Tracker = () => {
                         {currentJobs.map((job, index) => <Draggable key={job.id} draggableId={job.id} index={index}>
                             {(provided, snapshot) => <Card ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} className={`p-4 ${snapshot.isDragging ? "shadow-lg ring-2 ring-primary" : ""}`}>
                                 <div className="space-y-2">
-                                  <h3 className="text-base font-semibold text-gray-900 leading-tight break-words">
+                                  <h3 className="text-base font-semibold text-primary leading-tight break-words hover:underline cursor-pointer" onClick={() => window.open(`${AF_BASE_URL}/${job.job_id}`, '_blank')}>
                                     {job.headline}
                                   </h3>
-                                  <div className="flex flex-wrap items-center gap-2">
-                                    <div className="flex items-center gap-1.5 text-sm text-gray-600 min-w-0 flex-1">
-                                      <BriefcaseIcon className="w-4 h-4 shrink-0" />
-                                      <span className="break-words">{job.employer_name}</span>
-                                    </div>
-                                    <Button size="sm" onClick={() => window.open(`${AF_BASE_URL}/${job.job_id}`, '_blank')} className="bg-primary hover:bg-primary-hover text-white shrink-0 h-7 text-xs px-2.5">
-                                      Apply
-                                    </Button>
+                                  <div className="flex items-center gap-1.5 text-sm text-gray-600 min-w-0">
+                                    <BriefcaseIcon className="w-4 h-4 shrink-0" />
+                                    <span className="break-words">{job.employer_name}</span>
                                   </div>
                                 </div>
                               </Card>}
@@ -355,7 +351,7 @@ const Tracker = () => {
                                           {editingJob === job.id ? <Input value={editForm.headline || ''} onChange={e => setEditForm(prev => ({
                                 ...prev,
                                 headline: e.target.value
-                              }))} /> : <a href={`https://arbetsformedlingen.se/platsbanken/annonser/${job.job_id}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                              }))} /> : <a href={`${AF_BASE_URL}/${job.job_id}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
                                               {job.headline}
                                             </a>}
                                         </TableCell>
