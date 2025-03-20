@@ -372,11 +372,14 @@ const Tracker = () => {
                               }))} /> : job.workplace_city}
                                         </TableCell>
                                         <TableCell>
-                                          <Select className="bg-white" defaultValue={job.response_status || "Not Applied"} onValueChange={value => handleStatusChange(job.id, value as ApplicationStatus)} disabled={editingJob !== job.id}>
-                                            <SelectTrigger className="w-[150px]">
+                                          <Select 
+                                            defaultValue={job.response_status || "Not Applied"} 
+                                            onValueChange={value => handleStatusChange(job.id, value as ApplicationStatus)} 
+                                            disabled={editingJob !== job.id}>
+                                            <SelectTrigger className="w-[150px] bg-white">
                                               <SelectValue />
                                             </SelectTrigger>
-                                            <SelectContent className="bg-white">
+                                            <SelectContent>
                                               {APPLICATION_STATUSES.map(status => (
                                                 <SelectItem key={status.value} value={status.value}>
                                                   {status.label}
