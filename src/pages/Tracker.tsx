@@ -5,10 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { BriefcaseIcon, ArrowLeft, Home, Loader2, Trash2, ChevronLeft, ChevronRight, Edit, Save, X, BookmarkIcon, Download } from "lucide-react";
+import { BriefcaseIcon, Loader2, Trash2, ChevronLeft, ChevronRight, Edit, Save, X, Download } from "lucide-react";
 import { useSavedJobs } from "@/hooks/useSavedJobs";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-import type { SavedJob } from "@/types/saved-job";
+import type { SavedJob, TRACKED_JOBS_STORAGE_KEY } from "@/types/saved-job";
 import { useToast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -52,6 +52,23 @@ const formatDate = (date: Date) => {
   }).replace(/\//g, '.');
 };
 
+const saveTrackedJobsToLocalStorage = (userId: string, jobs: SavedJob[]) => {
+  const storageKey = `tracked_jobs_${userId}`;
+  localStorage.setItem(storageKey, JSON.stringify(jobs));
+  console.log(`Saved ${jobs.length} tracked jobs to local storage for user ${userId}`);
+};
+
+const loadTrackedJobsFromLocalStorage = (userId: string): SavedJob[] => {
+  const storageKey = `tracked_jobs_${userId}`;
+  const savedData = localStorage.getItem(storageKey);
+  if (savedData) {
+    const jobs = JSON.parse(savedData) as SavedJob[];
+    console.log(`Loaded ${jobs.length} tracked jobs from local storage for user ${userId}`);
+    return jobs;
+  }
+  return [];
+};
+
 const Tracker = () => {
   const {
     user
@@ -59,8 +76,7 @@ const Tracker = () => {
   const navigate = useNavigate();
   const {
     savedJobs,
-    isLoading,
-    updateJobStatus
+    isLoading
   } = useSavedJobs();
   const [trackedJobs, setTrackedJobs] = useState<SavedJob[]>([]);
   const [availableJobs, setAvailableJobs] = useState<SavedJob[]>([]);
@@ -72,14 +88,28 @@ const Tracker = () => {
   } = useToast();
 
   useEffect(() => {
+    if (user) {
+      const loadedJobs = loadTrackedJobsFromLocalStorage(user.id);
+      setTrackedJobs(loadedJobs);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (user && trackedJobs.length > 0) {
+      saveTrackedJobsToLocalStorage(user.id, trackedJobs);
+    }
+  }, [trackedJobs, user]);
+
+  useEffect(() => {
     if (!user) {
       navigate("/auth");
     }
   }, [user, navigate]);
 
   useEffect(() => {
-    if (savedJobs) {
-      setAvailableJobs(savedJobs.filter(job => !trackedJobs.some(tracked => tracked.id === job.id)));
+    if (savedJobs && trackedJobs) {
+      const trackedJobIds = trackedJobs.map(job => job.id);
+      setAvailableJobs(savedJobs.filter(job => !trackedJobIds.includes(job.id)));
     }
   }, [savedJobs, trackedJobs]);
 
@@ -89,25 +119,37 @@ const Tracker = () => {
       source,
       destination
     } = result;
+
+    console.log('Drag end:', { source, destination });
+
     if (source.droppableId === "savedJobs" && destination.droppableId === "trackerTable") {
       const draggedJob = availableJobs[source.index];
+      console.log('Dragged job:', draggedJob);
+      
       if (!trackedJobs.some(job => job.id === draggedJob.id)) {
         const currentDate = formatDate(new Date());
-        setTrackedJobs(prev => {
-          const newJobs = [...prev, {
-            ...draggedJob,
-            workplace_city: draggedJob.workplace_city || 'Not specified',
-            notes: null,
-            tracking_date: currentDate
-          }];
-          return newJobs.sort((a, b) => {
-            if (a.tracking_date === b.tracking_date) {
-              return a.headline.localeCompare(b.headline);
-            }
-            return (b.tracking_date || '').localeCompare(a.tracking_date || '');
-          });
+        const updatedTrackedJobs = [...trackedJobs, {
+          ...draggedJob,
+          workplace_city: draggedJob.workplace_city || 'Not specified',
+          notes: null,
+          tracking_date: currentDate
+        }];
+        
+        const sortedJobs = updatedTrackedJobs.sort((a, b) => {
+          if (a.tracking_date === b.tracking_date) {
+            return a.headline.localeCompare(b.headline);
+          }
+          return (b.tracking_date || '').localeCompare(a.tracking_date || '');
         });
+        
+        setTrackedJobs(sortedJobs);
+        
         setAvailableJobs(prev => prev.filter(job => job.id !== draggedJob.id));
+        
+        toast({
+          title: "Job tracked",
+          description: `Added "${draggedJob.headline}" to tracked jobs`
+        });
       }
     }
   };
@@ -123,6 +165,7 @@ const Tracker = () => {
         ...job,
         ...editForm
       } : job);
+      
       return updatedJobs.sort((a, b) => {
         if (a.tracking_date === b.tracking_date) {
           return a.headline.localeCompare(b.headline);
@@ -130,8 +173,14 @@ const Tracker = () => {
         return (b.tracking_date || '').localeCompare(a.tracking_date || '');
       });
     });
+    
     setEditingJob(null);
     setEditForm({});
+    
+    toast({
+      title: "Job updated",
+      description: "Changes saved successfully"
+    });
   };
 
   const handleCancelEdit = () => {
@@ -144,14 +193,25 @@ const Tracker = () => {
       ...job,
       response_status: status
     } : job));
-    await updateJobStatus(jobId, status);
+    
+    toast({
+      title: "Status updated",
+      description: `Job status changed to ${status}`
+    });
   };
 
   const handleRemoveJob = (jobId: string) => {
     const jobToRemove = trackedJobs.find(job => job.id === jobId);
     if (jobToRemove) {
       setTrackedJobs(prev => prev.filter(job => job.id !== jobId));
-      setAvailableJobs(prev => [...prev, jobToRemove]);
+      setAvailableJobs(prev => [...prev, jobToRemove].sort((a, b) => 
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      ));
+      
+      toast({
+        title: "Job removed",
+        description: "Job removed from tracking"
+      });
     }
   };
 
@@ -164,6 +224,7 @@ const Tracker = () => {
       });
       return;
     }
+    
     const headers = ["Job Title", "Job URL", "Employer", "Location", "Status", "Date", "Notes"];
     const csvRows = [headers];
     trackedJobs.forEach(job => {

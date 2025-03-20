@@ -14,3 +14,6 @@ export interface SavedJob {
   display_order: number | null;
   tracking_date: string | null;
 }
+
+// Local storage keys
+export const TRACKED_JOBS_STORAGE_KEY = 'tracked_jobs';
