@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
@@ -6,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { BriefcaseIcon, Loader2, Trash2, ChevronLeft, ChevronRight, Edit, Save, X, Download } from "lucide-react";
+import { BriefcaseIcon, Loader2, Trash2, ChevronLeft, ChevronRight, Edit, Save, X, Download, Calendar as CalendarIcon } from "lucide-react";
 import { useSavedJobs } from "@/hooks/useSavedJobs";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import type { SavedJob, TRACKED_JOBS_STORAGE_KEY } from "@/types/saved-job";
@@ -14,6 +13,10 @@ import { useToast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { NavBar } from "@/components/NavBar";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 
 const AF_BASE_URL = "https://arbetsformedlingen.se/platsbanken/annonser";
 const JOBS_PER_PAGE = 10;
@@ -51,6 +54,24 @@ const formatDate = (date: Date) => {
     month: '2-digit',
     year: '2-digit'
   }).replace(/\//g, '.');
+};
+
+const parseDate = (dateString: string | null): Date | undefined => {
+  if (!dateString) return undefined;
+  
+  const parts = dateString.split('.');
+  if (parts.length !== 3) return undefined;
+  
+  const day = parseInt(parts[0], 10);
+  const month = parseInt(parts[1], 10) - 1; // JavaScript months are 0-indexed
+  const year = parseInt(`20${parts[2]}`, 10); // Assume 20xx for years
+  
+  const date = new Date(year, month, day);
+  
+  // Validate the date is real
+  if (isNaN(date.getTime())) return undefined;
+  
+  return date;
 };
 
 const saveTrackedJobsToLocalStorage = (userId: string, jobs: SavedJob[]) => {
@@ -254,6 +275,31 @@ const Tracker = () => {
     });
   };
 
+  const handleDateSelect = (date: Date | undefined, jobId: string) => {
+    if (!date) return;
+    
+    const formattedDate = formatDate(date);
+    
+    setEditForm(prev => ({
+      ...prev,
+      tracking_date: formattedDate
+    }));
+    
+    // If not in edit mode, update the job directly
+    if (editingJob !== jobId) {
+      setTrackedJobs(prev => prev.map(job => 
+        job.id === jobId 
+          ? { ...job, tracking_date: formattedDate } 
+          : job
+      ));
+      
+      toast({
+        title: "Date updated",
+        description: `Tracking date set to ${formattedDate}`
+      });
+    }
+  };
+
   const totalPages = Math.ceil(availableJobs.length / JOBS_PER_PAGE);
   const startIndex = (currentPage - 1) * JOBS_PER_PAGE;
   const endIndex = startIndex + JOBS_PER_PAGE;
@@ -385,10 +431,70 @@ const Tracker = () => {
                                           </Select>
                                         </TableCell>
                                         <TableCell>
-                                          {editingJob === job.id ? <Input value={editForm.tracking_date || ''} onChange={e => setEditForm(prev => ({
-                                ...prev,
-                                tracking_date: e.target.value
-                              }))} placeholder="DD.MM.YY" /> : job.tracking_date}
+                                          {editingJob === job.id ? (
+                                            <div className="flex items-center w-full">
+                                              <Popover>
+                                                <PopoverTrigger asChild>
+                                                  <Button
+                                                    variant="outline"
+                                                    className={cn(
+                                                      "w-full justify-start text-left font-normal",
+                                                      !editForm.tracking_date && "text-muted-foreground"
+                                                    )}
+                                                  >
+                                                    {editForm.tracking_date || "Pick a date"}
+                                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                                  </Button>
+                                                </PopoverTrigger>
+                                                <PopoverContent className="w-auto p-0" align="start">
+                                                  <Calendar
+                                                    mode="single"
+                                                    selected={parseDate(editForm.tracking_date || null)}
+                                                    onSelect={(date) => handleDateSelect(date, job.id)}
+                                                    initialFocus
+                                                    className="p-3 pointer-events-auto"
+                                                  />
+                                                </PopoverContent>
+                                              </Popover>
+                                            </div>
+                                          ) : (
+                                            <div className="flex items-center space-x-2">
+                                              <Input 
+                                                type="text" 
+                                                value={job.tracking_date || ''} 
+                                                onChange={(e) => {
+                                                  setTrackedJobs(prev => 
+                                                    prev.map(j => j.id === job.id 
+                                                      ? { ...j, tracking_date: e.target.value } 
+                                                      : j
+                                                    )
+                                                  );
+                                                }}
+                                                placeholder="DD.MM.YY"
+                                                className="w-[85px] h-9 px-2 text-sm"
+                                              />
+                                              <Popover>
+                                                <PopoverTrigger asChild>
+                                                  <Button 
+                                                    variant="ghost" 
+                                                    size="icon" 
+                                                    className="h-8 w-8 text-gray-500 hover:text-primary"
+                                                  >
+                                                    <CalendarIcon className="h-4 w-4" />
+                                                  </Button>
+                                                </PopoverTrigger>
+                                                <PopoverContent className="w-auto p-0" align="start">
+                                                  <Calendar
+                                                    mode="single"
+                                                    selected={parseDate(job.tracking_date || null)}
+                                                    onSelect={(date) => handleDateSelect(date, job.id)}
+                                                    initialFocus
+                                                    className="p-3 pointer-events-auto"
+                                                  />
+                                                </PopoverContent>
+                                              </Popover>
+                                            </div>
+                                          )}
                                         </TableCell>
                                         <TableCell>
                                           {editingJob === job.id ? <Textarea value={editForm.notes || ''} onChange={e => setEditForm(prev => ({
